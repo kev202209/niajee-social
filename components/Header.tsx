@@ -29,6 +29,9 @@ export default function Header() {
         <Link href="/auth/login" className="text-sm text-gray-600 dark:text-gray-300">
           Login
         </Link>
+        <Link href="/auth/register" className="text-sm text-gray-600 dark:text-gray-300">
+          Sign up
+        </Link>
       </div>
     </header>
   )
