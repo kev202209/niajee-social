@@ -1,5 +1,5 @@
 // lib/customAdapter.ts
-import { Adapter, AdapterUser } from "next-auth/adapters";
+import { Adapter, AdapterUser, AdapterSession } from "next-auth/adapters";
 
 // Base URL of your Node.js API server.
 const API_BASE = process.env.API_BASE_URL || "http://localhost:5000/api/auth";
@@ -65,8 +65,18 @@ export const customAdapter = (): Adapter => {
     async linkAccount() { return Promise.resolve(); },
     async unlinkAccount() { return Promise.resolve(); },
     async getSessionAndUser() { return Promise.resolve(null); },
-    // async createSession() { return Promise.resolve(null); },
-    // async getSession() { return Promise.resolve(null); },
+    async createSession(session) { 
+      const res = await fetch(`${API_BASE}/createSession`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(session),
+      });
+      if (!res.ok) {
+        throw new Error("Error creating session");
+      }
+      const createdSession = await res.json();
+      return createdSession as AdapterSession;
+    },
     async updateSession() { return Promise.resolve(null); },
     async deleteSession() { return Promise.resolve(null); },
     async createVerificationToken() { return Promise.resolve(null); },
