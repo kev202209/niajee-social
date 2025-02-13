@@ -3,12 +3,13 @@ import { Adapter, AdapterUser, AdapterSession } from "next-auth/adapters";
 
 // Base URL of your Node.js API server.
 const API_BASE = process.env.API_BASE_URL || "http://localhost:5000/api/auth";
+console.log("API_BASE", API_BASE);
 
 export const customAdapter = (): Adapter => {
   return {
     // Create a new user by sending a POST request to your server.
     async createUser(user: any) {
-      const res = await fetch(`${API_BASE}/createUser`, {
+      const res = await fetch(`${API_BASE}/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(user),
