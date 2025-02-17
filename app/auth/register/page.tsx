@@ -115,7 +115,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,_theme(colors.indigo.500)_86%,_theme(colors.indigo.300)_90%,_theme(colors.indigo.500)_94%,_theme(colors.slate.600/.48))_border-box] rounded-2xl border border-1.5 border-transparent animate-border">
         {step === 1 && (
           <div>
             <h1 className="text-2xl font-bold mb-4 text-blue-500 dark:text-white">Welcome to Mosaic</h1>
@@ -128,7 +128,7 @@ export default function RegisterPage() {
               placeholder="First Name"
               value={formData.firstName}
               onChange={handleChange}
-              className="w-full p-2 border rounded mb-3 mr-1.5"
+              className="w-full p-2 border rounded mb-3 mr-1.5 [background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,_theme(colors.indigo.500)_86%,_theme(colors.indigo.300)_90%,_theme(colors.indigo.500)_94%,_theme(colors.slate.600/.48))_border-box]"
             />
             
             {/* <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Last Name</label> */}
