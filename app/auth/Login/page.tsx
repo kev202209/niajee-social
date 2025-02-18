@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { FaGoogle, FaFacebook } from 'react-icons/fa';
+import { Link2Icon } from 'lucide-react';
+import Link from 'next/link';
 
 interface DeviceDetails {
   device: string;
@@ -94,12 +96,12 @@ export default function LoginPage() {
           >
             <FaGoogle /> Login with Google
           </button>
-          <button
-            onClick={() => signIn('facebook')}
-            className="w-full p-2 bg-blue-600 text-white rounded flex items-center justify-center gap-2"
+          <Link
+            href='/auth/forget-password'
+            className="w-full p-2 text-grey-500 flex items-center justify-center gap-2"
           >
-            <FaFacebook /> Login with Facebook
-          </button>
+         forgot Password
+          </Link>
         </div>
       </div>
     </div>
