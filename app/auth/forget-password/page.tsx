@@ -139,11 +139,12 @@ export default function CosmicPage() {
 
       {/* Foreground Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
-      <div className="max-w-md mx-auto bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,_theme(colors.indigo.500)_86%,_theme(colors.indigo.300)_90%,_theme(colors.indigo.500)_94%,_theme(colors.slate.600/.48))_border-box] rounded-2xl border border-1.5 border-transparent animate-border">
-        <h1 className="text-2xl font-bold mb-4">Forgot Password</h1>
+      <div className="max-w-md mx-auto bg-white dark:bg-gray-800 p-6 rounded shadow         [background:linear-gradient(45deg,#ffffff,theme(colors.slate.200)_50%,#ffffff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.300/.48)_80%,theme(colors.blue.500)_86%,theme(colors.blue.300)_90%,theme(colors.blue.500)_94%,theme(colors.slate.300/.48))_border-box] 
+        dark:[background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,theme(colors.indigo.500)_86%,theme(colors.indigo.300)_90%,theme(colors.indigo.500)_94%,theme(colors.slate.600/.48))_border-box]  rounded-2xl border border-1.5 border-transparent animate-border">
+        <h1 className="text-2xl font-bold mb-4 text-black dark:text-white ">Forgot Password</h1>
         {message && <p className="text-green-500 mb-2">{message}</p>}
         {error && <p className="text-red-500 mb-2">{error}</p>}
-        <p className="mb-4 text-sm text-gray-600">
+        <p className="mb-4 text-sm text-gray-700 dark:text-white">
           Enter your email to receive a one-time password (OTP) to reset your password.
         </p>
         <form onSubmit={handleSubmit}>
@@ -152,10 +153,10 @@ export default function CosmicPage() {
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border rounded mb-4 bg-white"
+            className="w-full p-2 border rounded mb-4 dark:bg-inherit"
             required
           />
-          <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded">
+          <button type="submit" className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
             Send OTP
           </button>
         </form>
