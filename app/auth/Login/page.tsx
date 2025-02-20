@@ -153,7 +153,7 @@ export default function LoginPage() {
 
       {/* Foreground Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,_theme(colors.indigo.500)_86%,_theme(colors.indigo.300)_90%,_theme(colors.indigo.500)_94%,_theme(colors.slate.600/.48))_border-box] rounded-2xl border border-1.5 border-transparent animate-border">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#ffffff,theme(colors.slate.200)_50%,#ffffff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.300/.48)_80%,theme(colors.blue.500)_86%,theme(colors.blue.300)_90%,theme(colors.blue.500)_94%,theme(colors.slate.300/.48))_border-box] dark:[background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,theme(colors.indigo.500)_86%,theme(colors.indigo.300)_90%,theme(colors.indigo.500)_94%,theme(colors.slate.600/.48))_border-box] rounded-2xl border border-1.5 border-transparent animate-border">
         <h1 className="text-2xl font-bold mb-4 text-blue-500 dark:text-white">Login</h1>
         {error && <p className="text-red-500 mb-2">{error}</p>}
         {message && <p className="text-green-500 mb-2">{message}</p>}
@@ -166,7 +166,7 @@ export default function LoginPage() {
           placeholder="Enter your email or username"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
-          className="w-full p-2 border rounded mb-4"
+          className="w-full p-2 border rounded mb-4 dark:bg-inherit"
         />
 
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -177,12 +177,12 @@ export default function LoginPage() {
           placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 border rounded mb-4"
+          className="w-full p-2 border rounded mb-4 dark:bg-inherit"
         />
 
         <button
           onClick={handleLogin}
-          className="w-full p-2 bg-blue-500 text-white rounded mb-4"
+          className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded mb-4"
         >
           Login
         </button>
@@ -204,7 +204,7 @@ export default function LoginPage() {
           </button>
           <Link
             href='/auth/forget-password'
-            className="w-full p-2 text-grey-500 flex items-center justify-center gap-2"
+            className="w-full p-2 text-blue-600 dark:text-white flex items-center justify-center gap-2"
           >
          forgot Password
           </Link>
