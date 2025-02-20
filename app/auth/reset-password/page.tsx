@@ -176,23 +176,23 @@ export default function ResetPasswordPage() {
 
       {/* Foreground Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
-      <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,_theme(colors.indigo.500)_86%,_theme(colors.indigo.300)_90%,_theme(colors.indigo.500)_94%,_theme(colors.slate.600/.48))_border-box] rounded-2xl border border-1.5 border-transparent animate-border">
-        <h1 className="text-2xl font-bold mb-4">Reset Password</h1>
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#ffffff,theme(colors.slate.200)_50%,#ffffff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.300/.48)_80%,theme(colors.blue.500)_86%,theme(colors.blue.300)_90%,theme(colors.blue.500)_94%,theme(colors.slate.300/.48))_border-box] dark:[background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,theme(colors.indigo.500)_86%,theme(colors.indigo.300)_90%,theme(colors.indigo.500)_94%,theme(colors.slate.600/.48))_border-box] rounded-2xl border border-1.5 border-transparent animate-border">
+        <h1 className="text-2xl font-bold mb-4 text-blue-600 dark:text-white">Reset Password</h1>
         {message && <p className="text-green-500 mb-2">{message}</p>}
         {error && <p className="text-red-500 mb-2">{error}</p>}
 
         {step === 1 && (
           <form onSubmit={handleVerifyOtp}>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Enter OTP</label>
+            <label className="block text-sm font-medium text-gray-500 mb-1">Enter OTP</label>
             <input
               type="text"
               placeholder="Enter OTP"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              className="w-full p-2 border rounded mb-4"
+              className="w-full p-2 border rounded mb-4 dark:bg-inherit"
               required
             />
-            <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded">
+            <button type="submit" className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
               Verify OTP
             </button>
           </form>
