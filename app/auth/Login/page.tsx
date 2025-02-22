@@ -166,7 +166,7 @@ export default function LoginPage() {
           placeholder="Enter your email or username"
           value={identifier}
           onChange={(e) => setIdentifier(e.target.value)}
-          className="w-full p-2 border rounded mb-4 dark:bg-inherit"
+          className="w-full p-2 border rounded mb-4 dark:bg-inherit text-black dark:text-white"
         />
 
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -177,7 +177,7 @@ export default function LoginPage() {
           placeholder="Enter your password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-2 border rounded mb-4 dark:bg-inherit"
+          className="w-full p-2 border rounded mb-4 dark:bg-inherit text-black dark:text-white"
         />
 
         <button
@@ -198,7 +198,7 @@ export default function LoginPage() {
         <div className="mt-4 flex flex-col gap-2">
           <button
             onClick={() => signIn('google')}
-            className="w-full p-2 bg-red-600 text-white rounded flex items-center justify-center gap-2"
+            className="w-full p-2 bg-red-600 hover:bg-red-700 text-white rounded flex items-center justify-center gap-2"
           >
             <FaGoogle /> Login with Google
           </button>
