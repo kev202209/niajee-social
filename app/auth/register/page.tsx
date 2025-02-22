@@ -300,7 +300,7 @@ export default function RegisterPage() {
               name="birthday"
               value={formData.birthday}
               onChange={handleChange}
-              className="w-full p-2 border rounded mb-3 dark:bg-inherit"
+              className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
             />
             
             <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
@@ -324,7 +324,7 @@ export default function RegisterPage() {
                 type="file"
                 name="profilePicture"
                 onChange={handleFileChange}
-                className="w-full p-2 border rounded mb-1"
+                className="w-full p-2 border rounded mb-1 text-black dark:text-white"
               />
               <p className="text-sm text-gray-500">This is optional</p>
             </div>
@@ -336,7 +336,7 @@ export default function RegisterPage() {
               placeholder="Username"
               value={formData.username}
               onChange={handleChange}
-              className="w-full p-2 border rounded mb-3 dark:bg-inherit"
+              className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
             />
             
             <div className="flex justify-between">
@@ -369,7 +369,7 @@ export default function RegisterPage() {
               placeholder="Password"
               value={formData.password}
               onChange={handleChange}
-              className="w-full p-2 border rounded mb-3 dark:bg-inherit"
+              className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
             />
             
             <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">Confirm Password</label>
@@ -379,7 +379,7 @@ export default function RegisterPage() {
               placeholder="Confirm Password"
               value={formData.confirmPassword}
               onChange={handleChange}
-              className="w-full p-2 border rounded mb-3 dark:bg-inherit"
+              className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
             />
             
             <div className="flex justify-between">
