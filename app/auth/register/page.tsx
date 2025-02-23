@@ -3,7 +3,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { signIn } from 'next-auth/react';
-import { FaGoogle, FaFacebook } from 'react-icons/fa';
+import { FaGoogle } from 'react-icons/fa';
 
 interface DeviceDetails {
   device: string;
@@ -278,12 +278,6 @@ export default function RegisterPage() {
                 className="w-full p-2 bg-red-600 hover:bg-red-700 text-white rounded flex items-center justify-center gap-2"
               >
                 <FaGoogle /> Sign up with Google
-              </button>
-              <button
-                onClick={() => signIn('facebook')}
-                className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded flex items-center justify-center gap-2"
-              >
-                <FaFacebook /> Sign up with Facebook
               </button>
             </div>
           </div>
