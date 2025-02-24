@@ -274,7 +274,7 @@ export default function RegisterPage() {
             {/* OAuth Buttons with icons */}
             <div className="mt-4 flex flex-col gap-2">
               <button
-                onClick={() => signIn('google')}
+                onClick={() => window.location.href = 'http://localhost:5000/auth/google'}
                 className="w-full p-2 bg-red-600 hover:bg-red-700 text-white rounded flex items-center justify-center gap-2"
               >
                 <FaGoogle /> Sign up with Google
