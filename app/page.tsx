@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Home from '@/components/Home';
+import Landing from '@/components/Landing';
 
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
@@ -24,20 +25,21 @@ export default function HomePage() {
   if (!isLoggedIn) {
     // Show a different page or message for non-logged-in users.
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
-          You are not logged in.
-        </h1>
-        <p className="mb-4 text-gray-700 dark:text-gray-300">
-          Please log in to view your feed.
-        </p>
-        <button
-          onClick={() => router.push('/login')}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
-        >
-          Go to Login
-        </button>
-      </div>
+      <Landing />
+      // <div className="min-h-screen flex flex-col items-center justify-center">
+      //   <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">
+      //     You are not logged in.
+      //   </h1>
+      //   <p className="mb-4 text-gray-700 dark:text-gray-300">
+      //     Please log in to view your feed.
+      //   </p>
+      //   <button
+      //     onClick={() => router.push('/login')}
+      //     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+      //   >
+      //     Go to Login
+      //   </button>
+      // </div>
     );
   }
 
