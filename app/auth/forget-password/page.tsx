@@ -156,7 +156,7 @@ export default function CosmicPage() {
             className="w-full p-2 border rounded mb-4 dark:bg-inherit"
             required
           />
-          <button type="submit" className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
+          <button type="submit" className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
             Send OTP
           </button>
         </form>

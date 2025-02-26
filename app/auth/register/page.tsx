@@ -260,7 +260,7 @@ export default function RegisterPage() {
             
             <button
               onClick={handleEmailCheck}
-              className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded mb-3"
+              className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl mb-3"
             >
               Continue
             </button>
@@ -275,7 +275,7 @@ export default function RegisterPage() {
             <div className="mt-4 flex flex-col gap-2">
               <button
                 onClick={() => window.location.href = 'http://localhost:5000/auth/google'}
-                className="w-full p-2 bg-red-600 hover:bg-red-700 text-white rounded flex items-center justify-center gap-2"
+                className="w-full p-2 dark:bg-sky-500/10 bg-sky-600 hover:bg-sky-500/80 text-white dark:hover:bg-sky-500/80 dark:text-white rounded-xl flex items-center justify-center gap-2"
               >
                 <FaGoogle /> Sign up with Google
               </button>
@@ -336,14 +336,14 @@ export default function RegisterPage() {
             <div className="flex justify-between">
               <button
                 onClick={() => setStep(1)}
-                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded"
+                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl"
               >
                 Back
               </button>
               <button
                 onClick={() => { setStep(3); setError(''); }}
                 disabled={!formData.username}
-                className={`p-2 text-white rounded ${!formData.username ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+                className={`p-2 text-white rounded ${!formData.username ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 rounded-xl'}`}
               >
                 Continue
               </button>

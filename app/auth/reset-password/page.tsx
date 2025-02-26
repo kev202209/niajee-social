@@ -192,7 +192,7 @@ export default function ResetPasswordPage() {
               className="w-full p-2 border rounded mb-4 dark:bg-inherit"
               required
             />
-            <button type="submit" className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
+            <button type="submit" className="w-full p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl">
               Verify OTP
             </button>
           </form>
@@ -218,7 +218,7 @@ export default function ResetPasswordPage() {
               className="w-full p-2 border rounded mb-4"
               required
             />
-            <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded">
+            <button type="submit" className="w-full p-2 bg-blue-500 text-white rounded-xl">
               Reset Password
             </button>
           </form>
