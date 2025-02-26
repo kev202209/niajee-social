@@ -50,7 +50,7 @@ export default function Landing() {
   const boxShadow = useMotionTemplate`0px 4px 24px ${color}`;
 
   // Stars color based on theme: black for light, white for dark
-  const starsColor = theme === "light" ? "#000000" : "#ffffff";
+  // const starsColor = theme === "light" ? 0 : 1;
 
   const features = [
     {
@@ -103,7 +103,7 @@ export default function Landing() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="text-5xl font-bold gradient-text">
-              <Link href="/">MOSAIC</Link>
+              <Link href="/" className=" font-extrabold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient">MOSAIC</Link>
             </div>
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
@@ -218,10 +218,10 @@ export default function Landing() {
         className="relative grid min-h-screen place-content-center overflow-hidden bg-gray-50 dark:bg-gray-950 px-4 py-24 text-center text-gray-800 dark:text-gray-200"
       >
         <div className="relative z-10 flex flex-col items-center">
-          <span className="mb-1.5 inline-block rounded-full bg-gray-600/50 px-3 py-1.5 text-sm">
+          <span className="mb-1.5 inline-block rounded-full bg-blue-200 dark:bg-gray-600/50 px-3 py-1.5 text-sm">
             Beta Now Live!
           </span>
-          <h1 className="max-w-3xl bg-gradient-to-br from-white to-gray-400 bg-clip-text text-3xl font-medium leading-tight text-transparent sm:text-5xl md:text-7xl">
+          <h1 className="max-w-3xl bg-gradient-to-br from-gray-200 to-gray-700 dark:from-white dark:to-gray-400 bg-clip-text text-3xl font-medium leading-tight text-transparent sm:text-5xl md:text-7xl">
             Experience Social Media Like Never Before.
           </h1>
           <p className="my-6 max-w-xl text-base leading-relaxed md:text-lg">
@@ -242,14 +242,13 @@ export default function Landing() {
         </div>
         {/* Stars Background */}
         <div className="absolute inset-0 z-0">
-          <Canvas>
-            <Stars
+          <Canvas className='hidden dark:contents'>
+            <Stars 
               radius={50}
               count={2500}
               factor={4}
               fade
               speed={2}
-            //   color={starsColor}
             />
           </Canvas>
         </div>
@@ -394,7 +393,8 @@ export default function Landing() {
         </div>
       </footer>
 
-      {/* Global Animated Gradients */}
+      {/*Global Animated Gradients*/}
+      {/* 
       <style jsx global>{`
         @keyframes gradientAnimation {
           0% {
@@ -424,7 +424,7 @@ export default function Landing() {
           background-size: 400% 400%;
           animation: gradientAnimation 15s ease infinite;
         }
-      `}</style>
+      `}</style> */}
     </div>
   );
 }
