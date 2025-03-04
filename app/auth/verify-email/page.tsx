@@ -24,7 +24,7 @@ export default function VerifyEmailPage() {
         if (res.ok) {
           setMessage('Email verified successfully! You can now log in.');
           // Optionally, redirect after a delay:
-          setTimeout(() => router.push('/auth/login'), 3000);
+          setTimeout(() => router.push('/auth/login'), 5000);
         } else {
           setError(data.message || 'Verification failed.');
         }
