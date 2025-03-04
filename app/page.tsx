@@ -10,7 +10,7 @@ export default function HomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    const token = sessionStorage.getItem('secureToken');
+    const token = sessionStorage.getItem('sggtx');
     if (token) {
       setIsLoggedIn(true);
     } else {
