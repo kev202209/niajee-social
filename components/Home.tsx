@@ -1,10 +1,25 @@
+"use client";
 
-export default function Home() {
-    return (
-      <div>
-        <h1 className="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Welcome to Fusion</h1>
-        <p className='text-gray-900 dark:text-white'>This is your main feed where you’ll see a mix of posts, videos, and updates from around the platform.</p>
-        {/* Future implementation: Add components to display feed content, stories, etc. */}
-      </div>
-    )
-  }
+import React, { FC } from "react";
+import Header from "@/components/home/header";
+import Sidebar from "@/components/home/sidebar";
+import MainContent from "@/components/home/MainContent";
+import TweetFeed from "@/components/home/TweetFeed";
+import Footer from "@/components/home/Footer";
+
+
+const HomePage: FC = () => {
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+      <Header />
+      <Sidebar />
+      <TweetFeed />
+      <main className="ml-60 mr-80 pt-16">
+        <MainContent />
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+export default HomePage;
