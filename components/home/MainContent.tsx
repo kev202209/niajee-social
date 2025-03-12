@@ -13,7 +13,7 @@ const MainContent: FC = () => {
   const fetchContent = async (pageNumber: number) => {
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/content?page=${pageNumber}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/content?page=${pageNumber}`);
       if (response.ok) {
         const data = await response.json();
         // Append new data to existing state

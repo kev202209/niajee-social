@@ -1,17 +1,14 @@
-import { Short } from "@/types";
+import { Short } from "@/types"; 
 import { FC, useEffect, useRef, useState } from "react";
 import { FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiVolume, FiVolumeX, FiXCircle } from "react-icons/fi";
 import DropdownMenuPortal from "./DropDownMenu";
 
-const ShortCard: React.FC<{ short: Short }> = ({ short }) => {
+const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [volume, setVolume] = useState<number>(0.5);
   const [showOptions, setShowOptions] = useState<boolean>(false);
-  const [dropdownPosition, setDropdownPosition] = useState<{
-    top: number;
-    left: number;
-  } | null>(null);
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleMouseEnter = () => {
@@ -49,7 +46,6 @@ const ShortCard: React.FC<{ short: Short }> = ({ short }) => {
     }
   };
 
-  // Toggle the options dropdown and compute its position
   const handleToggleOptions = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     if (menuButtonRef.current) {
@@ -62,7 +58,6 @@ const ShortCard: React.FC<{ short: Short }> = ({ short }) => {
     setShowOptions((prev) => !prev);
   };
 
-  // Close the dropdown if clicking outside of the button
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuButtonRef.current && !menuButtonRef.current.contains(e.target as Node)) {
@@ -85,7 +80,7 @@ const ShortCard: React.FC<{ short: Short }> = ({ short }) => {
       >
         <video
           ref={videoRef}
-          src="/short-video.mp4"
+          src={short.videoSrc} // Dynamic video source from backend
           muted={isMuted}
           loop
           playsInline
@@ -116,11 +111,7 @@ const ShortCard: React.FC<{ short: Short }> = ({ short }) => {
           <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
             {short.title}
           </p>
-          <button
-            ref={menuButtonRef}
-            onClick={handleToggleOptions}
-            className="p-1"
-          >
+          <button ref={menuButtonRef} onClick={handleToggleOptions} className="p-1">
             <FiMoreHorizontal
               style={{ transform: "rotate(90deg)" }}
               className="text-gray-900 dark:text-gray-100"
