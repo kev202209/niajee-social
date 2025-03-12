@@ -9,9 +9,13 @@ export interface Video {
   }
   
 export interface Short {
-    id: number;
-    title: string;
-    views: string;
+  id: number;
+  videoSrc: string;
+  title: string;
+  channelAvatar: string;
+  channelName: string;
+  views: string;
+  age: string;
   }
   
 export interface Tweet {
@@ -21,3 +25,35 @@ export interface Tweet {
     handle: string;
     content: string;
   }
+
+
+// Types (same as before, but centralized here)
+export interface mVideo {
+  id: string;
+  videoSrc: string;
+  title: string;
+  channelName: string;
+  channelAvatar: string;
+  likes: number;
+  views: string;
+  uploadDate: string;
+  description: string;
+}
+
+export interface SuggestedVideo {
+  id: string;
+  thumbnail: string;
+  title: string;
+  channelName: string;
+  views: string;
+  age: string;
+}
+
+export interface Comment {
+  id: string;
+  username: string;
+  avatar: string;
+  age: string;
+  text: string;
+  likes: number;
+}
