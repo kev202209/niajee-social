@@ -2,6 +2,7 @@ import { FC, useEffect, useRef, useState } from "react";
 import { Video } from "../../types";
 import Image from "next/image";
 import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle } from "react-icons/fi";
+import Link from "next/link";
 
 
 
@@ -67,6 +68,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
   };
 
   return (
+    <Link href={`/watch/${video.id}`}>
     <div className="bg-white dark:bg-gray-800 rounded shadow cursor-pointer relative">
       {/* Video Thumbnail Container with 3:2 Aspect Ratio */}
       <div
@@ -162,6 +164,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
         </div>
       </div>
     </div>
+    </Link>
   );
 };
 
