@@ -1,6 +1,7 @@
 // This is a Server Component by default in Next.js 15 App Router
 import { Suspense } from "react";
 import VideoPlayer from "./VideoPlayer";
+import Header from "@/components/home/header";
 import SuggestedVideos from "./SuggestedVideos";
 import CommentsSection from "./CommentSection";
 
@@ -50,6 +51,8 @@ export default async function WatchPage({ params }: { params: { v: string } }) {
   ]);
 
   return (
+    <>
+    <Header/>
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pt-16">
       <div className="max-w-7xl mx-auto p-4">
         <div className="flex flex-col md:flex-row gap-4">
@@ -71,5 +74,6 @@ export default async function WatchPage({ params }: { params: { v: string } }) {
         </div>
       </div>
     </div>
+    </>
   );
 }
