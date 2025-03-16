@@ -68,15 +68,15 @@ const Header: FC = () => {
                 <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
                   <ul>
                     <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                      <FiPlus className="mr-2" /> <span>Add Content</span>
+                      <FiPlus className="mr-2" /> <span>Create</span>
                     </li>
                     <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
                       <FiSettings className="mr-2" /> <span>Settings</span>
                     </li>
-                    <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
+                    {/* <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
                       <DarkModeToggle />
                       <span>Dark Mode</span>{" "}
-                    </li>
+                    </li> */}
                     <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
                       <FiUser className="mr-2" /> <span>Profile</span>
                     </li>
