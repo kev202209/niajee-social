@@ -2,6 +2,7 @@ import { Short } from "@/types";
 import { FC, useEffect, useRef, useState } from "react";
 import { FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiVolume, FiVolumeX, FiXCircle } from "react-icons/fi";
 import DropdownMenuPortal from "./DropDownMenu";
+import Link from "next/link";
 
 const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -71,6 +72,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
   }, [showOptions]);
 
   return (
+    <Link href={`/shorts/${short.id}`}>
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow cursor-pointer relative w-40 flex-shrink-0">
       {/* Short Video Container with 9:16 Aspect Ratio */}
       <div
@@ -146,6 +148,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
         </DropdownMenuPortal>
       )}
     </div>
+    </Link>
   );
 };
 
