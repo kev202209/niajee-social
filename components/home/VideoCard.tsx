@@ -114,9 +114,11 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
               height={24}
               className="rounded-full h-6 w-6"
             />
-            <span className="ml-2 font-semibold text-gray-900 dark:text-gray-100 text-base">
+            <span className="line-clamp-2 ml-2 font-thin text-gray-900 dark:text-gray-100 text-base">
               {video.title}
             </span>
+
+
           </div>
           <div className="relative" ref={optionsRef}>
             <button
