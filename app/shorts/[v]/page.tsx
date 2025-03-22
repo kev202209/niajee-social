@@ -5,7 +5,9 @@ import { useState, useEffect, useRef } from "react";
 import Header from "@/components/watch/Header";
 import Sidebar from "@/components/watch/Sidebar";
 import VideoPlayer from "./shortVideoPlayer";
+import VideoActions from "./VideoActions";
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
+import CommentsSection from "./CommentsSection";
 
 interface Channel {
   name: string;
@@ -14,6 +16,7 @@ interface Channel {
 }
 
 interface Comment {
+  id: number;
   username: string;
   userIcon: string | null;
   age: string;
@@ -40,11 +43,12 @@ const getFullUrl = (url: string): string =>
 
 const ShortVideoPage = () => {
   const params = useParams();
-  const initialVideoId = params?.v;
+  const initialVideoId = Array.isArray(params?.v) ? params.v[0] : params?.v;
   const router = useRouter();
 
   const [currentVideo, setCurrentVideo] = useState<ShortData | null>(null);
   const [nextVideo, setNextVideo] = useState<ShortData | null>(null);
+  // Track history of videos for "back" navigation.
   const [videoHistory, setVideoHistory] = useState<ShortData[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,12 +56,31 @@ const ShortVideoPage = () => {
   const [isMuted, setIsMuted] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [volume, setVolume] = useState(0.5);
+  // New state: whether the comments panel is showing.
+  const [showComments, setShowComments] = useState(false);
 
-  // Refs for the scroll container and the current video element.
+  // Refs for the scroll container and current video element.
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentVideoRef = useRef<HTMLVideoElement>(null);
 
-  // Fetch current video: either by ID (if provided) or via limit=1.
+  // On mount, read the saved volume cookie.
+  useEffect(() => {
+    const cookieStr = document.cookie.split("; ").find(row => row.startsWith("volume="));
+    if (cookieStr) {
+      const volValue = parseFloat(cookieStr.split("=")[1]);
+      if (!isNaN(volValue)) {
+        setVolume(volValue);
+      }
+    }
+  }, []);
+
+  // Update volume cookie (expires in 1 year).
+  const updateVolumeCookie = (vol: number) => {
+    const maxAge = 60 * 60 * 24 * 365; // seconds
+    document.cookie = `volume=${vol}; path=/; max-age=${maxAge}`;
+  };
+
+  // Fetch current video by ID or default.
   const fetchCurrentVideo = async (videoId?: string): Promise<ShortData | null> => {
     try {
       let data: ShortData;
@@ -79,7 +102,7 @@ const ShortVideoPage = () => {
     }
   };
 
-  // Fetch the next video from the endpoint.
+  // Fetch next video.
   const fetchNextVideo = async (): Promise<ShortData | null> => {
     try {
       const res = await fetch(
@@ -95,18 +118,24 @@ const ShortVideoPage = () => {
     }
   };
 
+  // Helper: update URL with current short id.
+  const updateUrl = (id: string) => {
+    window.history.pushState(null, '', `/shorts/${id}`);
+  };
+
   useEffect(() => {
     const init = async () => {
       const current = await fetchCurrentVideo(initialVideoId);
       if (current) {
         setCurrentVideo(current);
-        router.replace(`/shorts/${current._id}`);
+        updateUrl(current._id);
         const next = await fetchNextVideo();
         setNextVideo(next);
         setLoading(false);
       }
     };
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialVideoId]);
 
   // Video control functions.
@@ -123,9 +152,7 @@ const ShortVideoPage = () => {
   const togglePlayPause = () => {
     if (currentVideoRef.current) {
       if (isPaused) {
-        // On user interaction, unmute and set volume
-        currentVideoRef.current.volume = 0.5;
-        setVolume(0.5);
+        currentVideoRef.current.volume = volume;
         setIsMuted(false);
         currentVideoRef.current.muted = false;
         currentVideoRef.current.play();
@@ -135,11 +162,11 @@ const ShortVideoPage = () => {
       setIsPaused((prev) => !prev);
     }
   };
-  
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
+    updateVolumeCookie(newVolume);
     if (currentVideoRef.current) {
       currentVideoRef.current.volume = newVolume;
       if (newVolume > 0 && isMuted) {
@@ -153,7 +180,7 @@ const ShortVideoPage = () => {
     }
   };
 
-  // Handle scroll down: update states and fetch a new next video.
+  // Navigation: scroll down to next video.
   const handleScrollDown = async () => {
     if (!nextVideo || !scrollContainerRef.current || !currentVideo) return;
     scrollContainerRef.current.scrollTo({
@@ -163,7 +190,7 @@ const ShortVideoPage = () => {
     setTimeout(async () => {
       setVideoHistory((prev) => [...prev, currentVideo]);
       setCurrentVideo(nextVideo);
-      router.replace(`/shorts/${nextVideo._id}`);
+      updateUrl(nextVideo._id);
       setIsPaused(false);
       setIsMuted(true);
       if (currentVideoRef.current) {
@@ -175,7 +202,7 @@ const ShortVideoPage = () => {
     }, 600);
   };
 
-  // Handle scroll up: update state with previous video.
+  // Navigation: scroll up to previous video.
   const handleScrollUp = () => {
     if (videoHistory.length === 0 || !scrollContainerRef.current || !currentVideo)
       return;
@@ -185,13 +212,18 @@ const ShortVideoPage = () => {
     setTimeout(() => {
       setVideoHistory((prev) => prev.slice(0, -1));
       setCurrentVideo(prevVideo);
-      router.replace(`/shorts/${prevVideo._id}`);
+      updateUrl(prevVideo._id);
       setIsPaused(false);
       setIsMuted(true);
       if (currentVideoRef.current) {
         currentVideoRef.current.muted = true;
       }
     }, 600);
+  };
+
+  // Toggle comments panel visibility.
+  const toggleComments = () => {
+    setShowComments((prev) => !prev);
   };
 
   if (loading || !currentVideo) {
@@ -209,22 +241,47 @@ const ShortVideoPage = () => {
           className="h-screen overflow-hidden flex justify-center"
         >
           <div className="h-[200vh] w-full max-w-[500px] relative">
-            {/* Current Video (first viewport) */}
-            <div className="h-screen relative flex items-center justify-center">
-              <VideoPlayer
-                videoRef={currentVideoRef}
-                videoSrc={currentVideo.videoSrc}
-                isMuted={isMuted}
-                isPaused={isPaused}
-                volume={volume}
-                onVolumeChange={handleVolumeChange}
-                toggleMute={toggleMute}
-                togglePlayPause={togglePlayPause}
-                channel={currentVideo.channel}
-                caption={currentVideo.caption}
-                song={currentVideo.song}
-              />
-            </div>
+            {/* Current Video Container with relative positioning */}
+            <div className="relative h-screen">
+  {/* Current Video Container */}
+  <div className={`flex items-center justify-center h-full transition-all duration-300 ${showComments ? "md:mr-40" : ""}`}>
+    <VideoPlayer
+      videoRef={currentVideoRef}
+      videoSrc={currentVideo.videoSrc}
+      isMuted={isMuted}
+      isPaused={isPaused}
+      volume={volume}
+      onVolumeChange={handleVolumeChange}
+      toggleMute={toggleMute}
+      togglePlayPause={togglePlayPause}
+      channel={currentVideo.channel}
+      caption={currentVideo.caption}
+      song={currentVideo.song}
+    />
+  </div>
+  {/* Video Actions: always absolutely positioned */}
+  <div className="absolute bottom-4 right-4">
+    <VideoActions onToggleComments={toggleComments} />
+    {showComments && (
+
+    <div className="mt-4">
+
+      <CommentsSection
+
+        comments={currentVideo.comments}
+
+        commentsEnabled={currentVideo.commentsEnabled}
+
+      />
+
+    </div>
+
+    )}
+
+      </div>  
+    </div>
+
+
             {/* Next Video Preview (second viewport) */}
             <div className="h-screen flex items-center justify-center">
               {nextVideo ? (
