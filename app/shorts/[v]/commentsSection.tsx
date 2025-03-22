@@ -1,4 +1,4 @@
-// components/CommentsSection.tsx
+// ./CommentsSection.tsx
 import { FC, useRef, useState } from 'react';
 import {
   FiFilter,
@@ -28,7 +28,7 @@ interface CommentsSectionProps {
 
 const CommentsSection: FC<CommentsSectionProps> = ({ comments, commentsEnabled }) => {
   const [isOpen, setIsOpen] = useState(true);
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null!);
 
   // Call the custom hook: when a click outside of containerRef happens, close the section.
   useOutsideClick(containerRef, () => {
