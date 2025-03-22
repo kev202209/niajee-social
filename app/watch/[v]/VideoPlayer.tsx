@@ -21,7 +21,6 @@ import {
   FiMaximize,
 } from "react-icons/fi";
 import { mVideo as Video } from "../../../types";
-import useOutsideClick from "@/hooks/useOutsideClick";
 
 export default function VideoPlayer({ video }: { video: Video }) {
   // Basic states
@@ -41,8 +40,6 @@ export default function VideoPlayer({ video }: { video: Video }) {
   const [isMiniplayer, setIsMiniplayer] = useState(false);
   const [isCinemaMode, setIsCinemaMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const showSettingsRef = useRef<HTMLDivElement>(null);
-  useOutsideClick(showSettingsRef, () => setShowSettings(false));
 
   // Refs for video and container elements and sleep timer
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -189,6 +186,19 @@ export default function VideoPlayer({ video }: { video: Video }) {
     }
   };
 
+  // Handle clicks on the progress bar for seeking
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    if (videoRef.current) {
+      videoRef.current.currentTime = percentage * duration;
+    }
+  };
+
+  // Calculate progress percentage (avoid division by zero)
+  const progressPercentage = duration ? (currentTime / duration) * 100 : 0;
+
   return (
     <div className="space-y-4">
       {/* Video Container */}
@@ -203,8 +213,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
         <video
           ref={videoRef}
           src={video.videoSrc}
-          // autoPlay
-          // muted
+          autoPlay
           className="w-full h-full rounded"
           onClick={togglePlay}
         />
@@ -218,6 +227,17 @@ export default function VideoPlayer({ video }: { video: Video }) {
             )}
           </div>
         )}
+        {/* Progress Bar */}
+        <div className="absolute bottom-12 left-0 right-0 px-2">
+          <div onClick={handleProgressClick} className="w-full h-1 bg-gray-300 cursor-pointer">
+            <div
+              className="h-full bg-blue-900 relative"
+              style={{ width: `${progressPercentage}%` }}
+            >
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-900 rounded-full" />
+            </div>
+          </div>
+        </div>
         {/* Custom Controls Overlay */}
         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-2 flex items-center text-white">
           {/* Left group: Rewind, Play/Pause, Forward */}
@@ -277,7 +297,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
               <FiMessageSquare className="w-5 h-5" />
             </button>
             {/* Settings Popup */}
-            <div className="relative" ref={showSettingsRef}>
+            <div className="relative">
               <button onClick={() => setShowSettings(!showSettings)} title="Settings" className="hover:text-gray-300">
                 <FiSettings className="w-5 h-5" />
               </button>
