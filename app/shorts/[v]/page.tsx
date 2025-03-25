@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import Header from "@/components/watch/Header";
 import Sidebar from "@/components/watch/Sidebar";
 import VideoPlayer from "./shortVideoPlayer";
+import ShortsSkeleton from './ShortSkeleton';
 import VideoActions from "./VideoActions";
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import CommentsSection from "./CommentsSection";
@@ -62,6 +63,37 @@ const ShortVideoPage = () => {
   // Refs for the scroll container and current video element.
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Add keyboard navigation handler
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "ArrowUp") {
+        handleScrollUp();
+      } else if (event.key === "ArrowDown") {
+        handleScrollDown();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [currentVideo, nextVideo, videoHistory]); // Add dependencies
+
+  useEffect(() => {
+    const handleScroll = (event: WheelEvent) => {
+      if (event.deltaY > 0) {
+        handleScrollDown();
+      } else if (event.deltaY < 0) {
+        handleScrollUp();
+      }
+    };
+
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener("wheel", handleScroll);
+      return () => container.removeEventListener("wheel", handleScroll);
+    }
+  }, [currentVideo, nextVideo, videoHistory]); // Add dependencies
+
 
   // On mount, read the saved volume cookie.
   useEffect(() => {
@@ -227,9 +259,10 @@ const ShortVideoPage = () => {
   };
 
   if (loading || !currentVideo) {
-    return <div>Loading...</div>;
+    return <ShortsSkeleton />;
   }
 
+    
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 relative">
       <Sidebar isOpen={false} onClose={() => {}} />
@@ -260,25 +293,25 @@ const ShortVideoPage = () => {
     />
   </div>
   {/* Video Actions: always absolutely positioned */}
-  <div className="absolute bottom-4 right-4">
-    <VideoActions onToggleComments={toggleComments} />
-    {showComments && (
-
+  <div className="absolute 
+  bottom-1/3 transform translate-y-1/3 // Moved down from center on mobile
+  right-0 
+  sm:bottom-auto sm:right-[px] sm:top-[60%] sm:-translate-y-1/2 // Moved down on larger screens
+  p-5 
+  rounded-l-lg 
+  backdrop-blur-sm 
+  transition-all duration-300
+  z-10">
+  <VideoActions onToggleComments={toggleComments} />
+  {showComments && (
     <div className="mt-4">
-
       <CommentsSection
-
         comments={currentVideo.comments}
-
         commentsEnabled={currentVideo.commentsEnabled}
-
       />
-
     </div>
-
-    )}
-
-      </div>  
+  )}
+</div> 
     </div>
 
 
@@ -299,29 +332,33 @@ const ShortVideoPage = () => {
                   song={nextVideo.song}
                 />
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  Loading next video...
-                </div>
+                // <div className="flex items-center justify-center h-full text-gray-500">
+                //   Loading next video...
+                // </div>
+                <ShortsSkeleton />
               )}
             </div>
           </div>
         </div>
 
         {/* Navigation arrows */}
-        <div className="absolute right-4 top-1/2 transform -translate-y-1/2 flex flex-col items-center space-y-4">
-          <button
-            onClick={handleScrollUp}
-            className="bg-black bg-opacity-50 p-2 rounded"
-          >
-            <FaArrowUp className="w-6 h-6 text-white" />
-          </button>
-          <button
-            onClick={handleScrollDown}
-            className="bg-black bg-opacity-50 p-2 rounded"
-          >
-            <FaArrowDown className="w-6 h-6 text-white" />
-          </button>
-        </div>
+      {/* Updated Navigation arrows - hidden on small screens */}
+      <div className="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 flex-col items-center space-y-4">
+        <button
+          onClick={handleScrollUp}
+          className="bg-black/50 hover:bg-black/70 p-2 rounded transition-colors duration-200"
+          aria-label="Previous video"
+        >
+          <FaArrowUp className="w-6 h-6 text-white" />
+        </button>
+        <button
+          onClick={handleScrollDown}
+          className="bg-black/50 hover:bg-black/70 p-2 rounded transition-colors duration-200"
+          aria-label="Next video"
+        >
+          <FaArrowDown className="w-6 h-6 text-white" />
+        </button>
+      </div>
       </div>
     </div>
   );
