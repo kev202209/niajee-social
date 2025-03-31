@@ -144,7 +144,15 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
       onMouseLeave={() => setHover(false)}
     >
       <div className="relative w-40 h-24 flex-shrink-0">
-        <img src={video.thumbnail} alt={video.title} className="object-cover w-full h-full rounded" />
+        {/* <img src={video.thumbnail} alt={video.title} className="object-cover w-full h-full rounded" /> */}
+        <video
+          // ref={videoRef}
+          src={video.videoSrc}
+          // muted={isMuted}
+          loop
+          playsInline
+          className="object-cover w-full h-full rounded"
+        />
         {hover && (
           <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black bg-opacity-50">
             <button className="text-white">
@@ -160,7 +168,7 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
         <h3 className="font-semibold text-sm line-clamp-2">{video.title}</h3>
         <p className="text-xs text-gray-600 dark:text-gray-400">{video.channelName}</p>
         <p className="text-xs text-gray-600 dark:text-gray-400">
-          {video.views} views · {video.age}
+          {video.views} · {video.uploadDate}
         </p>
       </div>
     </div>
