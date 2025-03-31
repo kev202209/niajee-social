@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   FiThumbsUp,
   FiThumbsDown,
@@ -40,11 +40,14 @@ export default function VideoPlayer({ video }: { video: Video }) {
   const [isMiniplayer, setIsMiniplayer] = useState(false);
   const [isCinemaMode, setIsCinemaMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [mouseIdle, setMouseIdle] = useState(false);
 
   // Refs for video and container elements and sleep timer
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const mouseIdleTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update volume on video element when volume or mute state changes
   useEffect(() => {
@@ -52,6 +55,20 @@ export default function VideoPlayer({ video }: { video: Video }) {
       videoRef.current.volume = isMuted ? 0 : volume;
     }
   }, [volume, isMuted]);
+
+  // Read volume cookie on mount
+  useEffect(() => {
+    const cookieStr = document.cookie.split("; ").find(row => row.startsWith("volume="));
+    if (cookieStr) {
+      const savedVolume = parseFloat(cookieStr.split("=")[1]);
+      if (!isNaN(savedVolume)) {
+        setVolume(savedVolume);
+        if (videoRef.current) {
+          videoRef.current.volume = savedVolume;
+        }
+      }
+    }
+  }, []);
 
   // Update current time and duration from video element
   useEffect(() => {
@@ -77,22 +94,85 @@ export default function VideoPlayer({ video }: { video: Video }) {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
+    // Play/Pause toggle and overlay animation
+    const togglePlay = useCallback(() => {
+      const videoEl = videoRef.current;
+      if (!videoEl) return;
+      
+      if (isPlaying) {
+        videoEl.pause();
+        setIsPlaying(false);
+        setPlayPauseAnim("pause");
+      } else {
+        videoEl.play();
+        setIsPlaying(true);
+        setPlayPauseAnim("play");
+      }
+      setTimeout(() => setPlayPauseAnim(null), 1000);
+    }, [isPlaying]);
 
-  // Play/Pause toggle and overlay animation
-  const togglePlay = () => {
-    const videoEl = videoRef.current;
-    if (!videoEl) return;
-    if (isPlaying) {
-      videoEl.pause();
-      setIsPlaying(false);
-      setPlayPauseAnim("pause");
-    } else {
-      videoEl.play();
-      setIsPlaying(true);
-      setPlayPauseAnim("play");
+  // Handle space key for play/pause
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        const activeElement = document.activeElement;
+        const isInput = activeElement instanceof HTMLInputElement || 
+                       activeElement instanceof HTMLTextAreaElement;
+        
+        // Only handle space if we're not in an input field
+        if (!isInput) {
+          e.preventDefault();
+          togglePlay();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, [togglePlay]);
+
+  // Handle mouse movement for controls visibility
+  useEffect(() => {
+    const handleMouseMove = () => {
+      setControlsVisible(true);
+      setMouseIdle(false);
+      
+      if (mouseIdleTimerRef.current) {
+        clearTimeout(mouseIdleTimerRef.current);
+      }
+      
+      if (isPlaying) {
+        mouseIdleTimerRef.current = setTimeout(() => {
+          setMouseIdle(true);
+          setControlsVisible(false);
+        }, 3000);
+      }
+    };
+
+    const container = videoContainerRef.current;
+    if (container) {
+      container.addEventListener('mousemove', handleMouseMove);
+      container.addEventListener('mouseleave', () => {
+        if (isPlaying) {
+          setControlsVisible(false);
+        }
+      });
+      container.addEventListener('mouseenter', () => {
+        setControlsVisible(true);
+      });
     }
-    setTimeout(() => setPlayPauseAnim(null), 1000);
-  };
+
+    return () => {
+      if (container) {
+        container.removeEventListener('mousemove', handleMouseMove);
+      }
+      if (mouseIdleTimerRef.current) {
+        clearTimeout(mouseIdleTimerRef.current);
+      }
+    };
+  }, [isPlaying]);
+
+
 
   // Rewind and forward 5 seconds
   const handleRewind = () => {
@@ -116,9 +196,15 @@ export default function VideoPlayer({ video }: { video: Video }) {
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
+    if (videoRef.current) {
+      videoRef.current.volume = newVolume;
+    }
     if (newVolume > 0 && isMuted) {
       setIsMuted(false);
     }
+    // Save volume to cookie (expires in 1 year)
+    const maxAge = 60 * 60 * 24 * 365;
+    document.cookie = `volume=${newVolume}; path=/; max-age=${maxAge}`;
   };
 
   // Format time (in seconds) to "M:SS"
@@ -228,7 +314,12 @@ export default function VideoPlayer({ video }: { video: Video }) {
           </div>
         )}
         {/* Progress Bar */}
-        <div className="absolute bottom-12 left-0 right-0 px-2">
+        <div className={`
+          absolute bottom-12 left-0 right-0 px-2
+          transition-opacity duration-300
+          ${controlsVisible ? 'opacity-100' : 'opacity-0'}
+          ${mouseIdle ? 'pointer-events-none' : 'pointer-events-auto'}
+        `}>
           <div onClick={handleProgressClick} className="w-full h-1 bg-gray-300 cursor-pointer">
             <div
               className="h-full bg-blue-900 relative"
@@ -239,7 +330,16 @@ export default function VideoPlayer({ video }: { video: Video }) {
           </div>
         </div>
         {/* Custom Controls Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent to-transparent p-2 flex items-center text-white">
+        <div 
+          className={`
+            absolute bottom-0 left-0 right-0 
+            bg-gradient-to-t from-black via-transparent to-transparent 
+            p-2 flex items-center text-white
+            transition-opacity duration-300
+            ${controlsVisible ? 'opacity-100' : 'opacity-0'}
+            ${mouseIdle ? 'pointer-events-none' : 'pointer-events-auto'}
+          `}
+        >
           {/* Left group: Rewind, Play/Pause, Forward */}
           <div className="flex items-center space-x-2">
             <button onClick={handleRewind} title="Rewind 5 seconds" className="hover:text-gray-300">
@@ -334,13 +434,15 @@ export default function VideoPlayer({ video }: { video: Video }) {
                   </div>
                   <div className="mb-2">
                     <span>Playback Speed</span>
-                    <select onChange={handlePlaybackSpeedChange} className="ml-2 bg-gray-700 px-1 py-0.5 rounded text-xs">
+                    <select 
+                      onChange={handlePlaybackSpeedChange} 
+                      defaultValue="1" 
+                      className="ml-2 bg-gray-700 px-1 py-0.5 rounded text-xs"
+                    >
                       <option value="0.25">0.25</option>
                       <option value="0.5">0.5</option>
                       <option value="0.75">0.75</option>
-                      <option value="1" selected>
-                        normal
-                      </option>
+                      <option value="1">normal</option>
                       <option value="1.5">1.5</option>
                       <option value="2">2</option>
                     </select>
