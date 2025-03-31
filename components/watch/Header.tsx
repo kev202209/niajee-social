@@ -1,5 +1,5 @@
 "use client";
-import { FC, useRef, useState } from "react";
+import { FC, useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import DarkModeToggle from "../DarkModeToggle";
@@ -17,14 +17,47 @@ import Sidebar from "./Sidebar"; // Adjust the import path if needed
 const Header: FC = () => {
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
-  useOutsideClick(profileMenuRef, () => setShowProfileMenu(false));
+  const headerRef = useRef<HTMLElement>(null);
+
+  const handleOutsideClick = useCallback((e: MouseEvent) => {
+    // Check if click is outside both the profile menu and header
+    if (!headerRef.current?.contains(e.target as Node)) {
+      setShowProfileMenu(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [handleOutsideClick]);
 
   // State to control sidebar visibility
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
-  const toggleSidebar = () => {
+  const toggleSidebar = useCallback((e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
     setIsSidebarOpen((prev) => !prev);
-  };
+  }, []);
+
+  const handleHeaderClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (isSidebarOpen) {
+        setIsSidebarOpen(false);
+      }
+    },
+    [isSidebarOpen]
+  );
+
+  const [tagline, setTagline] = useState<string>("Loading...");
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/content/taglines")
+      .then((res) => res.json())
+      .then((data) => setTagline(data.tagline))
+      .catch(() => setTagline("Craft your digital legacy."));
+  }, []);
 
   return (
     <>
@@ -32,17 +65,21 @@ const Header: FC = () => {
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black opacity-50 z-40"
-          onClick={toggleSidebar}
+          onClick={() => setIsSidebarOpen(false)}
         ></div>
       )}
 
-      <header className="w-full fixed top-0 z-[60] bg-white dark:bg-gray-900/80 backdrop-blur-md shadow-md">
+      <header
+        ref={headerRef}
+        onClick={handleHeaderClick}
+        className="w-full fixed top-0 z-[60] bg-white dark:bg-gray-900/80 backdrop-blur-md shadow-md"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center h-16 justify-between">
           {/* Hamburger icon and Logo */}
           <div className="flex items-center space-x-6">
             <button
               onClick={toggleSidebar}
-              className="text-gray-900 dark:text-gray-100 focus:outline-none"
+              className="text-gray-900 dark:text-gray-100 focus:outline-none z-50"
             >
               <FiMenu className="w-3 h-3" />
             </button>
@@ -54,6 +91,11 @@ const Header: FC = () => {
               MOSAIC
             </Link>
           </div>
+
+          {/* Center: Tagline */}
+          {/* <div className="text-gray-900 dark:text-gray-100 text-sm italic">
+            {tagline}
+          </div> */}
 
           {/* Center: Search Bar */}
           <div className="flex-1 mx-4 flex justify-center">
@@ -72,7 +114,10 @@ const Header: FC = () => {
             <DarkModeToggle />
             <div className="relative" ref={profileMenuRef}>
               <button
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowProfileMenu(!showProfileMenu);
+                }}
                 className="focus:outline-none"
               >
                 <Image
@@ -121,7 +166,7 @@ const Header: FC = () => {
       </header>
 
       {/* Render the Sidebar */}
-      <Sidebar isOpen={isSidebarOpen} onClose={toggleSidebar} />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </>
   );
 };
