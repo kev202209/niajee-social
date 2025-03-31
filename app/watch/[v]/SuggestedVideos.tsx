@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { FiChevronLeft, FiChevronRight, FiClock, FiPlusCircle } from "react-icons/fi";
 import { SuggestedVideo } from "../../../types";
+import Link from "next/link";
 
 export default function SuggestedVideos({ suggestedVideos }: { suggestedVideos: SuggestedVideo[] }) {
   const [tags] = useState([
@@ -144,6 +145,7 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
       onMouseLeave={() => setHover(false)}
     >
       <div className="relative w-40 h-24 flex-shrink-0">
+        <Link href={`/watch/${video.id}`}>
         {/* <img src={video.thumbnail} alt={video.title} className="object-cover w-full h-full rounded" /> */}
         <video
           // ref={videoRef}
@@ -163,6 +165,7 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
             </button>
           </div>
         )}
+        </Link>
       </div>
       <div className="flex flex-col">
         <h3 className="font-semibold text-sm line-clamp-2">{video.title}</h3>
