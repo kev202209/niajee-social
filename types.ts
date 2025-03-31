@@ -42,11 +42,14 @@ export interface mVideo {
 
 export interface SuggestedVideo {
   id: string;
-  thumbnail: string;
+  videoSrc: string;
   title: string;
   channelName: string;
+  channelAvatar: string;
+  likes: number;
   views: string;
-  age: string;
+  uploadDate: string;
+  description: string;
 }
 
 export interface Comment {
