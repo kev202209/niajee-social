@@ -225,7 +225,7 @@ export default function Landing() {
             Experience Social Media Like Never Before.
           </h1>
           <p className="my-6 max-w-xl text-base leading-relaxed md:text-lg">
-            Mosaic centralizes long videos, shorts, and community-driven content
+            Mosaic centralizes video streaming, shorts, and community-driven content
             into one seamless experience.
           </p>
           <Link href="/auth/register">
