@@ -49,7 +49,7 @@ export default function RegisterPage() {
   const handleEmailCheck = async () => {
     setIsEmailLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/check-email', {
+      const res = await fetch('http://localhost:5000/auth/check-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email }),
@@ -106,7 +106,7 @@ export default function RegisterPage() {
         form.append('profilePicture', formData.profilePicture);
       }
 
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch('http://localhost:5000/auth/register', {
         method: 'POST',
         body: form,
       });
@@ -118,9 +118,11 @@ export default function RegisterPage() {
         toast.success(data.message);
       } else {
         setError(data.message);
+        console.log('this is the error in register', data.message)
         toast.error(data.message);
       }
     } catch (err) {
+      console.log('this is the error in register', err)
       setError('Connection error.Please check your internet connection or try again later.');
       toast.error('Connection error.Please check your internet connection or try again later.');
       console.error(err);

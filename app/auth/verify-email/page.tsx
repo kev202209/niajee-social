@@ -19,7 +19,7 @@ export default function VerifyEmailPage() {
     const verifyEmail = async () => {
       try {
         // Call your backend verification endpoint.
-        const res = await fetch(`http://localhost:5000/api/auth/verify-email?token=${token}`);
+        const res = await fetch(`http://localhost:5000/auth/verify-email?token=${token}`);
         const data = await res.json();
         if (res.ok) {
           setMessage('Email verified successfully! You can now log in.');
@@ -37,9 +37,11 @@ export default function VerifyEmailPage() {
   }, [token, router]);
 
   return (
-    <div className="max-w-md mx-auto bg-white dark:bg-gray-800 p-6 rounded shadow">
-      {message && <p className="text-green-500">{message}</p>}
-      {error && <p className="text-red-500">{error}</p>}
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 p-10 rounded shadow">
+        {message && <p className="text-green-500">{message}</p>}
+        {error && <p className="text-red-500">{error}</p>}
+      </div>
     </div>
   );
 }
