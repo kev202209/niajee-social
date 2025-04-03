@@ -7,6 +7,7 @@ import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DeviceDetails {
   device: string;
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
 
   const handleLogin = async () => {
     const deviceDetails: DeviceDetails = {
@@ -35,8 +37,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage("Login successful!");
-        setError("");
+        login(data.token); // Use the login function from context
         toast.success("Login successful!");
         window.location.href = "/";
       } else {
