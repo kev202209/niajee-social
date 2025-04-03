@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // List of auth pages that should redirect to home if user is logged in
-const authPages = ['/auth/login', '/auth/register', '/auth/forget-password'];
+const authPages = ['/auth/login', '/auth/register', '/auth/forget-password', '/auth/verify-email', '/auth/reset-password',];
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
