@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+// List of auth pages that should redirect to home if user is logged in
+const authPages = ['/auth/login', '/auth/register', '/auth/forget-password'];
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
-  const isAuthPage = request.nextUrl.pathname.startsWith('/auth');
+  const isAuthPage = authPages.some(page => 
+    request.nextUrl.pathname.startsWith(page)
+  );
 
   // If trying to access auth pages while logged in, redirect to home
   if (isAuthPage && token) {
@@ -11,7 +16,7 @@ export function middleware(request: NextRequest) {
   }
 
   // If trying to access protected pages while logged out, redirect to login
-  if (!isAuthPage && !token) {
+  if (!isAuthPage && !token && !request.nextUrl.pathname.startsWith('/auth')) {
     return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
@@ -23,7 +28,6 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except:
-     * - auth pages (but we still want to handle redirects)
      * - api routes
      * - static files (images, icons, etc)
      */
