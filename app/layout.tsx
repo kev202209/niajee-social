@@ -2,6 +2,7 @@
 import './globals.css'
 import Header from '@/components/Header'
 import { Providers } from '@/components/Providers'
+import { AuthProvider } from '@/contexts/AuthContext'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -23,10 +24,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-gray-100 dark:bg-gray-900">
-        <Providers>
-          <Header />
-          <main className="">{children}</main>
-        </Providers>
+        <AuthProvider>
+          <Providers>
+            <Header />
+            <main className="">{children}</main>
+          </Providers>
+        </AuthProvider>
       </body>
     </html>
   )
