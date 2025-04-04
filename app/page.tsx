@@ -1,37 +1,21 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import Home from '@/components/Home';
 import Landing from '@/components/Landing';
 
 export default function HomePage() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
-  const router = useRouter();
+  const { user, isLoading } = useAuth();
 
-  useEffect(() => {
-    const token = sessionStorage.getItem('sggtx');
-    if (token) {
-      setIsLoggedIn(true);
-    } else {
-      setIsLoggedIn(false);
-    }
-  }, []);
-
-  if (isLoggedIn === null) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  if (!isLoggedIn) {
-    // Show a different page or message for non-logged-in users.
-    return (
-      <Landing />
-    );
+  // Show landing page for non-logged in users
+  if (!user) {
+    return <Landing />;
   }
 
-  // Render the home page for logged-in users.
-  return (
-    <Home />
-
-  );
+  // Show home page for logged in users
+  return <Home />;
 }
