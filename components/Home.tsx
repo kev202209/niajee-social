@@ -11,7 +11,6 @@ const HomePage: FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Header />
-      <Sidebar isOpen={false} onClose={() => {}} />
       {/* Hide TweetFeed on screens smaller than lg breakpoint */}
       <div className="hidden lg:block">
         <TweetFeed />
