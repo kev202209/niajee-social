@@ -343,7 +343,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
           {/* Left group: Rewind, Play/Pause, Forward */}
           <div className="flex items-center space-x-2">
             <button onClick={handleRewind} title="Rewind 5 seconds" className="hover:text-gray-300">
-              <FiRewind className="w-5 h-5" />
+              <FiRewind className="w-4 h-4" />
             </button>
             <button
               onClick={togglePlay}
@@ -351,13 +351,13 @@ export default function VideoPlayer({ video }: { video: Video }) {
               className="hover:text-gray-300"
             >
               {isPlaying ? (
-                <FiPause className="w-6 h-6" />
+                <FiPause className="w-5 h-5" />
               ) : (
-                <FiPlay className="w-6 h-6" />
+                <FiPlay className="w-5 h-5" />
               )}
             </button>
             <button onClick={handleForward} title="Forward 5 seconds" className="hover:text-gray-300">
-              <FiFastForward className="w-5 h-5" />
+              <FiFastForward className="w-4 h-4" />
             </button>
           </div>
           {/* Middle group: Volume control and time display */}
@@ -368,9 +368,9 @@ export default function VideoPlayer({ video }: { video: Video }) {
           >
             <button onClick={toggleMute} title="Volume" className="hover:text-gray-300">
               {isMuted ? (
-                <FiVolumeX className="w-5 h-5" />
+                <FiVolumeX className="w-4 h-4" />
               ) : (
-                <FiVolume2 className="w-5 h-5" />
+                <FiVolume2 className="w-4 h-4" />
               )}
             </button>
             {showVolumeSlider && (
@@ -391,15 +391,15 @@ export default function VideoPlayer({ video }: { video: Video }) {
           {/* Right group: Autoplay, Subtitles, Settings, Miniplayer, Cinema Mode, Fullscreen */}
           <div className="flex items-center space-x-2 ml-auto">
             <button onClick={toggleAutoplay} title="Autoplay" className="hover:text-gray-300">
-              <FiToggleRight className={`w-5 h-5 ${isAutoplay ? "text-blue-400" : "text-gray-300"}`} />
+              <FiToggleRight className={`w-4 h-4 ${isAutoplay ? "text-blue-400" : "text-gray-300"}`} />
             </button>
             <button title="Subtitles" className="hover:text-gray-300">
-              <FiMessageSquare className="w-5 h-5" />
+              <FiMessageSquare className="w-4 h-4" />
             </button>
             {/* Settings Popup */}
-            <div className="relative">
+            <div className="relative flex items-center">
               <button onClick={() => setShowSettings(!showSettings)} title="Settings" className="hover:text-gray-300">
-                <FiSettings className="w-5 h-5" />
+                <FiSettings className="w-4 h-4" />
               </button>
               {showSettings && (
                 <div className="absolute bottom-10 right-0 bg-gray-800 p-4 rounded shadow-lg text-sm w-56">
@@ -461,16 +461,16 @@ export default function VideoPlayer({ video }: { video: Video }) {
               )}
             </div>
             <button onClick={toggleMiniplayer} title="Miniplayer" className="hover:text-gray-300">
-              <FiMinimize className="w-5 h-5" />
+              <FiMinimize className="w-4 h-4" />
             </button>
             <button onClick={toggleCinemaMode} title="Cinema Mode" className="hover:text-gray-300">
-              <FiMonitor className="w-5 h-5" />
+              <FiMonitor className="w-4 h-4" />
             </button>
             <button onClick={toggleFullscreen} title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"} className="hover:text-gray-300">
               {isFullscreen ? (
-                <FiMinimize className="w-5 h-5" />
+                <FiMinimize className="w-4 h-4" />
               ) : (
-                <FiMaximize className="w-5 h-5" />
+                <FiMaximize className="w-4 h-4" />
               )}
             </button>
           </div>
