@@ -19,6 +19,7 @@ import {
   FiMinimize,
   FiMonitor,
   FiMaximize,
+  FiAirplay
 } from "react-icons/fi";
 import { mVideo as Video } from "../../../types";
 
@@ -461,7 +462,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
               )}
             </div>
             <button onClick={toggleMiniplayer} title="Miniplayer" className="hover:text-gray-300">
-              <FiMinimize className="w-4 h-4" />
+              <FiAirplay className="w-4 h-4" />
             </button>
             <button onClick={toggleCinemaMode} title="Cinema Mode" className="hover:text-gray-300">
               <FiMonitor className="w-4 h-4" />
