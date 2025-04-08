@@ -222,12 +222,24 @@ export default function VideoPlayer({ video }: { video: Video }) {
             setTimeout(() => setSeekIndicator(null), 1000);
           }
           break;
+        case 'KeyM':
+          e.preventDefault();
+          setIsMuted(prev => {
+            const newMuted = !prev;
+            setVolumeIndicator({
+              type: newMuted ? 'down' : 'up',
+              value: newMuted ? 0 : Math.round(volume * 100)
+            });
+            setTimeout(() => setVolumeIndicator({type: null, value: 0}), 1000);
+            return newMuted;
+          });
+          break;
       }
     };
 
     document.addEventListener('keydown', handleKeyboard);
     return () => document.removeEventListener('keydown', handleKeyboard);
-  }, [duration, isMuted]);
+  }, [duration, isMuted, volume]);
 
   // Rewind and forward 5 seconds
   const handleRewind = () => {
