@@ -43,6 +43,10 @@ export default function VideoPlayer({ video }: { video: Video }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [mouseIdle, setMouseIdle] = useState(false);
+  const [volumeIndicator, setVolumeIndicator] = useState<{type: 'up' | 'down' | null, value: number}>(
+    {type: null, value: 0}
+  );
+  const [seekIndicator, setSeekIndicator] = useState<'forward' | 'rewind' | null>(null);
 
   // Refs for video and container elements and sleep timer
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -95,22 +99,23 @@ export default function VideoPlayer({ video }: { video: Video }) {
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
-    // Play/Pause toggle and overlay animation
-    const togglePlay = useCallback(() => {
-      const videoEl = videoRef.current;
-      if (!videoEl) return;
-      
-      if (isPlaying) {
-        videoEl.pause();
-        setIsPlaying(false);
-        setPlayPauseAnim("pause");
-      } else {
-        videoEl.play();
-        setIsPlaying(true);
-        setPlayPauseAnim("play");
-      }
-      setTimeout(() => setPlayPauseAnim(null), 1000);
-    }, [isPlaying]);
+
+  // Play/Pause toggle and overlay animation
+  const togglePlay = useCallback(() => {
+    const videoEl = videoRef.current;
+    if (!videoEl) return;
+    
+    if (isPlaying) {
+      videoEl.pause();
+      setIsPlaying(false);
+      setPlayPauseAnim("pause");
+    } else {
+      videoEl.play();
+      setIsPlaying(true);
+      setPlayPauseAnim("play");
+    }
+    setTimeout(() => setPlayPauseAnim(null), 1000);
+  }, [isPlaying]);
 
   // Handle space key for play/pause
   useEffect(() => {
@@ -173,18 +178,71 @@ export default function VideoPlayer({ video }: { video: Video }) {
     };
   }, [isPlaying]);
 
+  // Add keyboard controls for volume and seeking
+  useEffect(() => {
+    const handleKeyboard = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement;
+      const isInput = activeElement instanceof HTMLInputElement || 
+                     activeElement instanceof HTMLTextAreaElement;
+      if (isInput) return;
 
+      switch(e.code) {
+        case 'ArrowUp':
+          e.preventDefault();
+          setVolume(prev => {
+            const newVolume = Math.min(1, prev + 0.03);
+            setVolumeIndicator({type: 'up', value: Math.round(newVolume * 100)});
+            setTimeout(() => setVolumeIndicator({type: null, value: 0}), 1000);
+            return newVolume;
+          });
+          if (isMuted) setIsMuted(false);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          setVolume(prev => {
+            const newVolume = Math.max(0, prev - 0.03);
+            setVolumeIndicator({type: 'down', value: Math.round(newVolume * 100)});
+            setTimeout(() => setVolumeIndicator({type: null, value: 0}), 1000);
+            return newVolume;
+          });
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (videoRef.current) {
+            videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 5, 0);
+            setSeekIndicator('rewind');
+            setTimeout(() => setSeekIndicator(null), 1000);
+          }
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (videoRef.current) {
+            videoRef.current.currentTime = Math.min(videoRef.current.currentTime + 5, duration);
+            setSeekIndicator('forward');
+            setTimeout(() => setSeekIndicator(null), 1000);
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyboard);
+    return () => document.removeEventListener('keydown', handleKeyboard);
+  }, [duration, isMuted]);
 
   // Rewind and forward 5 seconds
   const handleRewind = () => {
     if (videoRef.current) {
       videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 5, 0);
+      setSeekIndicator('rewind');
+      setTimeout(() => setSeekIndicator(null), 1000);
     }
   };
 
   const handleForward = () => {
     if (videoRef.current) {
       videoRef.current.currentTime = Math.min(videoRef.current.currentTime + 5, duration);
+      setSeekIndicator('forward');
+      setTimeout(() => setSeekIndicator(null), 1000);
     }
   };
 
@@ -311,6 +369,36 @@ export default function VideoPlayer({ video }: { video: Video }) {
               <FiPlay className="text-white text-6xl animate-fade" />
             ) : (
               <FiPause className="text-white text-6xl animate-fade" />
+            )}
+          </div>
+        )}
+        {/* Volume and Seek Indicators */}
+        {(volumeIndicator.type || seekIndicator) && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            {volumeIndicator.type && (
+              <div className="flex flex-col items-center bg-black/60 px-6 py-4 rounded-lg">
+                {volumeIndicator.type === 'up' ? (
+                  <FiVolume2 className="text-white text-4xl mb-2" />
+                ) : (
+                  <FiVolumeX className="text-white text-4xl mb-2" />
+                )}
+                <span className="text-white text-lg">{volumeIndicator.value}%</span>
+              </div>
+            )}
+            {seekIndicator && (
+              <div className="bg-black/60 px-6 py-4 rounded-lg">
+                {seekIndicator === 'forward' ? (
+                  <div className="flex items-center">
+                    <FiFastForward className="text-white text-4xl" />
+                    <span className="text-white text-lg ml-2">5 seconds</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <FiRewind className="text-white text-4xl" />
+                    <span className="text-white text-lg ml-2">5 seconds</span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
