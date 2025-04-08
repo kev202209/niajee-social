@@ -53,6 +53,8 @@ export default function VideoPlayer({ video }: { video: Video }) {
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mouseIdleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Update volume on video element when volume or mute state changes
   useEffect(() => {
@@ -211,7 +213,10 @@ export default function VideoPlayer({ video }: { video: Video }) {
           if (videoRef.current) {
             videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 5, 0);
             setSeekIndicator('rewind');
-            setTimeout(() => setSeekIndicator(null), 1000);
+            if (seekTimeoutRef.current) {
+              clearTimeout(seekTimeoutRef.current);
+            }
+            seekTimeoutRef.current = setTimeout(() => setSeekIndicator(null), 1000);
           }
           break;
         case 'ArrowRight':
@@ -219,18 +224,26 @@ export default function VideoPlayer({ video }: { video: Video }) {
           if (videoRef.current) {
             videoRef.current.currentTime = Math.min(videoRef.current.currentTime + 5, duration);
             setSeekIndicator('forward');
-            setTimeout(() => setSeekIndicator(null), 1000);
+            if (seekTimeoutRef.current) {
+              clearTimeout(seekTimeoutRef.current);
+            }
+            seekTimeoutRef.current = setTimeout(() => setSeekIndicator(null), 1000);
           }
           break;
         case 'KeyM':
           e.preventDefault();
           setIsMuted(prev => {
             const newMuted = !prev;
+            if (volumeTimeoutRef.current) {
+              clearTimeout(volumeTimeoutRef.current);
+            }
             setVolumeIndicator({
               type: newMuted ? 'down' : 'up',
               value: newMuted ? 0 : Math.round(volume * 100)
             });
-            setTimeout(() => setVolumeIndicator({type: null, value: 0}), 1000);
+            volumeTimeoutRef.current = setTimeout(() => {
+              setVolumeIndicator({type: null, value: 0});
+            }, 1000);
             return newMuted;
           });
           break;
@@ -246,7 +259,10 @@ export default function VideoPlayer({ video }: { video: Video }) {
     if (videoRef.current) {
       videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 5, 0);
       setSeekIndicator('rewind');
-      setTimeout(() => setSeekIndicator(null), 1000);
+      if (seekTimeoutRef.current) {
+        clearTimeout(seekTimeoutRef.current);
+      }
+      seekTimeoutRef.current = setTimeout(() => setSeekIndicator(null), 1000);
     }
   };
 
@@ -254,7 +270,10 @@ export default function VideoPlayer({ video }: { video: Video }) {
     if (videoRef.current) {
       videoRef.current.currentTime = Math.min(videoRef.current.currentTime + 5, duration);
       setSeekIndicator('forward');
-      setTimeout(() => setSeekIndicator(null), 1000);
+      if (seekTimeoutRef.current) {
+        clearTimeout(seekTimeoutRef.current);
+      }
+      seekTimeoutRef.current = setTimeout(() => setSeekIndicator(null), 1000);
     }
   };
 
@@ -386,7 +405,7 @@ export default function VideoPlayer({ video }: { video: Video }) {
         )}
         {/* Volume and Seek Indicators */}
         {(volumeIndicator.type || seekIndicator) && (
-          <div className="absolute inset-0 flex items-center">
+          <div className="absolute inset-0 flex items-center pointer-events-none">
             {/* Left side rewind indicator */}
             {seekIndicator === 'rewind' && (
               <div className="ml-8 bg-black/60 px-6 py-4 rounded-lg">
