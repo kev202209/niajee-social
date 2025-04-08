@@ -374,30 +374,38 @@ export default function VideoPlayer({ video }: { video: Video }) {
         )}
         {/* Volume and Seek Indicators */}
         {(volumeIndicator.type || seekIndicator) && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            {volumeIndicator.type && (
-              <div className="flex flex-col items-center bg-black/60 px-6 py-4 rounded-lg">
-                {volumeIndicator.type === 'up' ? (
-                  <FiVolume2 className="text-white text-4xl mb-2" />
-                ) : (
-                  <FiVolumeX className="text-white text-4xl mb-2" />
-                )}
-                <span className="text-white text-lg">{volumeIndicator.value}%</span>
+          <div className="absolute inset-0 flex items-center">
+            {/* Left side rewind indicator */}
+            {seekIndicator === 'rewind' && (
+              <div className="ml-8 bg-black/60 px-6 py-4 rounded-lg">
+                <div className="flex items-center">
+                  <FiRewind className="text-white text-4xl" />
+                  <span className="text-white text-lg ml-2">5 seconds</span>
+                </div>
               </div>
             )}
-            {seekIndicator && (
-              <div className="bg-black/60 px-6 py-4 rounded-lg">
-                {seekIndicator === 'forward' ? (
-                  <div className="flex items-center">
-                    <FiFastForward className="text-white text-4xl" />
-                    <span className="text-white text-lg ml-2">5 seconds</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center">
-                    <FiRewind className="text-white text-4xl" />
-                    <span className="text-white text-lg ml-2">5 seconds</span>
-                  </div>
-                )}
+            
+            {/* Center volume indicator */}
+            {volumeIndicator.type && (
+              <div className="flex-1 flex justify-center">
+                <div className="flex flex-col items-center bg-black/60 px-6 py-4 rounded-lg">
+                  {volumeIndicator.type === 'up' ? (
+                    <FiVolume2 className="text-white text-4xl mb-2" />
+                  ) : (
+                    <FiVolumeX className="text-white text-4xl mb-2" />
+                  )}
+                  <span className="text-white text-lg">{volumeIndicator.value}%</span>
+                </div>
+              </div>
+            )}
+
+            {/* Right side forward indicator */}
+            {seekIndicator === 'forward' && (
+              <div className="mr-8 ml-auto bg-black/60 px-6 py-4 rounded-lg">
+                <div className="flex items-center">
+                  <FiFastForward className="text-white text-4xl" />
+                  <span className="text-white text-lg ml-2">5 seconds</span>
+                </div>
               </div>
             )}
           </div>
