@@ -12,7 +12,8 @@ import {
   FiPlus,
   FiMenu,
 } from "react-icons/fi";
-import Sidebar from "./sidebar"; // Adjust the import path if needed
+import Sidebar from "./sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header: FC = () => {
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
@@ -35,6 +36,14 @@ const Header: FC = () => {
       .catch(() => setTagline("Craft your digital legacy."));
   }, []);
 
+  // Get the current logged in user from AuthContext
+  const { user, logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    // Reload the page after logout
+  };
+
   return (
     <>
       {/* Dim overlay; clicking it will close the sidebar */}
@@ -55,7 +64,6 @@ const Header: FC = () => {
             >
               <FiMenu className="w-3 h-3" />
             </button>
-            {/* Ensure extra-bold styling works here */}
             <Link
               href="/"
               className="font-extrabold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient"
@@ -63,11 +71,6 @@ const Header: FC = () => {
               MOSAIC
             </Link>
           </div>
-
-          {/* Center: Tagline */}
-          {/* <div className="text-gray-900 dark:text-gray-100 text-sm italic">
-            {tagline}
-          </div> */}
 
           {/* Center: Search Bar */}
           <div className="flex-1 mx-4 flex justify-center">
@@ -101,28 +104,33 @@ const Header: FC = () => {
                 <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50">
                   <div className="mb-2">
                     <p className="font-bold text-gray-900 dark:text-gray-100">
-                      Username
+                      {user ? user.username : "Username"}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      user@example.com
+                      {user ? user.email : "user@example.com"}
                     </p>
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
                     <ul>
                       <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <FiPlus className="mr-2" /> <span>Create</span>
+                        <Link href="/create" className="flex items-center w-full">
+                          <FiPlus className="mr-2" /> <span>Create</span>
+                        </Link>
                       </li>
                       <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <FiSettings className="mr-2" /> <span>Settings</span>
-                      </li>
-                      {/* <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <DarkModeToggle />
-                        <span>Dark Mode</span>
-                      </li> */}
-                      <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <FiUser className="mr-2" /> <span>Profile</span>
+                        <Link href="/settings" className="flex items-center w-full">
+                          <FiSettings className="mr-2" /> <span>Settings</span>
+                        </Link>
                       </li>
                       <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
+                        <Link href="/profile" className="flex items-center w-full">
+                          <FiUser className="mr-2" /> <span>Profile</span>
+                        </Link>
+                      </li>
+                      <li
+                        className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer"
+                        onClick={handleLogout}
+                      >
                         <FiLogOut className="mr-2" /> <span>Logout</span>
                       </li>
                     </ul>
