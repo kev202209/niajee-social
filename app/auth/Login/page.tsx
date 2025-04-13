@@ -43,10 +43,17 @@ export default function LoginPage() {
     <div className="relative w-full overflow-hidden bg-gradient-to-br from-white to-gray-200 dark:from-black dark:to-gray-800">
       <BlobAnimation />
       <ToastContainer
-        toastClassName="!bg-blue-600 !text-white !rounded-md !shadow-md"
-        progressClassName="!bg-blue-300"
-        autoClose={10000}
-      />
+  toastClassName={() =>
+    "relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg"
+  }
+  // bodyClassName="text-base font-semibold"
+  closeButton={false}
+  autoClose={7000}
+  hideProgressBar={true}
+/>
+
+
+
 
       {/* Foreground Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">

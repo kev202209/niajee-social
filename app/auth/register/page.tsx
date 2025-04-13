@@ -2,18 +2,17 @@
 
 import React, { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import { FaGoogle } from "react-icons/fa";
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
+import { useAuth } from "@/contexts/AuthContext";
 import "react-toastify/dist/ReactToastify.css";
 
-interface DeviceDetails {
-  device: string;
-  location: string;
-}
-
 export default function RegisterPage() {
+  const router = useRouter();
+  const { register, checkEmailAvailability } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [step, setStep] = useState(1);
@@ -27,107 +26,77 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
   });
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
 
-  // Handle text input changes.
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handle file input change.
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     setFormData(prev => ({ ...prev, profilePicture: files[0] }));
   };
 
-  // Step 1: Check if the email is available.
   const handleEmailCheck = async () => {
     setIsEmailLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/auth/check-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: formData.email }),
-      });
-      let data;
-      try {
-        data = await res.json();
-      } catch (jsonErr) {
-        const text = await res.text();
-        console.error('Response not JSON:', text);
-        throw new Error(text);
-      }
-
-      if (res.ok) {
+      const isAvailable = await checkEmailAvailability(formData.email);
+      if (isAvailable) {
         setStep(2);
-        setError('');
-        toast.success("Email verified! Let's continue.");
+        toast.success("Email is available! Let's continue.");
       } else {
-        setError(data.message);
-        toast.error(data.message);
+        toast.error('Email is already registered');
       }
     } catch (err) {
-      setError('Connection error.Please check your internet connection or try again later.');
-      toast.error('Connection error.Please check your internet connection or try again later.');
+      toast.error('Failed to check email availability');
       console.error(err);
+    } finally {
+      setIsEmailLoading(false);
     }
-    setIsEmailLoading(false);
   };
 
-  // Final registration: validate and submit all data.
   const handleRegister = async () => {
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
       toast.error('Passwords do not match');
       return;
     }
 
     setIsRegisterLoading(true);
-    const deviceDetails: DeviceDetails = {
-      device: navigator.userAgent,
-      location: 'Unknown', // Replace if needed.
-    };
-
     try {
-      const form = new FormData();
-      form.append('firstName', formData.firstName);
-      form.append('lastName', formData.lastName);
-      form.append('email', formData.email);
-      form.append('birthday', formData.birthday);
-      form.append('username', formData.username);
-      form.append('password', formData.password);
-      form.append('deviceDetails', JSON.stringify(deviceDetails));
+      await register(
+        formData.email,
+        formData.password,
+        formData.username,
+        formData.firstName,
+        formData.birthday
+      );
+
+      // Handle profile picture upload if exists
       if (formData.profilePicture) {
-        form.append('profilePicture', formData.profilePicture);
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', formData.profilePicture);
+        uploadFormData.append('email', formData.email);
+
+        const uploadResponse = await fetch('http://localhost:5000/auth/profile-picture', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+
+        if (!uploadResponse.ok) {
+          console.error('Failed to upload profile picture');
+        }
       }
 
-      const res = await fetch('http://localhost:5000/auth/register', {
-        method: 'POST',
-        body: form,
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setStep(4);
-        setMessage(data.message);
-        setError('');
-        toast.success(data.message);
-      } else {
-        setError(data.message);
-        console.log('this is the error in register', data.message)
-        toast.error(data.message);
-      }
+      setStep(4);
+      toast.success("Registration successful! Please check your email for verification.");
     } catch (err) {
-      console.log('this is the error in register', err)
-      setError('Connection error.Please check your internet connection or try again later.');
-      toast.error('Connection error.Please check your internet connection or try again later.');
-      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setIsRegisterLoading(false);
     }
-    setIsRegisterLoading(false);
   };
 
   return (
@@ -138,11 +107,15 @@ export default function RegisterPage() {
       {/* Blob animation imported from component */}
       <BlobAnimation />
       <ToastContainer
-        toastClassName="!bg-blue-600 !text-white !rounded-md !shadow-md"
-        // bodyClassName="!text-white"
-        progressClassName="!bg-blue-300"
-        autoClose={3000}
+        toastClassName={() =>
+          "relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg"
+        }
+        // bodyClassName="text-base font-semibold"
+        closeButton={false}
+        autoClose={7000}
+        hideProgressBar={true}
       />
+
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
         <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#ffffff,theme(colors.slate.200)_50%,#ffffff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.300/.48)_80%,theme(colors.blue.500)_86%,theme(colors.blue.300)_90%,theme(colors.blue.500)_94%,theme(colors.slate.300/.48))_border-box] dark:[background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,theme(colors.indigo.500)_86%,theme(colors.indigo.300)_90%,theme(colors.indigo.500)_94%,theme(colors.slate.600/.48))_border-box]  rounded-2xl border border-1.5 border-transparent animate-border">
           
@@ -154,7 +127,6 @@ export default function RegisterPage() {
               <Link href="/auth/login" className="block text-blue-600 dark:text-white mt-2 pb-2">
                 Already have an account? <span className="font-bold">Login</span>
               </Link>
-              {/* {error && <p className="text-red-500 mb-2">{error}</p>} */}
               <div className="flex flex-row">
                 <input
                   type="text"
@@ -218,7 +190,6 @@ export default function RegisterPage() {
               <h1 className="text-2xl font-bold mb-4 text-white dark:text-blue-600">
                 Set up Profile
               </h1>
-              {/* {error && <p className="text-red-600 mb-2">{error}</p>} */}
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
                 Birthday
               </label>
@@ -273,7 +244,7 @@ export default function RegisterPage() {
                   Back
                 </button>
                 <button
-                  onClick={() => { setStep(3); setError(''); }}
+                  onClick={() => { setStep(3); }}
                   disabled={!formData.username}
                   className={`p-2 h-10 rounded text-white ${
                     !formData.username 
@@ -292,7 +263,6 @@ export default function RegisterPage() {
               <h1 className="text-2xl font-bold mb-4 text-blue-600 dark:text-white">
                 Set up Password
               </h1>
-              {/* {error && <p className="text-red-600 mb-2">{error}</p>} */}
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
                 Password
               </label>
@@ -342,7 +312,7 @@ export default function RegisterPage() {
           {step === 4 && (
             <div>
               <h1 className="text-2xl font-bold mb-4">Verify Your Email</h1>
-              <p>{message}</p>
+              <p>Registration successful! Please check your email for verification.</p>
             </div>
           )}
         </div>
