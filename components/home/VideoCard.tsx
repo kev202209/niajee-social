@@ -3,6 +3,7 @@ import { Video } from "../../types";
 import Image from "next/image";
 import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle } from "react-icons/fi";
 import Link from "next/link";
+import timeAgo from "../../app/utils/timeAgo";
 
 
 
@@ -161,7 +162,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
             {video.channelName}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {video.views} views • {video.age}
+            {video.views} • {timeAgo(video.age)}
           </p>
         </div>
       </div>
