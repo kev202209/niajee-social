@@ -1,6 +1,7 @@
 import { FC, useCallback, useEffect, useRef, useState } from "react";
 import VideoCard from "./VideoCard";
 import ShortsRow from "./ShortsRow";
+import MainContentSkeleton from "./MainContentSkeleton";
 import { Short, Video } from "../../types";
 
 const MainContent: FC = () => {
@@ -57,7 +58,9 @@ const MainContent: FC = () => {
     videoChunks.push(videos.slice(i, i + 8));
   }
 
-  return (
+  return loading && page === 1 ? (
+    <MainContentSkeleton />
+  ) : (
     <div className="pt-16 pb-8 px-4 flex flex-col gap-8">
       {videoChunks.map((chunk, index) => (
         <div key={index}>
