@@ -7,12 +7,22 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (identifier: string, password: string) => Promise<void>;
-  register: (email: string, password: string, username: string, firstName: string, birthday?: string) => Promise<void>;
-  logout: () => void;
+  register: (
+    email: string,
+    password: string,
+    username: string,
+    firstName: string,
+    birthday?: string
+  ) => Promise<void>;
+  logout: () => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
   sendResetPasswordOtp: (email: string) => Promise<void>;
   verifyResetOtp: (otp: string) => Promise<void>;
-  resetPassword: (otp: string, newPassword: string, confirmPassword: string) => Promise<void>;
+  resetPassword: (
+    otp: string,
+    newPassword: string,
+    confirmPassword: string
+  ) => Promise<void>;
   checkEmailAvailability: (email: string) => Promise<boolean>;
 }
 
@@ -29,25 +39,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setLoading(false);
-        return;
-      }
-
+      // Since the cookie is HttpOnly, we rely on the server to verify it.
       const response = await fetch('http://localhost:5000/auth/verify', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        method: 'GET',
+        credentials: 'include', // Ensures the HttpOnly cookie is sent automatically
       });
 
       if (response.ok) {
         const userData: User = await response.json();
         setUser(userData);
       } else {
-        localStorage.removeItem('token');
+        setUser(null);
       }
-    } catch (error) {
+    } catch (err) {
       setError('Authentication check failed');
     } finally {
       setLoading(false);
@@ -55,22 +59,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const login = async (identifier: string, password: string) => {
-    console.log("Logging in with this in auth provider:", { identifier, password });
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await fetch('http://localhost:5000/auth/login', {
         method: 'POST',
+        credentials: 'include', // Allow the backend to set the HttpOnly cookie
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          identifier, 
+        body: JSON.stringify({
+          identifier,
           password,
           deviceDetails: {
             device: navigator.userAgent,
-            location: "Unknown"
+            location: 'Unknown'
           }
         }),
       });
@@ -78,11 +82,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed. Please check your internet connection.');
+        throw new Error(
+          data.message || 'Login failed. Please check your internet connection.'
+        );
       }
 
-      // localStorage.setItem('token', data.access_token);
-      document.cookie = `sggtx=${data.access_token}; path=/`;
+      // The server sets the HttpOnly cookie; just update the user state
       setUser(data.user);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Login failed');
@@ -93,8 +98,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const register = async (
-    email: string, 
-    password: string, 
+    email: string,
+    password: string,
     username: string,
     firstName: string,
     birthday?: string
@@ -108,9 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ 
-          email, 
-          password, 
+        body: JSON.stringify({
+          email,
+          password,
           username,
           firstName,
           birthday,
@@ -121,10 +126,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed. Please check your internet connection.');
+        throw new Error(
+          data.message || 'Registration failed. Please check your internet connection.'
+        );
       }
 
-      // Don't automatically log in - wait for email verification
+      // Registration may require email verification before logging in.
       return data;
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Registration failed');
@@ -184,7 +191,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const resetPassword = async (otp: string, newPassword: string, confirmPassword: string) => {
+  const resetPassword = async (
+    otp: string,
+    newPassword: string,
+    confirmPassword: string
+  ) => {
     try {
       const response = await fetch('http://localhost:5000/auth/reset-password', {
         method: 'POST',
@@ -211,20 +222,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    // localStorage.removeItem('token');
-    document.cookie = 'sggtx=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    setUser(null);
+  const logout = async () => {
+    try {
+      setLoading(true);
+      // Call the backend logout endpoint to clear the HttpOnly cookie
+      const response = await fetch('http://localhost:5000/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (response.ok) {
+        setUser(null);
+      } else {
+        throw new Error('Logout failed');
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Logout failed');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        loading, 
-        error, 
-        login, 
-        register, 
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        register,
         logout,
         verifyEmail,
         sendResetPasswordOtp,
