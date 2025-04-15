@@ -1,6 +1,7 @@
 import { Tweet } from "@/types";
 import { FC, useEffect, useState } from "react";
 import Image from "next/image";
+import TweetFeedSkeleton from "./TweetFeedSkeleton";
 import { FiMessageCircle, FiRepeat, FiHeart, FiEye, FiBookmark, FiShare } from "react-icons/fi";
 
 const TweetFeed: FC = () => {
@@ -9,10 +10,22 @@ const TweetFeed: FC = () => {
   useEffect(() => {
     const fetchTweets = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/tweets");
+        console.log('-------Fetching tweets...');
+        const response = await fetch("http://localhost:5000/posts/feed", {
+          method: "GET",
+          credentials: "include",
+        });
         if (response.ok) {
           const data = await response.json();
-          setTweets(data.tweets);
+          console.log('-------Fetched tweets:', data);
+          const transformedTweets: Tweet[] = data.map((item: any) => ({
+            id: item._id,
+            content: item.desc,
+            username: item.user?.firstName + ' ' + item.user?.lastName || "Anonymous",
+            handle: item.user?.username || "@unknown",
+            profilePic: item.user?.profilePic ?? "/placeholder.png"
+          }));
+          setTweets(transformedTweets);
         } else {
           console.error("Failed to fetch tweets");
         }
@@ -20,11 +33,14 @@ const TweetFeed: FC = () => {
         console.error("Error fetching tweets", error);
       }
     };
-
+  
     fetchTweets();
   }, []);
   
-    return (
+  
+  return tweets.length === 0 ? (
+    <TweetFeedSkeleton />
+  ) : (
       <aside className="w-80 bg-gray-100 dark:bg-gray-900 h-screen pt-16 fixed right-0 top-0 p-4">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 truncate">
           Community Feed
@@ -46,7 +62,7 @@ const TweetFeed: FC = () => {
                       {tweet.username}
                     </span>
                     <span className="text-gray-600 dark:text-gray-400 truncate flex-shrink-0 text-xs">
-                      {tweet.handle}
+                      @{tweet.handle}
                     </span>
                   </div>
                   <p className="text-gray-900 dark:text-gray-100 text-xs mt-1 line-clamp-2">
