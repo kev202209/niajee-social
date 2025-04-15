@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 const authPages = ['/auth/login', '/auth/register', '/auth/forget-password', '/auth/verify-email', '/auth/reset-password',];
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('token')?.value;
+  const token = request.cookies.get('sggtx')?.value;
   const isAuthPage = authPages.some(page => 
     request.nextUrl.pathname.startsWith(page)
   );

@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // localStorage.setItem('token', data.access_token);
-      document.cookie = `token=${data.access_token}; path=/`;
+      document.cookie = `sggtx=${data.access_token}; path=/`;
       setUser(data.user);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Login failed');
@@ -213,7 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     // localStorage.removeItem('token');
-    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'sggtx=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     setUser(null);
   };
 
