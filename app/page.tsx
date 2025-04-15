@@ -5,9 +5,9 @@ import Home from '@/components/Home';
 import Landing from '@/components/Landing';
 
 export default function HomePage() {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (isLoading) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
