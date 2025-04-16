@@ -28,6 +28,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+// Utility function to handle fetch errors
+const handleFetchError = (error: unknown, fallbackMessage: string): string => {
+  if (error instanceof TypeError && error.message === 'Failed to fetch') {
+    return 'Network error. Please check your internet connection.';
+  }
+  return error instanceof Error ? error.message : fallbackMessage;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,7 +48,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      // Since the cookie is HttpOnly, we rely on the server to verify it.
       const response = await fetch(`${api_link}/auth/verify`, {
         method: 'GET',
         credentials: 'include', // Ensures the HttpOnly cookie is sent automatically
@@ -53,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null);
       }
     } catch (err) {
-      setError('Authentication check failed');
+      setError(handleFetchError(err, 'Authentication check failed'));
     } finally {
       setLoading(false);
     }
@@ -66,7 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const response = await fetch(`${api_link}/auth/login`, {
         method: 'POST',
-        credentials: 'include', // Allow the backend to set the HttpOnly cookie
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -88,11 +95,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       }
 
-      // The server sets the HttpOnly cookie; just update the user state
       setUser(data.user);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Login failed');
-      throw error;
+    } catch (err) {
+      const errorMessage = handleFetchError(err, 'Login failed');
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -132,11 +139,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       }
 
-      // Registration may require email verification before logging in.
       return data;
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Registration failed');
-      throw error;
+    } catch (err) {
+      const errorMessage = handleFetchError(err, 'Registration failed');
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -144,15 +151,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verifyEmail = async (token: string) => {
     try {
-      const response = await fetch(`${api_link}auth/verify-email/${token}`, {
+      const response = await fetch(`${api_link}/auth/verify-email/${token}`, {
         method: 'POST'
       });
 
       if (!response.ok) {
         throw new Error('Email verification failed');
       }
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw new Error(handleFetchError(err, 'Email verification failed'));
     }
   };
 
@@ -169,8 +176,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         throw new Error('Failed to send reset OTP');
       }
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw new Error(handleFetchError(err, 'Failed to send reset OTP'));
     }
   };
 
@@ -187,8 +194,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         throw new Error('Invalid OTP');
       }
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw new Error(handleFetchError(err, 'Invalid OTP'));
     }
   };
 
@@ -209,8 +216,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!response.ok) {
         throw new Error('Password reset failed');
       }
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw new Error(handleFetchError(err, 'Password reset failed'));
     }
   };
 
@@ -218,15 +225,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch(`${api_link}/auth/check-email/${email}`);
       return response.ok;
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw new Error(handleFetchError(err, 'Email availability check failed'));
     }
   };
 
   const logout = async () => {
     try {
       setLoading(true);
-      // Call the backend logout endpoint to clear the HttpOnly cookie
       const response = await fetch(`${api_link}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
@@ -236,9 +242,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         throw new Error('Logout failed');
       }
-    } catch (error) {
-      setError(error instanceof Error ? error.message : 'Logout failed');
-      throw error;
+    } catch (err) {
+      const errorMessage = handleFetchError(err, 'Logout failed');
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
