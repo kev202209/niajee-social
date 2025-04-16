@@ -1,140 +1,131 @@
 'use client';
 
-import React, { useState } from "react";
+import { useState } from 'react';
+import axios from 'axios';
+import DOMPurify from 'dompurify';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-export default function ContactUs() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
+const ContactForm = () => {
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
   });
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const sanitizeInput = (input: string) => {
+    // Sanitize using DOMPurify and trim whitespace
+    return DOMPurify.sanitize(input.trim());
+  };
+
+  const validateEmail = (email: string) => {
+    // Basic email regex validation
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Replace with your submission logic (e.g., API call)
+    // Sanitize inputs
+    const sanitizedData = {
+      name: sanitizeInput(form.name),
+      email: sanitizeInput(form.email),
+      subject: sanitizeInput(form.subject),
+      message: sanitizeInput(form.message),
+    };
+
+    // Basic validation
+    if (!sanitizedData.name || !sanitizedData.email || !sanitizedData.message) {
+      toast.error("⚠️ Name, Email, and Message are required.");
+      return;
+    }
+
+    if (!validateEmail(sanitizedData.email)) {
+      toast.error("📧 Please enter a valid email address.");
+      return;
+    }
+
+    if (sanitizedData.message.length < 10) {
+      toast.error("📝 Message should be at least 10 characters long.");
+      return;
+    }
+
     try {
-      // Simulate submission delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setSubmitted(true);
-      setError("");
-    } catch (err) {
-      setError("An error occurred. Please try again later.");
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/contact`, sanitizedData);
+
+      toast.success(" Message was successfully Recieved.");
+
+      setForm({ name: '', email: '', subject: '', message: '' });
+
+    } catch (error) {
+      toast.error("❌ Failed to send message. Please try again!")
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 py-12 px-4">
-      <div className="max-w-3xl mx-auto">
-        <header className="mb-8 text-center">
-          <h1 className="text-4xl font-bold mb-4 pt-10">Contact Us</h1>
-          <p className="text-lg">
-            If you have any questions, concerns, or feedback, please do not hesitate to get in touch.
-          </p>
-        </header>
-
-        {submitted ? (
-          <div className="p-6 bg-green-100 dark:bg-green-900 rounded shadow text-center">
-            <p className="text-green-800 dark:text-green-200 text-xl">
-              Thank you for reaching out! We will get back to you as soon as possible.
-            </p>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name and Email on the same line for larger screens */}
-            <div className="flex flex-col md:flex-row md:space-x-4">
-              <div className="flex-1">
-                <label htmlFor="name" className="block font-medium mb-2">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
-                />
-              </div>
-              <div className="flex-1 mt-4 md:mt-0">
-                <label htmlFor="email" className="block font-medium mb-2">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="subject" className="block font-medium mb-2">
-                Subject
-              </label>
-              <input
-                type="text"
-                id="subject"
-                name="subject"
-                value={formData.subject}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="message" className="block font-medium mb-2">
-                Message
-              </label>
-              <textarea
-                id="message"
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                required
-                rows={6}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring focus:ring-blue-500"
-              />
-            </div>
-
-            {error && <div className="text-red-600">{error}</div>}
-
-            <button
-              type="submit"
-              className="w-full py-3 px-6 bg-blue-500 dark:bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-600 dark:hover:bg-blue-700 transition"
-            >
-              Send Message
-            </button>
-          </form>
-        )}
-
-        <div className="mt-8 text-center">
-          <p>
-            Alternatively, you can email us directly at{" "}
-            <a
-              href="mailto:support@mosaic.com"
-              className="text-blue-500 dark:text-blue-400 underline"
-            >
-              support@mosaic-social.com
-            </a>
-          </p>
+    <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl pt-20">
+      <h2 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Contact Us</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="flex gap-4">
+          <input
+            type="text"
+            name="name"
+            placeholder="Your Name"
+            value={form.name}
+            onChange={handleChange}
+            required
+            className="w-1/2 p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Your Email"
+            value={form.email}
+            onChange={handleChange}
+            required
+            className="w-1/2 p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+          />
         </div>
-      </div>
+        <input
+          type="text"
+          name="subject"
+          placeholder="Subject (optional)"
+          value={form.subject}
+          onChange={handleChange}
+          className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+        />
+        <textarea
+          name="message"
+          placeholder="Your Message"
+          value={form.message}
+          onChange={handleChange}
+          required
+          className="w-full p-3 h-40 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+        />
+        <button
+          type="submit"
+          className="w-full bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-500 text-white font-semibold py-3 rounded-lg hover:opacity-90 transition duration-300"
+        >
+          Send Message
+        </button>
+      </form>
+
+      <ToastContainer
+        toastClassName={() =>
+          "relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg"
+        }
+        closeButton={false}
+        autoClose={7000}
+        hideProgressBar={true}
+      />
     </div>
   );
-}
+};
+
+export default ContactForm;
