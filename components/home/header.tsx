@@ -18,6 +18,7 @@ import { useAuth } from "@/contexts/AuthContext";
 const Header: FC = () => {
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const api_link = process.env.NEXT_PUBLIC_API_URL;
   useOutsideClick(profileMenuRef, () => setShowProfileMenu(false));
 
   // State to control sidebar visibility
@@ -30,7 +31,7 @@ const Header: FC = () => {
   const [tagline, setTagline] = useState<string>("Loading...");
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/content/taglines")
+    fetch(`${api_link}/api/content/taglines`)
       .then((res) => res.json())
       .then((data) => setTagline(data.tagline))
       .catch(() => setTagline("Craft your digital legacy."));

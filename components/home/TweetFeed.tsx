@@ -6,12 +6,13 @@ import { FiMessageCircle, FiRepeat, FiHeart, FiEye, FiBookmark, FiShare } from "
 
 const TweetFeed: FC = () => {
   const [tweets, setTweets] = useState<Tweet[]>([]);
+  const api_link = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     const fetchTweets = async () => {
       try {
         console.log('-------Fetching tweets...');
-        const response = await fetch("http://localhost:5000/posts/feed", {
+        const response = await fetch(`${api_link}/posts/feed`, {
           method: "GET",
           credentials: "include",
         });

@@ -9,6 +9,7 @@ export default function VerifyEmailPage() {
   const router = useRouter();
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const api_link = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     if (!token) {
@@ -19,7 +20,7 @@ export default function VerifyEmailPage() {
     const verifyEmail = async () => {
       try {
         // Call your backend verification endpoint.
-        const res = await fetch(`http://localhost:5000/auth/verify-email?token=${token}`);
+        const res = await fetch(`${api_link}/auth/verify-email?token=${token}`);
         const data = await res.json();
         if (res.ok) {
           setMessage('Email verified successfully! You can now log in.');

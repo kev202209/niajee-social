@@ -32,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const api_link = process.env.NEXT_PUBLIC_API_URL;
 
   useEffect(() => {
     checkAuth();
@@ -40,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkAuth = async () => {
     try {
       // Since the cookie is HttpOnly, we rely on the server to verify it.
-      const response = await fetch('http://localhost:5000/auth/verify', {
+      const response = await fetch(`${api_link}/auth/verify`, {
         method: 'GET',
         credentials: 'include', // Ensures the HttpOnly cookie is sent automatically
       });
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:5000/auth/login', {
+      const response = await fetch(`${api_link}/auth/login`, {
         method: 'POST',
         credentials: 'include', // Allow the backend to set the HttpOnly cookie
         headers: {
@@ -108,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:5000/auth/register', {
+      const response = await fetch(`${api_link}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +144,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verifyEmail = async (token: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/auth/verify-email/${token}`, {
+      const response = await fetch(`${api_link}auth/verify-email/${token}`, {
         method: 'POST'
       });
 
@@ -157,7 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendResetPasswordOtp = async (email: string) => {
     try {
-      const response = await fetch('http://localhost:5000/auth/forgot-password', {
+      const response = await fetch(`${api_link}/auth/forgot-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -175,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const verifyResetOtp = async (otp: string) => {
     try {
-      const response = await fetch('http://localhost:5000/auth/verify-otp', {
+      const response = await fetch(`${api_link}/auth/verify-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     confirmPassword: string
   ) => {
     try {
-      const response = await fetch('http://localhost:5000/auth/reset-password', {
+      const response = await fetch(`${api_link}/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -215,7 +216,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkEmailAvailability = async (email: string): Promise<boolean> => {
     try {
-      const response = await fetch(`http://localhost:5000/auth/check-email/${email}`);
+      const response = await fetch(`${api_link}/auth/check-email/${email}`);
       return response.ok;
     } catch (error) {
       throw error;
@@ -226,7 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       // Call the backend logout endpoint to clear the HttpOnly cookie
-      const response = await fetch('http://localhost:5000/auth/logout', {
+      const response = await fetch(`${api_link}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });

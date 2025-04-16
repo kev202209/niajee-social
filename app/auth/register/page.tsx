@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { register, checkEmailAvailability } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
+  const api_link = process.env.NEXT_PUBLIC_API_URL;
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -80,7 +81,7 @@ export default function RegisterPage() {
         uploadFormData.append('file', formData.profilePicture);
         uploadFormData.append('email', formData.email);
 
-        const uploadResponse = await fetch('http://localhost:5000/auth/profile-picture', {
+        const uploadResponse = await fetch(`${api_link}/auth/profile-picture`, {
           method: 'POST',
           body: uploadFormData,
         });
@@ -176,7 +177,7 @@ export default function RegisterPage() {
               </div>
               <div className="mt-4 flex flex-col gap-2">
                 <button
-                  onClick={() => window.location.href = 'http://localhost:5000/auth/google'}
+                  onClick={() => window.location.href = `${api_link}/auth/google`}
                   className="w-full p-2 dark:bg-sky-500/10 bg-sky-600 hover:bg-sky-500/80 text-white dark:hover:bg-sky-500/80 dark:text-white rounded-xl flex items-center justify-center gap-2"
                 >
                   <FaGoogle /> Sign up with Google
