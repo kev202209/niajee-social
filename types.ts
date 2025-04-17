@@ -134,3 +134,17 @@ export interface Follow {
   follower: User;
   following: User;
 }
+
+
+
+export interface Channel {
+  _id: string;
+  name: string;
+  description: string;
+  logoUrl: string;
+  bannerUrl: string;
+  subscriberCount: number;
+  videoCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
