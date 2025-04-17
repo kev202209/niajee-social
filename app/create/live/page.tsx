@@ -80,16 +80,6 @@ const LivePage: FC<LivePageProps> = () => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {/* Mobile header */}
-        <div className="md:hidden flex items-center justify-between bg-white dark:bg-gray-800 p-4 shadow-md">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-gray-800 dark:text-gray-200"
-          >
-            <Menu />
-          </button>
-          <h1 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Go Live</h1>
-        </div>
 
         <main className="p-6 overflow-auto">
           <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">Go Live</h1>
