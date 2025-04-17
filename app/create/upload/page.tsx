@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, FC } from 'react';
+import React, { useState, useCallback, useEffect, FC } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
@@ -12,6 +12,12 @@ interface UploadFormValues {
   description: string;
   tags: string;
   visibility: 'public' | 'private' | 'unlisted';
+  channelId: string;
+}
+
+interface Channel {
+  _id: string;
+  name: string;
 }
 
 const UploadPage: FC = () => {
@@ -19,6 +25,7 @@ const UploadPage: FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [uploading, setUploading] = useState<boolean>(false);
+  const [channels, setChannels] = useState<Channel[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     setFile(acceptedFiles[0]);
@@ -30,9 +37,27 @@ const UploadPage: FC = () => {
     maxSize: 500 * 1024 * 1024,
   });
 
+  // Fetch user's channels
+  useEffect(() => {
+    const fetchChannels = async () => {
+      try {
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/my-channel`);
+        setChannels(response.data);
+      } catch (error) {
+        toast.error('Failed to load channels.');
+      }
+    };
+
+    fetchChannels();
+  }, []);
+
   const onSubmit: SubmitHandler<UploadFormValues> = async (data) => {
     if (!file) {
       toast.error('Please select a video file to upload.');
+      return;
+    }
+    if (!data.channelId) {
+      toast.error('Please select a channel.');
       return;
     }
     setUploading(true);
@@ -40,11 +65,9 @@ const UploadPage: FC = () => {
     formData.append('file', file);
     formData.append('title', data.title.trim());
     formData.append('description', data.description.trim());
-    formData.append(
-      'tags',
-      data.tags.split(',').map((t) => t.trim()).join(',')
-    );
+    formData.append('tags', data.tags.split(',').map((t) => t.trim()).join(','));
     formData.append('visibility', data.visibility);
+    formData.append('channelId', data.channelId);
     formData.append('userId', '<YOUR_USER_ID>'); // replace with actual user ID
 
     try {
@@ -75,6 +98,7 @@ const UploadPage: FC = () => {
         Upload Video
       </h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* File Drop */}
         <div
           {...getRootProps()}
           className="p-8 border-2 border-dashed rounded-lg text-center cursor-pointer bg-white dark:bg-gray-800"
@@ -88,6 +112,8 @@ const UploadPage: FC = () => {
             <p>Drag & drop a video file here, or click to select</p>
           )}
         </div>
+
+        {/* Progress Bar */}
         {uploading && (
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full">
             <div
@@ -98,6 +124,8 @@ const UploadPage: FC = () => {
             </div>
           </div>
         )}
+
+        {/* Title */}
         <div>
           <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">
             Title
@@ -107,6 +135,8 @@ const UploadPage: FC = () => {
             className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white"
           />
         </div>
+
+        {/* Description */}
         <div>
           <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">
             Description
@@ -116,6 +146,8 @@ const UploadPage: FC = () => {
             className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white h-24"
           />
         </div>
+
+        {/* Tags */}
         <div>
           <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">
             Tags (comma separated)
@@ -125,6 +157,8 @@ const UploadPage: FC = () => {
             className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white"
           />
         </div>
+
+        {/* Visibility */}
         <div>
           <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">
             Visibility
@@ -138,6 +172,26 @@ const UploadPage: FC = () => {
             <option value="unlisted">Unlisted</option>
           </select>
         </div>
+
+        {/* Channel Select */}
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">
+            Channel
+          </label>
+          <select
+            {...register('channelId')}
+            className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white"
+          >
+            <option value="">Select a channel</option>
+            {channels.map((channel) => (
+              <option key={channel._id} value={channel._id}>
+                {channel.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Submit */}
         <button
           type="submit"
           disabled={uploading}
@@ -146,6 +200,7 @@ const UploadPage: FC = () => {
           {uploading ? 'Uploading...' : 'Upload'}
         </button>
       </form>
+
       <ToastContainer
         toastClassName={() =>
           'relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg'
