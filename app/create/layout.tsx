@@ -38,8 +38,9 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
           fixed top-0 left-0 h-screen pt-16
           bg-white dark:bg-gray-900 z-40
           transition-all duration-300 ease-in-out
-          ${isSidebarOpen ? 'w-56' : 'w-16'}
+          ${isSidebarOpen ?  'w-25 md:w-40' : 'w-10'}
         `}
+        
       >
         <nav className="flex flex-col pt-4 h-full w-full">
           {sidebarItems.map(({ label, icon: Icon, href }) => (
@@ -75,10 +76,10 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
         <main
           className={`
             pt-16 h-full overflow-y-auto transition-all duration-300
-            ${isSidebarOpen ? 'ml-56' : 'ml-16'}
+            ${isSidebarOpen ? 'ml-25 md:ml-40' : 'ml-10'}
           `}
         >
-          <div className="p-6">{children}</div>
+          <div className="">{children}</div>
         </main>
       </div>
     </div>

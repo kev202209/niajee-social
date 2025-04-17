@@ -27,7 +27,9 @@ const Sidebar: FC<SidebarProps> = ({ isSidebarOpen }) => {
         bg-gray-100 dark:bg-gray-900
         transition-all duration-300 ease-in-out
         z-20
-        ${isSidebarOpen ? 'w-56' : 'w-16'}
+        ${isSidebarOpen
+          ? 'w-25 md:w-40' 
+          : 'w-10'}
       `}
     >
       <nav className="flex flex-col pt-4 h-full w-full">
@@ -56,7 +58,7 @@ const Sidebar: FC<SidebarProps> = ({ isSidebarOpen }) => {
               className={`
                 ml-3 flex-1 whitespace-nowrap transition-all duration-300
                 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}
-                '}
+                md:opacity-100 md:w-auto md:overflow-visible
               `}
             >
               {label}
