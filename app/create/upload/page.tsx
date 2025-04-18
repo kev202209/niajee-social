@@ -69,8 +69,7 @@ const UploadPage: FC = () => {
     formData.append('description', data.description.trim());
     formData.append('tags', data.tags.split(',').map((t) => t.trim()).join(','));
     formData.append('visibility', data.visibility);
-    formData.append('channelId', data.channelId);
-    formData.append('userId', '<YOUR_USER_ID>'); // replace with actual user ID
+    formData.append('channelId', data.channelId); // replace with actual user ID
 
     try {
       await axios.post(
