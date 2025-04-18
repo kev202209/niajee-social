@@ -41,8 +41,10 @@ const UploadPage: FC = () => {
   useEffect(() => {
     const fetchChannels = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/my-channel`);
-        setChannels(response.data);
+        const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/my-channel`, {
+          withCredentials: true
+        });
+        setChannels(response.data.channels);
       } catch (error) {
         toast.error('Failed to load channels.');
       }
@@ -72,10 +74,11 @@ const UploadPage: FC = () => {
 
     try {
       await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL}/videos/upload`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/videos/upload`,
         formData,
         {
-          headers: { 'Content-Type': 'multipart/form-data' },
+          headers: { 'Content-Type': 'multipart/form-data'},
+          withCredentials: true,
           onUploadProgress: (event) => {
             setProgress(Math.round((event.loaded * 100) / (event.total || 1)));
           },
