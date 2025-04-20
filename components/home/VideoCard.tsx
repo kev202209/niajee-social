@@ -162,7 +162,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
             {video.channelName}
           </p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {video.views} • {timeAgo(video.age)}
+            {video.views} views • {timeAgo(video.age)}
           </p>
         </div>
       </div>
