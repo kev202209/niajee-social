@@ -61,6 +61,64 @@ export function useVideoPlayer({ src, autoplay = true }: { src: string; autoplay
   const [controlsVisible, setControlsVisible] = useState(true);
   const [mouseIdle, setMouseIdle] = useState(false);
 
+
+    // Handlers
+    const handleRewind = useCallback(() => {
+      if (!videoRef.current) return;
+      videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 5, 0);
+      setSeekIndicator('rewind'); setTimeout(() => setSeekIndicator(null), 1000);
+    }, []);
+    const handleForward = useCallback(() => {
+      if (!videoRef.current) return;
+      videoRef.current.currentTime = Math.min(videoRef.current.currentTime + 5, duration);
+      setSeekIndicator('forward'); setTimeout(() => setSeekIndicator(null), 1000);
+    }, [duration]);
+    const toggleMute = useCallback(() => setIsMuted(m => !m), []);
+    const toggleAutoplay = () => setIsAutoplay(a => !a);
+    const toggleAmbientMode = () => setAmbientMode(a => !a);
+    const toggleMiniplayer = () => { setIsMiniplayer(m => !m); if (isCinemaMode) setIsCinemaMode(false); };
+    const toggleCinemaMode = () => { setIsCinemaMode(c => !c); if (isMiniplayer) setIsMiniplayer(false); };
+    const toggleFullscreen = () => { if (!containerRef.current) return; document.fullscreenElement ? document.exitFullscreen() : containerRef.current.requestFullscreen(); };
+    // Sleep Timer: when a duration is selected, pause the video after that time
+    const handleSleepTimerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const value = e.target.value;
+      let seconds = 0;
+      if (value.includes("sec")) {
+        seconds = parseInt(value);
+      } else if (value.includes("hour")) {
+        seconds = 3600;
+      }
+      if (sleepTimerRef.current) {
+        clearTimeout(sleepTimerRef.current);
+      }
+      if (seconds > 0) {
+        sleepTimerRef.current = setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.pause();
+            setIsPlaying(false);
+          }
+        }, seconds * 1000);
+      }
+    };
+  
+    // Change playback speed
+    const handlePlaybackSpeedChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const newSpeed = parseFloat(e.target.value);
+      if (videoRef.current) {
+        videoRef.current.playbackRate = newSpeed;
+      }
+    };
+      // Handle clicks on the progress bar for seeking
+      const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const percentage = clickX / rect.width;
+        if (videoRef.current) {
+          videoRef.current.currentTime = percentage * duration;
+        }
+      };
+
+
   // Modes
   const [isAutoplay, setIsAutoplay] = useState<boolean>(autoplay);
   const [ambientMode, setAmbientMode] = useState(true);
@@ -137,26 +195,7 @@ export function useVideoPlayer({ src, autoplay = true }: { src: string; autoplay
     return () => document.removeEventListener('keydown', onKey);
   }, [handleRewind, handleForward, toggleMute]);
 
-  // Handlers
-  const handleRewind = useCallback(() => {
-    if (!videoRef.current) return;
-    videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 5, 0);
-    setSeekIndicator('rewind'); setTimeout(() => setSeekIndicator(null), 1000);
-  }, []);
-  const handleForward = useCallback(() => {
-    if (!videoRef.current) return;
-    videoRef.current.currentTime = Math.min(videoRef.current.currentTime + 5, duration);
-    setSeekIndicator('forward'); setTimeout(() => setSeekIndicator(null), 1000);
-  }, [duration]);
-  const toggleMute = useCallback(() => setIsMuted(m => !m), []);
-  const toggleAutoplay = () => setIsAutoplay(a => !a);
-  const toggleAmbientMode = () => setAmbientMode(a => !a);
-  const toggleMiniplayer = () => { setIsMiniplayer(m => !m); if (isCinemaMode) setIsCinemaMode(false); };
-  const toggleCinemaMode = () => { setIsCinemaMode(c => !c); if (isMiniplayer) setIsMiniplayer(false); };
-  const toggleFullscreen = () => { if (!containerRef.current) return; document.fullscreenElement ? document.exitFullscreen() : containerRef.current.requestFullscreen(); };
-  const handleSleepTimerChange = (e: React.ChangeEvent<HTMLSelectElement>) => { /* implement */ };
-  const handlePlaybackSpeedChange = (e: React.ChangeEvent<HTMLSelectElement>) => { /* implement */ };
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => { /* implement */ };
+
 
   return {
     videoRef,
