@@ -23,6 +23,8 @@ interface Channel {
 const UploadPage: FC = () => {
   const { register, handleSubmit, reset } = useForm<UploadFormValues>();
   const [file, setFile] = useState<File | null>(null);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [uploading, setUploading] = useState<boolean>(false);
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -31,20 +33,41 @@ const UploadPage: FC = () => {
     setFile(acceptedFiles[0]);
   }, []);
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const onThumbnailDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file) {
+      setThumbnail(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+    }
+  }, []);
+
+  const {
+    getRootProps,
+    getInputProps,
+    isDragActive,
+  } = useDropzone({
     onDrop,
     accept: { 'video/*': [] },
     maxSize: 500 * 1024 * 1024,
   });
 
-  // Fetch user's channels
+  const {
+    getRootProps: getThumbnailRootProps,
+    getInputProps: getThumbnailInputProps,
+    isDragActive: isThumbnailDragActive,
+  } = useDropzone({
+    onDrop: onThumbnailDrop,
+    accept: { 'image/*': [] },
+    maxSize: 10 * 1024 * 1024,
+  });
+
   useEffect(() => {
     const fetchChannels = async () => {
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/my-channel`, {
           withCredentials: true
         });
-        setChannels(response.data.channels);
+        setChannels(response.data.channels || []);
       } catch (error) {
         toast.error('Failed to load channels.');
       }
@@ -62,21 +85,26 @@ const UploadPage: FC = () => {
       toast.error('Please select a channel.');
       return;
     }
+  
     setUploading(true);
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('video', file); // ✅ fix here
     formData.append('title', data.title.trim());
     formData.append('description', data.description.trim());
     formData.append('tags', data.tags.split(',').map((t) => t.trim()).join(','));
     formData.append('visibility', data.visibility);
-    formData.append('channelId', data.channelId); // replace with actual user ID
-
+    formData.append('channelId', data.channelId);
+  
+    if (thumbnail) {
+      formData.append('thumbnail', thumbnail);
+    }
+  
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/videos/upload`,
         formData,
         {
-          headers: { 'Content-Type': 'multipart/form-data'},
+          headers: { 'Content-Type': 'multipart/form-data' },
           withCredentials: true,
           onUploadProgress: (event) => {
             setProgress(Math.round((event.loaded * 100) / (event.total || 1)));
@@ -86,6 +114,8 @@ const UploadPage: FC = () => {
       toast.success('Video uploaded successfully!');
       reset();
       setFile(null);
+      setThumbnail(null);
+      setThumbnailPreview(null);
     } catch {
       toast.error('Upload failed. Please try again.');
     } finally {
@@ -93,14 +123,16 @@ const UploadPage: FC = () => {
       setProgress(0);
     }
   };
+  
 
   return (
     <div className="max-w-2xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-white">
         Upload Video
       </h1>
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* File Drop */}
+        {/* Video File Drop */}
         <div
           {...getRootProps()}
           className="p-8 border-2 border-dashed rounded-lg text-center cursor-pointer bg-white dark:bg-gray-800"
@@ -115,7 +147,7 @@ const UploadPage: FC = () => {
           )}
         </div>
 
-        {/* Progress Bar */}
+        {/* Upload Progress Bar */}
         {uploading && (
           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full">
             <div
@@ -127,44 +159,36 @@ const UploadPage: FC = () => {
           </div>
         )}
 
-        {/* Title */}
+        {/* Title Input */}
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">
-            Title
-          </label>
+          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">Title</label>
           <input
             {...register('title', { required: true })}
             className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white"
           />
         </div>
 
-        {/* Description */}
+        {/* Description Input */}
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">
-            Description
-          </label>
+          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">Description</label>
           <textarea
             {...register('description')}
             className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white h-24"
           />
         </div>
 
-        {/* Tags */}
+        {/* Tags Input */}
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">
-            Tags (comma separated)
-          </label>
+          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">Tags (comma separated)</label>
           <input
             {...register('tags')}
             className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white"
           />
         </div>
 
-        {/* Visibility */}
+        {/* Visibility Select */}
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">
-            Visibility
-          </label>
+          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">Visibility</label>
           <select
             {...register('visibility')}
             className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white"
@@ -177,9 +201,7 @@ const UploadPage: FC = () => {
 
         {/* Channel Select */}
         <div>
-          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">
-            Channel
-          </label>
+          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">Channel</label>
           <select
             {...register('channelId')}
             className="w-full p-3 border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-800 dark:text-white"
@@ -193,7 +215,32 @@ const UploadPage: FC = () => {
           </select>
         </div>
 
-        {/* Submit */}
+        {/* Thumbnail Upload (Optional) */}
+        <div>
+          <label className="block text-sm font-medium mb-1 text-gray-800 dark:text-gray-200">Thumbnail (optional)</label>
+          <div
+            {...getThumbnailRootProps()}
+            className="p-4 border-2 border-dashed rounded-lg text-center cursor-pointer bg-white dark:bg-gray-800 mb-2"
+          >
+            <input {...getThumbnailInputProps()} />
+            {isThumbnailDragActive ? (
+              <p>Drop the image here...</p>
+            ) : thumbnail ? (
+              <p>{thumbnail.name}</p>
+            ) : (
+              <p>Drag & drop an image file here, or click to select</p>
+            )}
+          </div>
+          {thumbnailPreview && (
+            <img
+              src={thumbnailPreview}
+              alt="Thumbnail preview"
+              className="w-40 h-auto rounded-lg border border-gray-300 dark:border-gray-700"
+            />
+          )}
+        </div>
+
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={uploading}
