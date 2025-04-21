@@ -21,6 +21,7 @@ export interface User {
 export interface Video {
     id: number;
     videoSrc: string;
+    videoId: string;
     title: string;
     channelAvatar: string;
     channelName: string;
@@ -49,27 +50,48 @@ export interface Tweet {
 
 // Types (same as before, but centralized here)
 export interface mVideo {
-  id: string;
-  videoSrc: string;
+  _id: string;
+  videoId: string;
   title: string;
+  description: string;
+  tags: string;
+  visibility: 'public' | 'private' | 'unlisted';
+  videoUrl: {
+    '240p': string;
+    '360p': string;
+    '480p': string;
+    '720p': string;
+    '1080p': string;
+    [key: string]: string; // For any other quality levels
+  };
+  thumbnailUrl: string;
+  duration: number;
+  format: string;
+  channelId: string;
+  createdAt: string;
+  updatedAt: string;
+  // Additional fields needed for VideoMeta component
   channelName: string;
   channelAvatar: string;
   likes: number;
+  dislikes?: number;
   views: string;
   uploadDate: string;
-  description: string;
+  shares?: number;
+  comments?: number;
+  saved?: boolean;
 }
 
-export interface SuggestedVideo {
-  id: string;
+// Update SuggestedVideo to extend from mVideo
+export interface SuggestedVideo extends Omit<mVideo, 'videoUrl'> {
   videoSrc: string;
-  title: string;
   channelName: string;
   channelAvatar: string;
   likes: number;
   views: string;
   uploadDate: string;
-  description: string;
+  duration: number;
+  thumbnailUrl: string;
 }
 
 export interface Comment {
@@ -145,6 +167,8 @@ export interface Channel {
   bannerUrl: string;
   subscriberCount: number;
   videoCount: number;
+  isSubscribed?: boolean;
+  hasJoined?: boolean;
   createdAt: string;
   updatedAt: string;
 }
