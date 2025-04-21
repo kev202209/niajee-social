@@ -3,8 +3,13 @@
 import React, { useState } from 'react';
 import { FiThumbsUp, FiThumbsDown, FiShare, FiDownload, FiSave, FiMoreVertical } from 'react-icons/fi';
 import { mVideo as Video } from '../../types';
+import timeAgo from '../../app/utils/timeAgo';
 
-export default function VideoMeta({ video }: { video: Video }) {
+interface VideoMetaProps {
+  video: Video;
+}
+
+export default function VideoMeta({ video }: VideoMetaProps) {
   const [descExpanded, setDescExpanded] = useState(false);
   return (
     <div className="space-y-2">
@@ -25,7 +30,7 @@ export default function VideoMeta({ video }: { video: Video }) {
         <button className="flex items-center space-x-1"><FiSave /><span>Save</span></button>
         <button className="flex items-center space-x-1"><FiMoreVertical /></button>
       </div>
-      <div className="text-sm text-gray-600 dark:text-gray-400">{video.views} views · {video.uploadDate}</div>
+      <div className="text-sm text-gray-600 dark:text-gray-400">{video.views} views · {timeAgo(video.createdAt)}</div>
       <div>
         <p className={`text-sm ${!descExpanded? 'line-clamp-3':''}`}>{video.description}</p>
         <button onClick={() => setDescExpanded(prev => !prev)} className="text-blue-500 text-sm">{descExpanded?'Show less':'Show more'}</button>
