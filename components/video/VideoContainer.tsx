@@ -2,20 +2,35 @@
 'use client';
 import React from 'react';
 import { VideoPlayerControls } from '../../hooks/useVideoPlayer';
-interface Props { controls: VideoPlayerControls; src: string; }
-export default function VideoContainer({ controls, src }: Props) {
+
+interface VideoContainerProps {
+  controls: VideoPlayerControls;
+  videoRef: React.RefObject<HTMLVideoElement>;
+  className?: string;
+}
+
+export default function VideoContainer({ 
+  controls, 
+  videoRef,
+  className 
+}: VideoContainerProps) {
   return (
-    <div
-      ref={controls.containerRef}
-      className={`relative bg-black rounded overflow-hidden ${controls.ambientMode ? 'shadow-xl' : 'shadow-sm'} ${controls.isCinemaMode ? 'w-full' : ''} ${controls.isMiniplayer ? 'w-64 h-36 fixed bottom-4 right-4' : 'aspect-video'}`}
-    >
+    <div className="relative bg-black rounded overflow-hidden w-full aspect-video">
       <video
-        ref={controls.videoRef}
-        src={src}
-        autoPlay={controls.isAutoplay}
+        ref={videoRef}
+        className={`w-full h-full object-contain ${className}`}
+        playsInline
         onClick={controls.togglePlay}
-        className="w-full h-full cursor-pointer rounded"
-      />
+        style={{
+          // Prevent default browser styling
+          WebkitAppearance: 'none',
+          MozAppearance: 'none'
+        }}
+      >
+        <source 
+          type="application/x-mpegURL"
+        />
+      </video>
     </div>
   );
 }
