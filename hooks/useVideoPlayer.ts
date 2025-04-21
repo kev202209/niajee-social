@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
 export interface VideoPlayerControls {
-  videoRef: React.RefObject<HTMLVideoElement>;
-  containerRef: React.RefObject<HTMLDivElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
@@ -20,6 +20,10 @@ export interface VideoPlayerControls {
   isMiniplayer: boolean;
   isCinemaMode: boolean;
   isFullscreen: boolean;
+  videoUrl: {
+    [key: string]: string;
+  };
+  videoQuality: '1080p' | '720p' | '480p' | '360p' | 'auto';
   togglePlay: () => void;
   toggleMute: () => void;
   setVolume: (v: number) => void;
@@ -33,11 +37,22 @@ export interface VideoPlayerControls {
   handleSleepTimerChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handlePlaybackSpeedChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   handleProgressClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+  changeVideoQuality: (quality: string) => void;
+  getNetworkSpeed: () => number | null;
 }
 
-export function useVideoPlayer({ src, autoplay = true }: { src: string; autoplay?: boolean }): VideoPlayerControls {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+export function useVideoPlayer({ 
+  videoRef,
+  src, 
+  videoUrls, 
+  autoplay = true 
+}: { 
+  videoRef: React.RefObject<HTMLVideoElement>;
+  src: string; 
+  videoUrls: { [key: string]: string };
+  autoplay?: boolean; 
+}): VideoPlayerControls {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mouseIdleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -61,63 +76,77 @@ export function useVideoPlayer({ src, autoplay = true }: { src: string; autoplay
   const [controlsVisible, setControlsVisible] = useState(true);
   const [mouseIdle, setMouseIdle] = useState(false);
 
+  // Video quality
+  const [videoQuality, setVideoQuality] = useState<'1080p' | '720p' | '480p' | '360p' | 'auto'>('auto');
 
-    // Handlers
-    const handleRewind = useCallback(() => {
-      if (!videoRef.current) return;
-      videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 5, 0);
-      setSeekIndicator('rewind'); setTimeout(() => setSeekIndicator(null), 1000);
-    }, []);
-    const handleForward = useCallback(() => {
-      if (!videoRef.current) return;
-      videoRef.current.currentTime = Math.min(videoRef.current.currentTime + 5, duration);
-      setSeekIndicator('forward'); setTimeout(() => setSeekIndicator(null), 1000);
-    }, [duration]);
-    const toggleMute = useCallback(() => setIsMuted(m => !m), []);
-    const toggleAutoplay = () => setIsAutoplay(a => !a);
-    const toggleAmbientMode = () => setAmbientMode(a => !a);
-    const toggleMiniplayer = () => { setIsMiniplayer(m => !m); if (isCinemaMode) setIsCinemaMode(false); };
-    const toggleCinemaMode = () => { setIsCinemaMode(c => !c); if (isMiniplayer) setIsMiniplayer(false); };
-    const toggleFullscreen = () => { if (!containerRef.current) return; document.fullscreenElement ? document.exitFullscreen() : containerRef.current.requestFullscreen(); };
-    // Sleep Timer: when a duration is selected, pause the video after that time
-    const handleSleepTimerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const value = e.target.value;
-      let seconds = 0;
-      if (value.includes("sec")) {
-        seconds = parseInt(value);
-      } else if (value.includes("hour")) {
-        seconds = 3600;
-      }
-      if (sleepTimerRef.current) {
-        clearTimeout(sleepTimerRef.current);
-      }
-      if (seconds > 0) {
-        sleepTimerRef.current = setTimeout(() => {
-          if (videoRef.current) {
-            videoRef.current.pause();
-            setIsPlaying(false);
-          }
-        }, seconds * 1000);
-      }
-    };
-  
-    // Change playback speed
-    const handlePlaybackSpeedChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const newSpeed = parseFloat(e.target.value);
-      if (videoRef.current) {
-        videoRef.current.playbackRate = newSpeed;
-      }
-    };
-      // Handle clicks on the progress bar for seeking
-      const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const percentage = clickX / rect.width;
+  // Add video URLs state
+  const [videoUrl, setVideoUrl] = useState(videoUrls);
+
+  function getNetworkSpeed() {
+    const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
+    if (connection && connection.downlink) {
+      return connection.downlink; // Mbps
+    }
+    return null;
+  }
+
+  const changeVideoQuality = (quality: string) => {
+    setVideoQuality(quality as any);
+    if (videoRef.current) {
+      const current = videoRef.current.currentTime;
+      const newUrl = `${process.env.NEXT_PUBLIC_API_URL}/${videoUrls[quality]}`;
+      videoRef.current.src = newUrl;
+      videoRef.current.currentTime = current;
+      videoRef.current.play();
+    }
+  };
+
+  // Handlers
+  const handleRewind = useCallback(() => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = Math.max(videoRef.current.currentTime - 5, 0);
+    setSeekIndicator('rewind'); setTimeout(() => setSeekIndicator(null), 1000);
+  }, []);
+
+  const handleForward = useCallback(() => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = Math.min(videoRef.current.currentTime + 5, duration);
+    setSeekIndicator('forward'); setTimeout(() => setSeekIndicator(null), 1000);
+  }, [duration]);
+
+  const toggleMute = useCallback(() => setIsMuted(m => !m), []);
+  const toggleAutoplay = () => setIsAutoplay(a => !a);
+  const toggleAmbientMode = () => setAmbientMode(a => !a);
+  const toggleMiniplayer = () => { setIsMiniplayer(m => !m); if (isCinemaMode) setIsCinemaMode(false); };
+  const toggleCinemaMode = () => { setIsCinemaMode(c => !c); if (isMiniplayer) setIsMiniplayer(false); };
+  const toggleFullscreen = () => { if (!containerRef.current) return; document.fullscreenElement ? document.exitFullscreen() : containerRef.current.requestFullscreen(); };
+
+  const handleSleepTimerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    let seconds = 0;
+    if (value.includes("sec")) seconds = parseInt(value);
+    else if (value.includes("hour")) seconds = 3600;
+    if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
+    if (seconds > 0) {
+      sleepTimerRef.current = setTimeout(() => {
         if (videoRef.current) {
-          videoRef.current.currentTime = percentage * duration;
+          videoRef.current.pause(); setIsPlaying(false);
         }
-      };
+      }, seconds * 1000);
+    }
+  };
 
+  const handlePlaybackSpeedChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newSpeed = parseFloat(e.target.value);
+    if (videoRef.current) videoRef.current.playbackRate = newSpeed;
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const percentage = clickX / rect.width;
+    if (videoRef.current) videoRef.current.currentTime = percentage * duration;
+  };
 
   // Modes
   const [isAutoplay, setIsAutoplay] = useState<boolean>(autoplay);
@@ -131,12 +160,10 @@ export function useVideoPlayer({ src, autoplay = true }: { src: string; autoplay
     const cookie = document.cookie.split('; ').find(c => c.startsWith('volume='));
     if (cookie) {
       const v = parseFloat(cookie.split('=')[1]);
-      if (!isNaN(v)) {
-        setVolume(v);
-        if (videoRef.current) videoRef.current.volume = v;
-      }
+      if (!isNaN(v)) { setVolume(v); if (videoRef.current) videoRef.current.volume = v; }
     }
   }, []);
+
   useEffect(() => { if (videoRef.current) videoRef.current.volume = isMuted ? 0 : volume; }, [volume, isMuted]);
 
   // Metadata & time updates
@@ -159,6 +186,7 @@ export function useVideoPlayer({ src, autoplay = true }: { src: string; autoplay
     else { v.play(); setIsPlaying(true); setPlayPauseAnim('play'); }
     setTimeout(() => setPlayPauseAnim(null), 1000);
   }, [isPlaying]);
+
   useEffect(() => { const onKey = (e: KeyboardEvent) => { if (e.code === 'Space' && !(document.activeElement instanceof HTMLInputElement)) { e.preventDefault(); togglePlay(); } }; document.addEventListener('keydown', onKey); return () => document.removeEventListener('keydown', onKey); }, [togglePlay]);
 
   // Mouse idle
@@ -166,9 +194,7 @@ export function useVideoPlayer({ src, autoplay = true }: { src: string; autoplay
     const onMove = () => {
       setControlsVisible(true); setMouseIdle(false);
       if (mouseIdleTimerRef.current) clearTimeout(mouseIdleTimerRef.current);
-      if (isPlaying) {
-        mouseIdleTimerRef.current = setTimeout(() => { setMouseIdle(true); setControlsVisible(false); }, 3000);
-      }
+      if (isPlaying) mouseIdleTimerRef.current = setTimeout(() => { setMouseIdle(true); setControlsVisible(false); }, 3000);
     };
     const c = containerRef.current;
     if (c) {
@@ -195,10 +221,8 @@ export function useVideoPlayer({ src, autoplay = true }: { src: string; autoplay
     return () => document.removeEventListener('keydown', onKey);
   }, [handleRewind, handleForward, toggleMute]);
 
-
-
   return {
-    videoRef,
+    videoRef, // Return the passed videoRef
     containerRef,
     isPlaying,
     currentTime,
@@ -215,6 +239,8 @@ export function useVideoPlayer({ src, autoplay = true }: { src: string; autoplay
     isMiniplayer,
     isCinemaMode,
     isFullscreen,
+    videoUrl: videoUrls,
+    videoQuality,
     togglePlay,
     toggleMute,
     setVolume,
@@ -227,6 +253,8 @@ export function useVideoPlayer({ src, autoplay = true }: { src: string; autoplay
     toggleFullscreen,
     handleSleepTimerChange,
     handlePlaybackSpeedChange,
-    handleProgressClick
+    handleProgressClick,
+    changeVideoQuality,
+    getNetworkSpeed
   };
 }
