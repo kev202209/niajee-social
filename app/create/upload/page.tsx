@@ -85,20 +85,20 @@ const UploadPage: FC = () => {
       toast.error('Please select a channel.');
       return;
     }
-  
+
     setUploading(true);
     const formData = new FormData();
-    formData.append('video', file); // ✅ fix here
+    formData.append('video', file);
     formData.append('title', data.title.trim());
     formData.append('description', data.description.trim());
     formData.append('tags', data.tags.split(',').map((t) => t.trim()).join(','));
     formData.append('visibility', data.visibility);
     formData.append('channelId', data.channelId);
-  
+
     if (thumbnail) {
       formData.append('thumbnail', thumbnail);
     }
-  
+
     try {
       await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/api/videos/upload`,
@@ -123,7 +123,6 @@ const UploadPage: FC = () => {
       setProgress(0);
     }
   };
-  
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -146,18 +145,6 @@ const UploadPage: FC = () => {
             <p>Drag & drop a video file here, or click to select</p>
           )}
         </div>
-
-        {/* Upload Progress Bar */}
-        {uploading && (
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full">
-            <div
-              className="bg-blue-600 text-xs font-medium text-blue-100 text-center p-0.5 leading-none rounded-full"
-              style={{ width: `${progress}%` }}
-            >
-              {progress}%
-            </div>
-          </div>
-        )}
 
         {/* Title Input */}
         <div>
@@ -239,6 +226,18 @@ const UploadPage: FC = () => {
             />
           )}
         </div>
+
+        {/* Upload Progress Bar - just above button */}
+        {uploading && (
+          <div className="w-full bg-gray-300 dark:bg-gray-700 rounded-full h-6 overflow-hidden">
+            <div
+              className="bg-blue-600 text-sm font-semibold text-white text-center leading-6"
+              style={{ width: `${progress}%` }}
+            >
+              {progress}%
+            </div>
+          </div>
+        )}
 
         {/* Submit Button */}
         <button
