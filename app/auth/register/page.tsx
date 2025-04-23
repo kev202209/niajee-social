@@ -289,9 +289,9 @@ export default function RegisterPage() {
 
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
                 By creating an account, you confirm that you have read and accept our{" "}
-                <Link href="/legals/terms" className="text-blue-500 underline hover:text-blue-700">
+                <a href="/legals/terms" className="text-blue-500 underline hover:text-blue-700" target="_blank" rel="noopener noreferrer">
                   Terms and Conditions
-                </Link>.
+                </a>.
               </p>
 
               <div className="flex justify-between">
