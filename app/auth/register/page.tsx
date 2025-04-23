@@ -286,6 +286,14 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
               />
+
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                By creating an account, you confirm that you have read and accept our{" "}
+                <Link href="/legals/terms" className="text-blue-500 underline hover:text-blue-700">
+                  Terms and Conditions
+                </Link>.
+              </p>
+
               <div className="flex justify-between">
                 <button
                   onClick={() => setStep(2)}
@@ -309,6 +317,7 @@ export default function RegisterPage() {
               </div>
             </div>
           )}
+
 
           {step === 4 && (
             <div>
