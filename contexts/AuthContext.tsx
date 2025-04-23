@@ -223,7 +223,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkEmailAvailability = async (email: string): Promise<boolean> => {
     try {
-      const response = await fetch(`${api_link}/auth/check-email/${email}`);
+      const response = await fetch(`${api_link}/auth/check-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json', // Important: Tell the backend we're sending JSON
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email }), // Send the email in the request body as JSON
+      });
       return response.ok;
     } catch (err) {
       throw new Error(handleFetchError(err, 'Email availability check failed'));
