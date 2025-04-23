@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const authPages = ['/auth/login', '/auth/register', '/auth/forget-password', '/auth/verify-email', '/auth/reset-password'];
-const publicPages = ['/legals/privacy-policy', '/legals/terms', '/legals/contact-us'];
+const publicPages = ['/legals/privacy-policy', '/legals/terms', '/legals/contact-us', '/']; // Add root path
 
 // Add public asset extensions
 const publicAssets = /\.(?:jpg|jpeg|gif|png|svg|ico|webp|mp4|webm)$/;
@@ -15,8 +15,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Allow access to legal pages without authentication
-  if (publicPages.some(page => pathname.startsWith(page))) {
+  // Allow access to public pages without authentication
+  if (publicPages.some(page => pathname === page)) { // Use exact match for homepage
     return NextResponse.next();
   }
 
