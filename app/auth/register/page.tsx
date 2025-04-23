@@ -41,6 +41,10 @@ export default function RegisterPage() {
     setFormData(prev => ({ ...prev, profilePicture: files[0] }));
   };
 
+  const handleRemoveImage = () => {
+    setFormData(prev => ({ ...prev, profilePicture: null }));
+  };
+
   const handleEmailCheck = async () => {
     setIsEmailLoading(true);
     try {
@@ -206,11 +210,22 @@ export default function RegisterPage() {
               </label>
               <div className="flex flex-col items-center mb-3">
                 {formData.profilePicture ? (
-                  <img
-                    src={URL.createObjectURL(formData.profilePicture)}
-                    alt="Profile Preview"
-                    className="w-32 h-32 rounded-full object-cover mb-2"
-                  />
+                  <div className="relative">
+                    <img
+                      src={URL.createObjectURL(formData.profilePicture)}
+                      alt="Profile Preview"
+                      className="w-32 h-32 rounded-full object-cover mb-2"
+                    />
+                    <button
+                      onClick={handleRemoveImage}
+                      className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700 transition-colors"
+                      type="button"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
                 ) : (
                   <img
                     src="/placeholder.png"
