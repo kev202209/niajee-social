@@ -3,12 +3,13 @@
 import { useAuth } from '@/contexts/AuthContext';
 import Home from '@/components/Home';
 import Landing from '@/components/Landing';
+import Loading from './watch/[v]/loading';
 
 export default function HomePage() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   // Show landing page for non-logged in users
