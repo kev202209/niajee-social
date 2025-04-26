@@ -1,6 +1,7 @@
 // app/layout.tsx
 import Header from '@/components/Header'
 import type { Metadata } from 'next'
+import Footer from '@/components/home/Footer'
 
 export const metadata: Metadata = {
   title: 'Mosaic - Social Media Super App',
@@ -22,6 +23,7 @@ export default function RootLayout({
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
             <Header />
             <div className="">{children}</div>
+            <Footer />
       </div>
   )
 }
