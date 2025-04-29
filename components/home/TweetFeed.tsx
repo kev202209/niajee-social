@@ -21,9 +21,9 @@ const TweetFeed: FC = () => {
           console.log('-------Fetched tweets:', data);
           const transformedTweets: Tweet[] = data.map((item: any) => ({
             id: item._id,
-            content: item.desc,
-            username: item.user?.firstName + ' ' + item.user?.lastName || "Anonymous",
-            handle: item.user?.username || "@unknown",
+            content: item.content,
+            username: item.firstName + ' ' + item.lastName || "Anonymous",
+            handle: item.userName || "@unknown",
             profilePic: item.user?.profilePic ?? "/placeholder.png"
           }));
           setTweets(transformedTweets);
