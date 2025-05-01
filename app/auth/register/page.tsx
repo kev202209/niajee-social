@@ -139,7 +139,7 @@ export default function RegisterPage() {
                   placeholder="First Name"
                   value={formData.firstName}
                   onChange={handleChange}
-                  className="w-full p-2 border rounded mb-3 mr-1.5 dark:bg-inherit"
+                  className="w-full p-2 border rounded mb-3 mr-1.5 dark:bg-inherit text-black dark:text-white"
                 />
                 <input
                   type="text"
@@ -147,7 +147,7 @@ export default function RegisterPage() {
                   placeholder="Last Name"
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="w-full p-2 border rounded mb-3 dark:bg-inherit"
+                  className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
                 />
               </div>
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
@@ -192,7 +192,7 @@ export default function RegisterPage() {
 
           {step === 2 && (
             <div>
-              <h1 className="text-2xl font-bold mb-4 text-white dark:text-blue-600">
+              <h1 className="text-2xl font-bold mb-4 text-blue-600 dark:text-white">
                 Set up Profile
               </h1>
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
@@ -336,8 +336,8 @@ export default function RegisterPage() {
 
           {step === 4 && (
             <div>
-              <h1 className="text-2xl font-bold mb-4">Verify Your Email</h1>
-              <p>Registration successful! Please check your email for verification.</p>
+              <h1 className="text-2xl font-bold mb-4 text-black dark:text-white">Verify Your Email</h1>
+              <p className="text-black dark:text-white">Registration successful! Please check your email for verification.</p>
             </div>
           )}
         </div>
