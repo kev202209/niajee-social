@@ -159,7 +159,7 @@ export default function RegisterPage() {
                 placeholder="Email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full p-2 border rounded mb-3 dark:bg-inherit"
+                className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
               />
               <button
                 onClick={handleEmailCheck}
