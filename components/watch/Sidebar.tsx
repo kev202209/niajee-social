@@ -22,27 +22,27 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
     >
       <ul className="space-y-2 p-4">
         <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <Home className="w-5 h-5 mr-3" />
+          <Home className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
           <span className="text-gray-900 dark:text-gray-100">Home</span>
         </li>
         <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <TrendingUp className="w-5 h-5 mr-3" />
+          <TrendingUp className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
           <span className="text-gray-900 dark:text-gray-100">Trending</span>
         </li>
         <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <LaptopMinimalCheck className="w-5 h-5 mr-3" />
+          <LaptopMinimalCheck className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
           <span className="text-gray-900 dark:text-gray-100">Subscriptions</span>
         </li>
         <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <Library className="w-5 h-5 mr-3" />
+          <Library className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
           <span className="text-gray-900 dark:text-gray-100">Library</span>
         </li>
         <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <History className="w-5 h-5 mr-3" />
+          <History className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
           <span className="text-gray-900 dark:text-gray-100">History</span>
         </li>
         <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <Download className="w-5 h-5 mr-3" />
+          <Download className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
           <span className="text-gray-900 dark:text-gray-100">Downloads</span>
         </li>
       </ul>
