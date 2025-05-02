@@ -13,6 +13,7 @@ import {
   FiMenu,
 } from "react-icons/fi";
 import Sidebar from "./Sidebar"; // Adjust the import path if needed
+import { useAuth } from "@/contexts/AuthContext"; // Add this import
 
 const Header: FC = () => {
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
@@ -59,6 +60,15 @@ const Header: FC = () => {
       .then((data) => setTagline(data.tagline))
       .catch(() => setTagline("Craft your digital legacy."));
   }, []);
+
+  // Add auth context
+  const { user, logout } = useAuth();
+
+  // Add logout handler
+  const handleLogout = async () => {
+    await logout();
+    // Reload the page after logout
+  };
 
   return (
     <>
@@ -122,7 +132,7 @@ const Header: FC = () => {
                 className="focus:outline-none"
               >
                 <Image
-                  src="/placeholder.png"
+                  src={user && user.profilePic ? user.profilePic : "/placeholder.png"}
                   alt="Profile"
                   width={40}
                   height={40}
@@ -133,28 +143,33 @@ const Header: FC = () => {
                 <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50">
                   <div className="mb-2">
                     <p className="font-bold text-gray-900 dark:text-gray-100">
-                      Username
+                      {user ? user.username : "Username"}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      user@example.com
+                      {user ? user.email : "user@example.com"}
                     </p>
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
                     <ul>
                       <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <FiPlus className="mr-2" /> <span>Create</span>
+                        <Link href="/create" className="flex items-center w-full">
+                          <FiPlus className="mr-2" /> <span>Create</span>
+                        </Link>
                       </li>
                       <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <FiSettings className="mr-2" /> <span>Settings</span>
-                      </li>
-                      {/* <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <DarkModeToggle />
-                        <span>Dark Mode</span>
-                      </li> */}
-                      <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <FiUser className="mr-2" /> <span>Profile</span>
+                        <Link href="/settings" className="flex items-center w-full">
+                          <FiSettings className="mr-2" /> <span>Settings</span>
+                        </Link>
                       </li>
                       <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
+                        <Link href="/profile" className="flex items-center w-full">
+                          <FiUser className="mr-2" /> <span>Profile</span>
+                        </Link>
+                      </li>
+                      <li
+                        className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer"
+                        onClick={handleLogout}
+                      >
                         <FiLogOut className="mr-2" /> <span>Logout</span>
                       </li>
                     </ul>

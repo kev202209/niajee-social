@@ -94,7 +94,7 @@ const Header: FC = () => {
           className="focus:outline-none"
         >
           <Image
-            src="/placeholder.png"
+            src={user && user.profilePic ? user.profilePic : "/placeholder.png"}
             alt="Profile"
             width={40}
             height={40}
