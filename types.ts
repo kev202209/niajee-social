@@ -7,7 +7,7 @@ export interface User {
   location: string | null;
   job: string | null;
   website: string | null;
-  profileImg: string | null;
+  profilePic: string | null;
   cover: string | null;
   createdAt: Date;
   updatedAt: Date;
