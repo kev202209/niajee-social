@@ -9,6 +9,7 @@ import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
 import { useAuth } from "@/contexts/AuthContext";
 import "react-toastify/dist/ReactToastify.css";
+import { getDeviceInfo } from '../../utils/deviceInfo';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -71,12 +72,18 @@ export default function RegisterPage() {
 
     setIsRegisterLoading(true);
     try {
+      // Get device information
+      const deviceInfo = await getDeviceInfo();
+
+      // Register user with device info
       await register(
         formData.email,
         formData.password,
         formData.username,
         formData.firstName,
-        formData.birthday
+        formData.lastName,
+        formData.birthday,
+        deviceInfo // Add this parameter to your register function
       );
 
       // Handle profile picture upload if exists
@@ -84,6 +91,7 @@ export default function RegisterPage() {
         const uploadFormData = new FormData();
         uploadFormData.append('file', formData.profilePicture);
         uploadFormData.append('email', formData.email);
+        uploadFormData.append('deviceInfo', JSON.stringify(deviceInfo));
 
         const uploadResponse = await fetch(`${api_link}/auth/profile-picture`, {
           method: 'POST',
@@ -225,7 +233,7 @@ export default function RegisterPage() {
                         <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </button>
-                  </div>
+                </div>
                 ) : (
                   <img
                     src="/placeholder.png"
@@ -304,7 +312,7 @@ export default function RegisterPage() {
 
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
                 By creating an account, you confirm that you have read and accept our{" "}
-                <a href="/legals/terms" className="text-blue-500 underline hover:text-blue-700" target="_blank" rel="noopener noreferrer">
+                <a href={`${process.env.NEXT_PUBLIC_MAIN_URL}/terms`} className="text-blue-500 underline hover:text-blue-700" target="_blank" rel="noopener noreferrer">
                   Terms and Conditions
                 </a>.
               </p>

@@ -6,13 +6,15 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
-  login: (identifier: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string, deviceInfo: any) => Promise<void>;
   register: (
     email: string,
     password: string,
     username: string,
     firstName: string,
-    birthday?: string
+    lastName: string,
+    birthday: string | undefined,
+    deviceInfo: any
   ) => Promise<void>;
   logout: () => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
@@ -66,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (identifier: string, password: string) => {
+  const login = async (identifier: string, password: string, deviceInfo: any) => {
     try {
       setLoading(true);
       setError(null);
@@ -80,10 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({
           identifier,
           password,
-          deviceDetails: {
-            device: navigator.userAgent,
-            location: 'Unknown'
-          }
+          deviceInfo
         }),
       });
 
@@ -110,7 +109,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     username: string,
     firstName: string,
-    birthday?: string
+    lastName: string,
+    birthday: string | undefined,
+    deviceInfo: any
   ) => {
     try {
       setLoading(true);
@@ -126,8 +127,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           password,
           username,
           firstName,
+          lastName,
           birthday,
-          deviceDetails: navigator.userAgent
+          deviceInfo
         }),
       });
 
@@ -236,6 +238,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(handleFetchError(err, 'Email availability check failed'));
     }
   };
+
 
   const logout = async () => {
     try {

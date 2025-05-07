@@ -9,6 +9,7 @@ import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
 import { useAuth } from "@/contexts/AuthContext";
 import "react-toastify/dist/ReactToastify.css";
+import { getDeviceInfo } from "../../utils/deviceInfo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,8 +26,8 @@ export default function LoginPage() {
     const password = formData.get('password') as string;
 
     try {
-      console.log("Logging in with:", { identifier, password });
-      await login(identifier, password);
+      const deviceInfo = await getDeviceInfo();
+      await login(identifier, password, deviceInfo);
       toast.success("Login successful!");
       router.push('/');
     } catch (err) {
@@ -44,16 +45,14 @@ export default function LoginPage() {
     <div className="relative w-full overflow-hidden bg-gradient-to-br from-white to-gray-200 dark:from-black dark:to-gray-800">
       <BlobAnimation />
       <ToastContainer
-  toastClassName={() =>
-    "relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg"
-  }
-  // bodyClassName="text-base font-semibold"
-  closeButton={false}
-  autoClose={7000}
-  hideProgressBar={true}
-/>
-
-
+        toastClassName={() =>
+          "relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg"
+        }
+        // bodyClassName="text-base font-semibold"
+        closeButton={false}
+        autoClose={7000}
+        hideProgressBar={true}
+      />
 
 
       {/* Foreground Content */}
