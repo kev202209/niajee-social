@@ -40,12 +40,20 @@ export interface Short {
   }
   
 export interface Tweet {
-    id: number;
-    profilePic: string;
-    username: string;
-    handle: string;
-    content: string;
-  }
+  id: string;
+  content: string;
+  username: string;
+  displayName: string;
+  profilePic: string;
+  createdAt?: string;
+  likeCount: number;
+  replyCount: number;
+  repostCount: number;
+  saveCount: number;
+  isLiked: boolean;
+  isSaved: boolean;
+  isReposted: boolean;
+}
 
 
 // Types (same as before, but centralized here)
