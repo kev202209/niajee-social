@@ -24,7 +24,7 @@ const TweetFeed: FC = () => {
             id: item._id,
             content: item.content,
             username: item.user?.username || "Anonymous",
-            handle: item.user?.username || "@unknown",
+            displayname: item.user?.displayName || "@unknown",
             profilePic: item.user?.profilePic ?? "/placeholder.png",
             createdAt: item.createdAt,
             likeCount: item.likeCount,
@@ -69,10 +69,10 @@ const TweetFeed: FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-1">
                       <span className="font-semibold text-gray-900 dark:text-gray-100 truncate text-xs">
-                        {tweet.username}
+                        {tweet.displayName}
                       </span>
                       <span className="text-gray-600 dark:text-gray-400 truncate flex-shrink-0 text-xs">
-                        @{tweet.handle}
+                        @{tweet.username}
                       </span>
                     </div>
                     <span className="text-xs text-gray-500">
