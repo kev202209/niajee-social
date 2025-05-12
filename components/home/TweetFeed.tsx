@@ -2,7 +2,8 @@ import { Tweet } from "@/types";
 import { FC, useEffect, useState } from "react";
 import Image from "next/image";
 import TweetFeedSkeleton from "./TweetFeedSkeleton";
-import { FiMessageCircle, FiRepeat, FiHeart, FiEye, FiBookmark, FiShare } from "react-icons/fi";
+import { FiMessageCircle, FiRepeat, FiHeart, FiBookmark, FiShare } from "react-icons/fi";
+import timeAgo from "@/app/utils/timeAgo";
 
 const TweetFeed: FC = () => {
   const [tweets, setTweets] = useState<Tweet[]>([]);
@@ -22,9 +23,17 @@ const TweetFeed: FC = () => {
           const transformedTweets: Tweet[] = data.map((item: any) => ({
             id: item._id,
             content: item.content,
-            username: item.firstName + ' ' + item.lastName || "Anonymous",
-            handle: item.userName || "@unknown",
-            profilePic: item.user?.profilePic ?? "/placeholder.png"
+            username: item.user?.username || "Anonymous",
+            handle: item.user?.username || "@unknown",
+            profilePic: item.user?.profilePic ?? "/placeholder.png",
+            createdAt: item.createdAt,
+            likeCount: item.likeCount,
+            replyCount: item.replyCount,
+            repostCount: item.repostCount,
+            saveCount: item.saveCount,
+            isLiked: item.isLiked,
+            isSaved: item.isSaved,
+            isReposted: item.isReposted
           }));
           setTweets(transformedTweets);
         } else {
@@ -37,7 +46,6 @@ const TweetFeed: FC = () => {
   
     fetchTweets();
   }, []);
-  
   
   return tweets.length === 0 ? (
     <TweetFeedSkeleton />
@@ -58,32 +66,58 @@ const TweetFeed: FC = () => {
                   className="rounded-full h-8 w-8 flex-shrink-0"
                 />
                 <div className="ml-2 flex-1 min-w-0">
-                  <div className="flex items-center space-x-1">
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 truncate text-xs">
-                      {tweet.username}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400 truncate flex-shrink-0 text-xs">
-                      @{tweet.handle}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1">
+                      <span className="font-semibold text-gray-900 dark:text-gray-100 truncate text-xs">
+                        {tweet.username}
+                      </span>
+                      <span className="text-gray-600 dark:text-gray-400 truncate flex-shrink-0 text-xs">
+                        @{tweet.handle}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500">
+                      {tweet.createdAt && timeAgo(tweet.createdAt)}
                     </span>
                   </div>
                   <p className="text-gray-900 dark:text-gray-100 text-xs mt-1 line-clamp-2">
                     {tweet.content}
                   </p>
                   <div className="flex items-center justify-between mt-2 gap-1">
-                    <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-blue-500" title="Comment">
+                    <button 
+                      className={`flex items-center gap-1 ${tweet.replyCount > 0 ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'}`} 
+                      title="Comment"
+                    >
                       <FiMessageCircle className="w-3 h-3" />
+                      {tweet.replyCount > 0 && (
+                        <span className="text-xs">{tweet.replyCount}</span>
+                      )}
                     </button>
-                    <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-green-500" title="Retweet">
+                    <button 
+                      className={`flex items-center gap-1 ${tweet.isReposted ? 'text-green-500' : 'text-gray-500 dark:text-gray-400 hover:text-green-500'}`} 
+                      title="Retweet"
+                    >
                       <FiRepeat className="w-3 h-3" />
+                      {tweet.repostCount > 0 && (
+                        <span className="text-xs">{tweet.repostCount}</span>
+                      )}
                     </button>
-                    <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-red-500" title="Like">
+                    <button 
+                      className={`flex items-center gap-1 ${tweet.isLiked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400 hover:text-red-500'}`} 
+                      title="Like"
+                    >
                       <FiHeart className="w-3 h-3" />
+                      {tweet.likeCount > 0 && (
+                        <span className="text-xs">{tweet.likeCount}</span>
+                      )}
                     </button>
-                    <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-purple-500" title="Views">
-                      <FiEye className="w-3 h-3" />
-                    </button>
-                    <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-yellow-500" title="Bookmark">
+                    <button 
+                      className={`flex items-center gap-1 ${tweet.isSaved ? 'text-yellow-500' : 'text-gray-500 dark:text-gray-400 hover:text-yellow-500'}`}
+                      title="Bookmark"
+                    >
                       <FiBookmark className="w-3 h-3" />
+                      {tweet.saveCount > 0 && (
+                        <span className="text-xs">{tweet.saveCount}</span>
+                      )}
                     </button>
                     <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-blue-500" title="Share">
                       <FiShare className="w-3 h-3" />
@@ -96,6 +130,6 @@ const TweetFeed: FC = () => {
         </ul>
       </aside>
     );
-  };
+};
 
 export default TweetFeed;
