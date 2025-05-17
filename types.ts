@@ -55,8 +55,6 @@ export interface Tweet {
   isReposted: boolean;
 }
 
-
-// Types (same as before, but centralized here)
 export interface mVideo {
   _id: string;
   videoId: string;
