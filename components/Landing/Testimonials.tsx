@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import ParticleBackground from "./ParticleBackground";
 
 export default function Testimonials() {
   const [current, setCurrent] = useState(0);
@@ -61,8 +62,17 @@ export default function Testimonials() {
   };
 
   return (
-    <section className="py-24 bg-gray-50 dark:bg-gray-950">
-      <div className="max-w-7xl mx-auto px-4">
+    <section className="relative py-24 bg-gray-50 dark:bg-gray-950 overflow-hidden">
+      {/* Particle Background */}
+      <ParticleBackground 
+        className="z-0" 
+        color="#9333ea" 
+        density={40} 
+        connectionOpacity={0.05}
+        particleOpacity={0.15}
+      />
+      
+      <div className="relative z-10 max-w-7xl mx-auto px-4">
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -85,7 +95,7 @@ export default function Testimonials() {
           {/* Background decorative elements */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-gradient-to-r from-blue-400/20 to-purple-400/20 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full blur-3xl -z-10"></div>
           
-          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 md:p-12">
+          <div className="relative bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl p-8 md:p-12">
             <svg className="absolute text-blue-500/20 w-24 h-24 -top-8 -left-8" width="40" height="40" viewBox="0 0 40 40" fill="currentColor">
               <path d="M13.333 26.667c0-7.333 5.333-13.333 12-13.333v-6.667c-10.667 0-18.667 8.667-18.667 20v6.667h13.333v-6.667h-6.667zM33.333 26.667c0-7.333 5.334-13.333 12-13.333v-6.667c-10.666 0-18.666 8.667-18.666 20v6.667h13.333v-6.667h-6.667z" />
             </svg>
@@ -152,7 +162,7 @@ export default function Testimonials() {
               </AnimatePresence>
 
               {/* Navigation buttons */}
-              <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between items-center pointer-events-none">
+              <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between items-center pointer-events-none px-4">
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
