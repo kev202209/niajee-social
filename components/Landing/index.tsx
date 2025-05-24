@@ -4,6 +4,7 @@ import React from "react";
 import Header from "./Header";
 import Hero from "./Hero";
 import Features from "./Features";
+import Testimonials from "./Testimonials";
 import DownloadSection from "./DownloadSection";
 import ParallaxSection from "./ParallaxSection";
 import Footer from "./Footer";
@@ -14,8 +15,9 @@ export default function Landing() {
       <Header />
       <Hero />
       
-      <main className="">
+      <main>
         <Features />
+        <Testimonials /> {/* Add the new testimonials section */}
         <DownloadSection />
         <ParallaxSection />
       </main>
