@@ -1,3 +1,5 @@
+'use client';
+
 import React from "react";
 import {
   Globe,
@@ -7,6 +9,7 @@ import {
   Users,
   LayoutGrid,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Features() {
   const features = [
@@ -52,28 +55,86 @@ export default function Features() {
     },
   ];
 
+  // Animation variants for container
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  // Animation variants for items
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100
+      }
+    }
+  };
+
   return (
-    <section id="why-join" className="py-16 bg-gray-50 dark:bg-gray-950">
+    <section id="why-join" className="py-24 bg-gray-50 dark:bg-gray-950">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
-          Why Join Mosaic
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-100px" }}
+          className="text-center mb-16"
+        >
+          <span className="inline-block px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 text-sm font-medium mb-3">
+            Features
+          </span>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-gray-100 mb-4">
+            Why Join Mosaic
+          </h2>
+          <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-400 text-lg">
+            Experience a new era of social media with our innovative platform designed with your needs in mind.
+          </p>
+        </motion.div>
+
+        <motion.div 
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+        >
           {features.map((feature, index) => (
-            <div
+            <motion.div
               key={index}
-              className="flex flex-col items-center text-center p-6 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-lg transition"
+              variants={itemVariants}
+              className="relative group flex flex-col items-center text-center p-8 rounded-xl backdrop-blur-sm 
+                         bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 
+                         shadow-sm hover:shadow-xl transition-all duration-300
+                         hover:border-blue-300 dark:hover:border-blue-700"
+              whileHover={{ 
+                y: -5,
+                transition: { duration: 0.2 }
+              }}
             >
-              <div className="mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-gray-100">
+              <div className="mb-6 p-3 rounded-full bg-gray-100 dark:bg-gray-700/50 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/30 transition-colors duration-300">
+                {feature.icon}
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-gray-800 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                 {feature.title}
               </h3>
               <p className="text-gray-600 dark:text-gray-300">
                 {feature.description}
               </p>
-            </div>
+              
+              {/* Decorative gradient blur */}
+              <div className="absolute -z-10 h-32 w-32 rounded-full bg-blue-400/20 dark:bg-blue-600/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
