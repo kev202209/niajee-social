@@ -83,9 +83,12 @@ export default function Hero() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="group relative flex w-fit items-center gap-1.5 rounded-full 
-                         bg-gray-950/10 px-4 py-2 sm:px-6 sm:py-3 
+                         dark:bg-gray-950/10 dark:hover:bg-gray-950/50
+                         bg-gray-800/90 hover:bg-gray-900
+                         px-4 py-2 sm:px-6 sm:py-3 
                          text-sm sm:text-base md:text-lg font-medium
-                         transition-colors hover:bg-gray-950/50"
+                         text-white dark:text-gray-200
+                         transition-colors"
             >
               Get Started
               <FiArrowRight className="ml-1 transition-transform group-hover:-rotate-45 group-active:-rotate-12" />
