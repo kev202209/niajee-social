@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext';
 import Home from '@/components/Home';
-import Landing from '@/components/Landing';
+import Landing from '@/components/Landing/index';
 import Loading from './watch/[v]/loading';
 
 export default function HomePage() {
