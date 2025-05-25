@@ -93,10 +93,6 @@ export default function CookiePolicy() {
             <li>By email: support@mosaic-social.com</li>
           </ul>
         </section>
-
-        <footer className="mt-12 text-center text-sm text-gray-600 dark:text-gray-400">
-          &copy; {new Date().getFullYear()} Mosaic. All rights reserved.
-        </footer>
       </div>
     </div>
   );
