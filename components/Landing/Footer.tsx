@@ -30,7 +30,7 @@ export default function Footer() {
             <p className="mb-4">
               Bringing communities together through innovative social media experiences.
             </p>
-            <div className="flex space-x-4 mt-6">
+            {/* <div className="flex space-x-4 mt-6">
               <motion.a 
                 href="https://twitter.com" 
                 target="_blank"
@@ -71,23 +71,13 @@ export default function Footer() {
                 <FiYoutube className="w-5 h-5" />
                 <span className="sr-only">YouTube</span>
               </motion.a>
-            </div>
+            </div> */}
           </div>
           
           {/* Quick Links */}
           <div className="col-span-1">
             <h3 className="text-white text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
-              <li>
-                <Link href="/about" className="hover:text-white transition-colors">
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/features" className="hover:text-white transition-colors">
-                  Features
-                </Link>
-              </li>
               <li>
                 <Link href="/blog" className="hover:text-white transition-colors">
                   Blog
@@ -99,7 +89,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-white transition-colors">
+                <Link href="/legals/contact-us" className="hover:text-white transition-colors">
                   Contact
                 </Link>
               </li>
@@ -121,12 +111,12 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/cookies" className="hover:text-white transition-colors">
+                <Link href="/legals/cookie-policy" className="hover:text-white transition-colors">
                   Cookie Policy
                 </Link>
               </li>
               <li>
-                <Link href="/gdpr" className="hover:text-white transition-colors">
+                <Link href="/legals/gdpr" className="hover:text-white transition-colors">
                   GDPR
                 </Link>
               </li>
@@ -167,17 +157,18 @@ export default function Footer() {
             <p className="text-sm">
               © {currentYear} Mosaic. All rights reserved.
             </p>
-            <div className="mt-4 md:mt-0">
+            {/* <div className="mt-4 md:mt-0">
               <select 
                 className="bg-gray-800 dark:bg-gray-700 border border-gray-700 dark:border-gray-600 text-white rounded px-2 py-1 text-sm"
                 defaultValue="en"
               >
                 <option value="en">English</option>
+                <option value="sw">Kiswahili</option>
                 <option value="es">Español</option>
                 <option value="fr">Français</option>
                 <option value="de">Deutsch</option>
               </select>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
