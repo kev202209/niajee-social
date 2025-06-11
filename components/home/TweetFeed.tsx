@@ -79,9 +79,11 @@ const TweetFeed: FC = () => {
                       {tweet.createdAt && timeAgo(tweet.createdAt)}
                     </span>
                   </div>
+                  <a href={`${process.env.NEXT_PUBLIC_SECOND_FRONTEND_URL}/${tweet.username}/status/${tweet.id}`}>
                   <p className="text-gray-900 dark:text-gray-100 text-xs mt-1 line-clamp-2">
                     {tweet.content}
                   </p>
+                  </a>
                   <div className="flex items-center justify-between mt-2 gap-1">
                     <button 
                       className={`flex items-center gap-1 ${tweet.replyCount > 0 ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'}`} 
