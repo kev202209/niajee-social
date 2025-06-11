@@ -42,8 +42,8 @@ export default function ResetPasswordPage() {
         toast.error(data.message);
       }
     } catch (err) {
-      setError('Connection error.Please check your internet connection or try again later.');
-      toast.error('Connection error.Please check your internet connection or try again later.');
+      setError('Connection error. Please check your internet connection or try again later.');
+      toast.error('Connection error. Please check your internet connection or try again later.');
       console.error(err);
     }
     setIsOtpLoading(false);
@@ -78,8 +78,8 @@ export default function ResetPasswordPage() {
         toast.error(data.message);
       }
     } catch (err) {
-      setError('Connection error.Please check your internet connection or try again later.');
-      toast.error('Connection error.Please check your internet connection or try again later.');
+      setError('Connection error. Please check your internet connection or try again later.');
+      toast.error('Connection error. Please check your internet connection or try again later.');
       console.error(err);
     }
     setIsResetLoading(false);
@@ -110,68 +110,82 @@ export default function ResetPasswordPage() {
         <div className='max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#ffffff,theme(colors.slate.200)_50%,#ffffff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.300/.48)_80%,theme(colors.blue.500)_86%,theme(colors.blue.300)_90%,theme(colors.blue.500)_94%,theme(colors.slate.300/.48))_border-box] dark:[background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,theme(colors.indigo.500)_86%,theme(colors.indigo.300)_90%,theme(colors.indigo.500)_94%,theme(colors.slate.600/.48))_border-box]  rounded-2xl border border-1.5 border-transparent animate-border'>
           
           <h1 className="text-2xl font-bold mb-4 text-blue-600 dark:text-white">Reset Password</h1>
-          {/* {message && <p className="text-green-500 mb-2">{message}</p>} */}
-          {/* {error && <p className="text-red-500 mb-2">{error}</p>} */}
 
           {step === 1 && (
-            <form onSubmit={handleVerifyOtp}>
-              <label className="block text-sm font-medium text-gray-500 mb-1">Enter OTP</label>
-              <input
-                type="text"
-                placeholder="Enter OTP"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className="w-full p-2 border rounded mb-4 dark:bg-inherit"
-                required
-              />
-              <button
-                type="submit"
-                disabled={!otp || isOtpLoading}
-                className={`w-full h-10 p-2 rounded-xl text-white ${
-                  isOtpLoading 
-                    ? "bg-blue-600 pointer-events-none" 
-                    : (!otp ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700")
-                }`}
-              >
-                {isOtpLoading ? <LoadingDots /> : "Verify OTP"}
-              </button>
-            </form>
+            <div>
+              <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                Enter the OTP sent to your email to verify your identity.
+              </p>
+              <form onSubmit={handleVerifyOtp}>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Enter OTP
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="w-full p-2 border rounded mb-4 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={!otp || isOtpLoading}
+                  className={`w-full h-10 p-2 rounded-xl text-white ${
+                    isOtpLoading 
+                      ? "bg-blue-600 pointer-events-none" 
+                      : (!otp ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700")
+                  }`}
+                >
+                  {isOtpLoading ? <LoadingDots /> : "Verify OTP"}
+                </button>
+              </form>
+            </div>
           )}
 
           {step === 2 && (
-            <form onSubmit={handleResetPassword}>
-              <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
-              <input
-                type="password"
-                placeholder="New Password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full p-2 border rounded mb-4 dark:bg-inherit"
-                required
-              />
-              <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
-              <input
-                type="password"
-                placeholder="Confirm New Password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full p-2 border rounded mb-4 dark:bg-inherit"
-                required
-              />
-              <button
-                type="submit"
-                disabled={!newPassword || !confirmPassword || isResetLoading}
-                className={`w-full h-10 p-2 rounded-xl text-white ${
-                  isResetLoading 
-                    ? "bg-blue-600 pointer-events-none" 
-                    : (!newPassword || !confirmPassword 
-                        ? "bg-gray-400 cursor-not-allowed" 
-                        : "bg-blue-600 hover:bg-blue-700")
-                }`}
-              >
-                {isResetLoading ? <LoadingDots /> : "Reset Password"}
-              </button>
-            </form>
+            <div>
+              <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                OTP verified! Now enter your new password.
+              </p>
+              <form onSubmit={handleResetPassword}>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="New Password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full p-2 border rounded mb-4 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  required
+                />
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  placeholder="Confirm New Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full p-2 border rounded mb-4 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={!newPassword || !confirmPassword || isResetLoading}
+                  className={`w-full h-10 p-2 rounded-xl text-white ${
+                    isResetLoading 
+                      ? "bg-blue-600 pointer-events-none" 
+                      : (!newPassword || !confirmPassword 
+                          ? "bg-gray-400 cursor-not-allowed" 
+                          : "bg-blue-600 hover:bg-blue-700")
+                  }`}
+                >
+                  {isResetLoading ? <LoadingDots /> : "Reset Password"}
+                </button>
+              </form>
+            </div>
           )}
         </div>
       </div>

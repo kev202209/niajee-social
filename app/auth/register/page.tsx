@@ -125,7 +125,6 @@ export default function RegisterPage() {
         toastClassName={() =>
           "relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg"
         }
-        // bodyClassName="text-base font-semibold"
         closeButton={false}
         autoClose={7000}
         hideProgressBar={true}
@@ -149,7 +148,7 @@ export default function RegisterPage() {
                   placeholder="First Name"
                   value={formData.firstName}
                   onChange={handleChange}
-                  className="w-full p-2 border rounded mb-3 mr-1.5 dark:bg-inherit text-black dark:text-white"
+                  className="w-full p-2 border rounded mb-3 mr-1.5 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <input
                   type="text"
@@ -157,7 +156,7 @@ export default function RegisterPage() {
                   placeholder="Last Name"
                   value={formData.lastName}
                   onChange={handleChange}
-                  className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
+                  className="w-full p-2 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
@@ -169,7 +168,7 @@ export default function RegisterPage() {
                 placeholder="Email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
+                className="w-full p-2 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
               <button
                 onClick={handleEmailCheck}
@@ -246,7 +245,7 @@ export default function RegisterPage() {
                   type="file"
                   name="profilePicture"
                   onChange={handleFileChange}
-                  className="w-full p-2 border rounded mb-1 text-black dark:text-white"
+                  className="w-full p-2 border rounded mb-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-600 dark:file:text-gray-300"
                 />
                 <p className="text-sm text-gray-500">This is optional</p>
               </div>
@@ -259,7 +258,7 @@ export default function RegisterPage() {
                 placeholder="Username"
                 value={formData.username}
                 onChange={handleChange}
-                className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
+                className="w-full p-2 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
               <div className="flex justify-between">
                 <button
@@ -297,7 +296,7 @@ export default function RegisterPage() {
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
+                className="w-full p-2 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
                 Confirm Password
@@ -308,7 +307,7 @@ export default function RegisterPage() {
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
+                className="w-full p-2 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               />
 
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">

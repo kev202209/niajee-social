@@ -48,7 +48,6 @@ export default function LoginPage() {
         toastClassName={() =>
           "relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg"
         }
-        // bodyClassName="text-base font-semibold"
         closeButton={false}
         autoClose={7000}
         hideProgressBar={true}
@@ -71,7 +70,7 @@ export default function LoginPage() {
             name="identifier"
             required
             placeholder="Enter your email or username"
-            className="w-full p-2 border rounded mb-4 dark:bg-inherit text-black dark:text-white"
+            className="w-full p-2 border rounded mb-4 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
           />
 
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -82,7 +81,7 @@ export default function LoginPage() {
             name="password"
             required
             placeholder="Enter your password"
-            className="w-full p-2 border rounded mb-4 dark:bg-inherit text-black dark:text-white"
+            className="w-full p-2 border rounded mb-4 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
           />
 
           <button

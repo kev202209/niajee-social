@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from "react";
+import Link from "next/link";
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-export default function CosmicPage() {
+export default function ForgetPasswordPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -35,8 +36,8 @@ export default function CosmicPage() {
         toast.error(data.message);
       }
     } catch (err) {
-      setError('Connection error.Please check your internet connection or try again later.');
-      toast.error('Connection error.Please check your internet connection or try again later.');
+      setError('Connection error. Please check your internet connection or try again later.');
+      toast.error('Connection error. Please check your internet connection or try again later.');
       console.error(err);
     }
     setIsLoading(false);
@@ -52,32 +53,39 @@ export default function CosmicPage() {
         toastClassName={() =>
           "relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg"
         }
-        // bodyClassName="text-base font-semibold"
         closeButton={false}
         autoClose={7000}
         hideProgressBar={true}
       />
 
-      
       {/* Foreground Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#ffffff,theme(colors.slate.200)_50%,#ffffff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.300/.48)_80%,theme(colors.blue.500)_86%,theme(colors.blue.300)_90%,theme(colors.blue.500)_94%,theme(colors.slate.300/.48))_border-box] dark:[background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,theme(colors.indigo.500)_86%,theme(colors.indigo.300)_90%,theme(colors.indigo.500)_94%,theme(colors.slate.600/.48))_border-box]  rounded-2xl border border-1.5 border-transparent animate-border">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#ffffff,theme(colors.slate.200)_50%,#ffffff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.300/.48)_80%,theme(colors.blue.500)_86%,theme(colors.blue.300)_90%,theme(colors.blue.500)_94%,theme(colors.slate.300/.48))_border-box] dark:[background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,theme(colors.indigo.500)_86%,theme(colors.indigo.300)_90%,theme(colors.indigo.500)_94%,theme(colors.slate.600/.48))_border-box] rounded-2xl border border-1.5 border-transparent animate-border">
           
           <h1 className="text-2xl font-bold mb-4 text-blue-600 dark:text-white">Forgot Password</h1>
-          {/* {message && <p className="text-green-500 mb-2">{message}</p>} */}
-          {/* {error && <p className="text-red-500 mb-2">{error}</p>} */}
-          <p className="mb-4 text-sm text-blue-600 dark:text-white">
+          
+          {/* Add navigation link back to login */}
+          <Link href="/auth/login" className="block text-blue-600 dark:text-white mt-2 pb-2">
+            Remember your password? <span className="font-bold">Login</span>
+          </Link>
+          
+          <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
             Enter your email to receive a one-time password (OTP) to reset your password.
           </p>
+          
           <form onSubmit={handleSubmit}>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Email Address
+            </label>
             <input
               type="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border rounded mb-4 dark:bg-inherit"
+              className="w-full p-2 border rounded mb-4 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
               required
             />
+            
             <button
               type="submit"
               disabled={!email || isLoading}
@@ -90,6 +98,16 @@ export default function CosmicPage() {
               {isLoading ? <LoadingDots /> : "Send OTP"}
             </button>
           </form>
+          
+          {/* Additional navigation options */}
+          <div className="mt-4 text-center">
+            <Link 
+              href="/auth/register" 
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+            >
+              Don't have an account? Sign up
+            </Link>
+          </div>
         </div>
       </div>
     </div>
