@@ -11,6 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import "react-toastify/dist/ReactToastify.css";
 import { getDeviceInfo } from '../../utils/deviceInfo';
 
+import { DatePicker } from "@/components/ui/DatePicker";
+
 export default function RegisterPage() {
   const router = useRouter();
   const { register, checkEmailAvailability } = useAuth();
@@ -206,12 +208,11 @@ export default function RegisterPage() {
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
                 Birthday
               </label>
-              <input
-                type="date"
-                name="birthday"
+              <DatePicker
                 value={formData.birthday}
-                onChange={handleChange}
-                className="w-full p-2 border rounded mb-3 dark:bg-inherit text-black dark:text-white"
+                onChange={(date) => setFormData(prev => ({ ...prev, birthday: date }))}
+                placeholder="Select your birthday"
+                className="mb-3"
               />
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
                 Upload Profile Picture (optional)
