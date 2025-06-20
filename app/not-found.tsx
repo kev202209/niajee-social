@@ -8,10 +8,10 @@ const NotFoundPage: NextPage = () => {
     <div className="min-h-screen bg-gradient-animation dark:bg-gradient-animation-dark flex flex-col items-center justify-center px-4">
       <div className="p-8 rounded-lg text-center max-w-md">
         <h1 className="text-5xl font-bold gradient-text text-gray-700 dark:text-gray-300 mb-4">404</h1>
-        <p className="text-xl text-gray-700 dark:text-gray-300 mb-6">
+        <p className="text-xl text-gray-700 dark:text-white mb-6">
           Oops! The page you&apos;re looking for can&apos;t be found.
         </p>
-        <p className="text-gray-600 dark:text-gray-400 mb-8">
+        <p className="text-gray-600 dark:text-white mb-8">
           It seems we've misplaced this page. Don't worry, you can always head back to the homepage.
         </p>
         <Link
