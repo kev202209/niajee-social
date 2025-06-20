@@ -4,24 +4,16 @@ import { useState } from 'react'
 import CreateHeader from '@/components/create/Header'
 import Link from 'next/link'
 import {
-  Rocket,
+  Home,
   Film,
-  Upload,
-  Video,
-  Sliders,
-  ImageIcon,
-  Settings2,
+  Plus,
 } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 
 const sidebarItems = [
-  { label: 'Go Live', icon: Rocket, href: '/create/live' },
+  { label: 'Dashboard', icon: Home, href: '/create' },
   { label: 'Channels', icon: Film, href: '/create/channels' },
-  { label: 'Upload', icon: Upload, href: '/create/upload' },
-  { label: 'Editor', icon: Video, href: '/create/editor' },
-  { label: 'Analytics', icon: Sliders, href: '/create/analytics' },
-  { label: 'Branding', icon: ImageIcon, href: '/create/branding' },
-  { label: 'Settings', icon: Settings2, href: '/create/settings' },
+  { label: 'Create Channel', icon: Plus, href: '/create/channels/new' },
 ]
 
 export default function CreateLayout({ children }: { children: React.ReactNode }) {
@@ -36,21 +28,20 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
       <aside
         className={`
           fixed top-0 left-0 h-screen pt-16
-          bg-white dark:bg-gray-900 z-40
+          bg-white dark:bg-gray-900 z-40 border-r border-gray-200 dark:border-gray-700
           transition-all duration-300 ease-in-out
-          ${isSidebarOpen ?  'w-25 md:w-40' : 'w-10'}
+          ${isSidebarOpen ? 'w-64' : 'w-16'}
         `}
-        
       >
-        <nav className="flex flex-col pt-4 h-full w-full">
+        <nav className="flex flex-col pt-6 h-full px-4">
           {sidebarItems.map(({ label, icon: Icon, href }) => (
             <Link
               key={label}
               href={href}
-              className={`flex items-center p-2 rounded-lg font-medium transition
-                ${pathname.startsWith(href)
+              className={`flex items-center p-3 rounded-lg font-medium transition mb-1
+                ${pathname === href
                   ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}
               `}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
@@ -76,10 +67,10 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
         <main
           className={`
             pt-16 h-full overflow-y-auto transition-all duration-300
-            ${isSidebarOpen ? 'ml-25 md:ml-40' : 'ml-10'}
+            ${isSidebarOpen ? 'ml-64' : 'ml-16'}
           `}
         >
-          <div className="">{children}</div>
+          {children}
         </main>
       </div>
     </div>
