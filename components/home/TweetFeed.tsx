@@ -120,96 +120,100 @@ const TweetFeed: FC = () => {
   
   // Success state with tweets
   return (
-    <aside className="w-80 bg-gray-100 dark:bg-gray-900 h-screen pt-16 fixed right-0 top-0 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 truncate">
-          Community Feed
-        </h2>
-        <button
-          onClick={handleRetry}
-          className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
-          title="Refresh feed"
-        >
-          <FiRefreshCw className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-        </button>
-      </div>
-      <ul className="space-y-3 h-[calc(100vh-8rem)] overflow-y-auto">
-        {tweets.map((tweet) => (
-          <li key={tweet.id} className="bg-white dark:bg-gray-800 rounded shadow p-2 max-h-[180px]">
-            <div className="flex">
-              <Image
-                src={tweet.profilePic}
-                alt={tweet.username}
-                width={32}
-                height={32}
-                className="rounded-full h-8 w-8 flex-shrink-0"
-              />
-              <div className="ml-2 flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    <span className="font-semibold text-gray-900 dark:text-gray-100 truncate text-xs">
-                      {tweet.displayName}
-                    </span>
-                    <span className="text-gray-600 dark:text-gray-400 truncate flex-shrink-0 text-xs">
-                      @{tweet.username}
-                    </span>
+    <div className="h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
+      <div className="p-4 h-full flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Community Feed
+          </h2>
+          <button
+            onClick={handleRetry}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors duration-200"
+            title="Refresh feed"
+          >
+            <FiRefreshCw className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <ul className="space-y-3">
+            {tweets.map((tweet) => (
+              <li key={tweet.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 hover:shadow-md transition-shadow">
+                <div className="flex">
+                  <Image
+                    src={tweet.profilePic}
+                    alt={tweet.username}
+                    width={32}
+                    height={32}
+                    className="rounded-full h-8 w-8 flex-shrink-0"
+                  />
+                  <div className="ml-2 flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-1">
+                        <span className="font-semibold text-gray-900 dark:text-gray-100 truncate text-xs">
+                          {tweet.displayName}
+                        </span>
+                        <span className="text-gray-600 dark:text-gray-400 truncate flex-shrink-0 text-xs">
+                          @{tweet.username}
+                        </span>
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        {tweet.createdAt && timeAgo(tweet.createdAt)}
+                      </span>
+                    </div>
+                    <a href={`${process.env.NEXT_PUBLIC_SECOND_FRONTEND_URL}/${tweet.username}/status/${tweet.id}`}>
+                    <p className="text-gray-900 dark:text-gray-100 text-xs mt-1 line-clamp-2">
+                      {tweet.content}
+                    </p>
+                    </a>
+                    <div className="flex items-center justify-between mt-2 gap-1">
+                      <button 
+                        className={`flex items-center gap-1 ${tweet.replyCount > 0 ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'}`} 
+                        title="Comment"
+                      >
+                        <FiMessageCircle className="w-3 h-3" />
+                        {tweet.replyCount > 0 && (
+                          <span className="text-xs">{tweet.replyCount}</span>
+                        )}
+                      </button>
+                      <button 
+                        className={`flex items-center gap-1 ${tweet.isReposted ? 'text-green-500' : 'text-gray-500 dark:text-gray-400 hover:text-green-500'}`} 
+                        title="Retweet"
+                      >
+                        <FiRepeat className="w-3 h-3" />
+                        {tweet.repostCount > 0 && (
+                          <span className="text-xs">{tweet.repostCount}</span>
+                        )}
+                      </button>
+                      <button 
+                        className={`flex items-center gap-1 ${tweet.isLiked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400 hover:text-red-500'}`} 
+                        title="Like"
+                      >
+                        <FiHeart className="w-3 h-3" />
+                        {tweet.likeCount > 0 && (
+                          <span className="text-xs">{tweet.likeCount}</span>
+                        )}
+                      </button>
+                      <button 
+                        className={`flex items-center gap-1 ${tweet.isSaved ? 'text-yellow-500' : 'text-gray-500 dark:text-gray-400 hover:text-yellow-500'}`}
+                        title="Bookmark"
+                      >
+                        <FiBookmark className="w-3 h-3" />
+                        {tweet.saveCount > 0 && (
+                          <span className="text-xs">{tweet.saveCount}</span>
+                        )}
+                      </button>
+                      <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-blue-500" title="Share">
+                        <FiShare className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-500">
-                    {tweet.createdAt && timeAgo(tweet.createdAt)}
-                  </span>
                 </div>
-                <a href={`${process.env.NEXT_PUBLIC_SECOND_FRONTEND_URL}/${tweet.username}/status/${tweet.id}`}>
-                <p className="text-gray-900 dark:text-gray-100 text-xs mt-1 line-clamp-2">
-                  {tweet.content}
-                </p>
-                </a>
-                <div className="flex items-center justify-between mt-2 gap-1">
-                  <button 
-                    className={`flex items-center gap-1 ${tweet.replyCount > 0 ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'}`} 
-                    title="Comment"
-                  >
-                    <FiMessageCircle className="w-3 h-3" />
-                    {tweet.replyCount > 0 && (
-                      <span className="text-xs">{tweet.replyCount}</span>
-                    )}
-                  </button>
-                  <button 
-                    className={`flex items-center gap-1 ${tweet.isReposted ? 'text-green-500' : 'text-gray-500 dark:text-gray-400 hover:text-green-500'}`} 
-                    title="Retweet"
-                  >
-                    <FiRepeat className="w-3 h-3" />
-                    {tweet.repostCount > 0 && (
-                      <span className="text-xs">{tweet.repostCount}</span>
-                    )}
-                  </button>
-                  <button 
-                    className={`flex items-center gap-1 ${tweet.isLiked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400 hover:text-red-500'}`} 
-                    title="Like"
-                  >
-                    <FiHeart className="w-3 h-3" />
-                    {tweet.likeCount > 0 && (
-                      <span className="text-xs">{tweet.likeCount}</span>
-                    )}
-                  </button>
-                  <button 
-                    className={`flex items-center gap-1 ${tweet.isSaved ? 'text-yellow-500' : 'text-gray-500 dark:text-gray-400 hover:text-yellow-500'}`}
-                    title="Bookmark"
-                  >
-                    <FiBookmark className="w-3 h-3" />
-                    {tweet.saveCount > 0 && (
-                      <span className="text-xs">{tweet.saveCount}</span>
-                    )}
-                  </button>
-                  <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-blue-500" title="Share">
-                    <FiShare className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </aside>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
   );
 };
 

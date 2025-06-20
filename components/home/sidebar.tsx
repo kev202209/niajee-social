@@ -7,63 +7,107 @@ import {
   History,
   Download,
   Component,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isExpanded: boolean;
+  setIsExpanded: (expanded: boolean) => void;
 }
 
-const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
+const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
+  const menuItems = [
+    { icon: Home, label: "Home", href: "/" },
+    { icon: TrendingUp, label: "Trending", href: "/trending" },
+    { icon: Component, label: "Shorts", href: "/shorts" },
+    { icon: LaptopMinimalCheck, label: "Subscriptions", href: "/subscriptions" },
+    { icon: Library, label: "Library", href: "/library" },
+    { icon: History, label: "History", href: "/history" },
+    { icon: Download, label: "Downloads", href: "/downloads" },
+  ];
+
   return (
     <aside
       className={`
-        fixed left-0 top-0 h-screen pt-16
-        bg-gray-100 dark:bg-gray-900
+        h-[calc(100vh-4rem)] flex-shrink-0
+        bg-white dark:bg-gray-900 
+        border-r border-gray-200 dark:border-gray-700
         transition-all duration-300 ease-in-out
-        ${isOpen ? "w-56" : "w-16"}
-        z-20
+        ${isExpanded ? "w-40" : "w-20"}
+        overflow-hidden flex flex-col
       `}
+      onMouseEnter={() => setIsExpanded(true)}
+      onMouseLeave={() => setIsExpanded(false)}
     >
-      <ul className="space-y-2 ">
-        {[
-          { icon: Home, label: "Home" },
-          { icon: TrendingUp, label: "Trending" },
-          { icon: Component, label: "Shorts" },
-          { icon: LaptopMinimalCheck, label: "Subscriptions" },
-          { icon: Library, label: "Library" },
-          { icon: History, label: "History" },
-          { icon: Download, label: "Downloads" },
-        ].map(({ icon: Icon, label }) => (
-          <li
-            key={label}
-            className="
-              flex items-center
-              transition-all duration-300 ease-in-out
-              p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer
-            "
-          >
-            <Icon
-              className={`
-                w-5 h-5
-                text-gray-700 dark:text-gray-300
-                transition-transform duration-300
-                flex-shrink-0
-                ${isOpen ? "translate-x-0" : "translate-x-[22px]"}
-              `}
-            />
-            <span
-              className={`
-                transition-all duration-300 ease-in-out
-                text-gray-900 dark:text-gray-100
-                ${isOpen ? "ml-9 opacity-100" : "ml-0 opacity-0"}
-              `}
-            >
-              {label}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {/* Toggle Button */}
+      <div className="flex justify-end p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+        >
+          {isExpanded ? (
+            <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          ) : (
+            <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          )}
+        </button>
+      </div>
+
+      {/* Menu Items */}
+      <nav className="p-3 flex-1 overflow-y-auto scrollbar-hide">
+        <ul className="space-y-2">
+          {menuItems.map(({ icon: Icon, label, href }) => (
+            <li key={label}>
+              <a
+                href={href}
+                className={`
+                  flex items-center rounded-lg
+                  hover:bg-gray-100 dark:hover:bg-gray-800
+                  transition-all duration-200
+                  group cursor-pointer relative
+                  ${isExpanded ? "p-3" : "p-3 justify-center"}
+                `}
+                title={!isExpanded ? label : ""}
+              >
+                <Icon className="w-5 h-5 text-gray-700 dark:text-gray-300 flex-shrink-0" />
+                <span
+                  className={`
+                    text-gray-900 dark:text-gray-100 font-medium text-sm
+                    transition-all duration-300 whitespace-nowrap
+                    ${isExpanded 
+                      ? "opacity-100 translate-x-0 ml-3 w-auto" 
+                      : "opacity-0 translate-x-2 ml-0 w-0 overflow-hidden"
+                    }
+                  `}
+                >
+                  {label}
+                </span>
+                
+                {/* Tooltip for collapsed state */}
+                {!isExpanded && (
+                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                    {label}
+                  </div>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      {/* Footer Section */}
+      <div className="p-3 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div 
+          className={`
+            text-xs text-gray-500 dark:text-gray-400 text-center
+            transition-all duration-300
+            ${isExpanded ? "opacity-100" : "opacity-0"}
+          `}
+        >
+          © 2024 MOSAIC
+        </div>
+      </div>
     </aside>
   );
 };

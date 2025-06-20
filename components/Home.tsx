@@ -1,6 +1,6 @@
 "use client";
 
-import React, { FC } from "react";
+import React, { FC, useState } from "react";
 import Header from "@/components/home/header";
 import Sidebar from "@/components/home/sidebar";
 import MainContent from "@/components/home/MainContent";
@@ -8,20 +8,33 @@ import TweetFeed from "@/components/home/TweetFeed";
 import Footer from "@/components/home/Footer";
 
 const HomePage: FC = () => {
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
-      {/* Hide TweetFeed on screens smaller than lg breakpoint */}
-      <div className="hidden lg:block">
-        <TweetFeed />
+      
+      {/* Main Layout Container - Flex layout */}
+      <div className="flex pt-16">
+        {/* Sidebar */}
+        <Sidebar 
+          isExpanded={isSidebarExpanded} 
+          setIsExpanded={setIsSidebarExpanded} 
+        />
+        
+        {/* Main Content Area - Takes remaining space */}
+        <main className="flex-1 min-w-0">
+          <div className="max-w-none">
+            <MainContent />
+          </div>
+        </main>
+
+        {/* TweetFeed - Hidden on mobile, visible on lg+ */}
+        <div className="hidden lg:block w-80 flex-shrink-0">
+          <TweetFeed />
+        </div>
       </div>
-      {/* Adjust main content margins responsively */}
-      <main className="ml-0 mr-0 pt-16 
-        sm:ml-60 
-        lg:mr-80 
-        transition-all duration-300">
-        <MainContent />
-      </main>
+      
       <Footer />
     </div>
   );
