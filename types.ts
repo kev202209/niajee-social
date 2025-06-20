@@ -166,15 +166,59 @@ export interface Follow {
 
 
 export interface Channel {
-  _id: string;
+  id: string; // Changed from _id to id (uuid)
   name: string;
-  description: string;
-  logoUrl: string;
-  bannerUrl: string;
-  subscriberCount: number;
-  videoCount: number;
-  isSubscribed?: boolean;
-  hasJoined?: boolean;
+  handle: string; // New field - @channelname
+  description: string | null; // Can be null
+  ownerId: string; // New field
+  
+  // Channel branding
+  avatar: string | null; // Changed from logoUrl
+  banner: string | null; // Changed from bannerUrl
+  theme?: {
+    primaryColor?: string;
+    secondaryColor?: string;
+    backgroundColor?: string;
+  } | null;
+  
+  // Channel stats
+  subscriberCount: number | null;
+  videoCount: number | null;
+  viewCount: number | null;
+  
+  // Channel settings
+  isPublic: boolean | null;
+  isVerified: boolean | null;
+  isMonetized: boolean | null;
+  allowComments: boolean | null;
+  
+  // Channel metadata
+  category: string | null;
+  country: string | null;
+  language: string | null;
+  
+  // Social links
+  socialLinks?: {
+    website?: string;
+    twitter?: string;
+    instagram?: string;
+    facebook?: string;
+    discord?: string;
+  } | null;
+  
+  // Channel keywords/tags
+  keywords?: string[] | null;
+  
+  // Moderation
+  isActive: boolean | null;
+  isSuspended: boolean | null;
+  suspensionReason: string | null;
+  
+  // Timestamps
   createdAt: string;
   updatedAt: string;
+  
+  // Optional fields for UI
+  isSubscribed?: boolean;
+  hasJoined?: boolean;
 }
