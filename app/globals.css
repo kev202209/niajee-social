@@ -49,6 +49,70 @@
 
 
 
+/* Standard scrollbar hide class */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Opera */
+}
+
+/* Custom scrollbar styles */
+.scrollbar {
+  scrollbar-width: thin;  /* Firefox */
+  scrollbar-color: rgba(59, 130, 246, 0.5) rgba(30, 58, 138, 0.2);  /* Firefox: thumb and track */
+}
+
+.scrollbar::-webkit-scrollbar {
+  width: 6px;  /* width of the entire scrollbar */
+}
+
+.scrollbar::-webkit-scrollbar-track {
+  background: rgba(30, 58, 138, 0.2);  /* color of the tracking area */
+  border-radius: 10px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(59, 130, 246, 0.5);  /* color of the scroll thumb */
+  border-radius: 10px;  /* roundness of the scroll thumb */
+  transition: background-color 0.3s;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(59, 130, 246, 0.8);  /* color on hover */
+}
+
+/* Scrollbar styles for dark containers */
+.scrollbar-dark {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.5) rgba(15, 23, 42, 0.3);
+}
+
+.scrollbar-dark::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 10px;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb {
+  background-color: rgba(59, 130, 246, 0.5);
+  border-radius: 10px;
+  transition: background-color 0.3s;
+}
+
+.scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(59, 130, 246, 0.8);
+}
+
+
+   /* Shadcn colors */
+
+
 @layer base {
   :root {
     --background: 0 0% 100%;
