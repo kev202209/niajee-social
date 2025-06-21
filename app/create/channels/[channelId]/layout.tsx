@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useParams } from 'next/navigation'
 import { Channel } from '@/types'
+import CreateHeader from '@/components/create/Header'
 import {
   BarChart,
   Upload,
@@ -11,7 +12,8 @@ import {
   Palette,
   Video,
   Radio,
-  Home
+  Home,
+  ArrowLeft
 } from 'lucide-react'
 
 const channelSidebarItems = [
@@ -29,6 +31,7 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
   const params = useParams()
   const channelId = params.channelId as string
   const [channel, setChannel] = useState<Channel | null>(null)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   useEffect(() => {
     const fetchChannel = async () => {
@@ -37,7 +40,7 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
           credentials: 'include'
         })
         const data = await res.json()
-        setChannel(data.channel)
+        setChannel(data.channel || data)
       } catch (error) {
         console.error('Failed to fetch channel:', error)
       }
@@ -48,23 +51,58 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
     }
   }, [channelId])
 
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
   const baseHref = `/create/channels/${channelId}`
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
+    <div className="flex h-screen overflow-hidden">
       {/* Channel Sidebar */}
-      <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <aside
+        className={`
+          fixed top-0 left-0 h-screen pt-16
+          bg-white dark:bg-gray-900 z-40 border-r border-gray-200 dark:border-gray-700
+          transition-all duration-300 ease-in-out
+          ${isSidebarOpen ? 'w-64' : 'w-16'}
+        `}
+      >
+        {/* Back to Channels Link */}
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <Link
+            href="/create/channels"
+            className="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition"
+          >
+            <ArrowLeft className="w-4 h-4 flex-shrink-0" />
+            <span
+              className={`
+                ml-2 whitespace-nowrap transition-all duration-300
+                ${isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}
+              `}
+            >
+              Back to Channels
+            </span>
+          </Link>
+        </div>
+
         {/* Channel Header */}
         <div className="p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
               {channel?.avatar ? (
-                <img src={channel.avatar} alt={channel.name} className="w-full h-full rounded-full object-cover" />
+                <img 
+                  src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/channels/${channel.avatar}`} 
+                  alt={channel.name} 
+                  className="w-full h-full rounded-full object-cover" 
+                />
               ) : (
                 <Video className="w-5 h-5 text-white" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
+            <div
+              className={`
+                flex-1 min-w-0 transition-all duration-300
+                ${isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}
+              `}
+            >
               <h3 className="font-semibold text-gray-900 dark:text-white truncate">
                 {channel?.name || 'Loading...'}
               </h3>
@@ -76,7 +114,7 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
         </div>
 
         {/* Navigation */}
-        <nav className="p-4">
+        <nav className="p-4 flex-1 overflow-y-auto">
           {channelSidebarItems.map(({ label, icon: Icon, href }) => {
             const fullHref = baseHref + href
             const isActive = pathname === fullHref
@@ -92,17 +130,35 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
                 `}
               >
                 <Icon className="w-5 h-5 flex-shrink-0" />
-                <span className="ml-3">{label}</span>
+                <span
+                  className={`
+                    ml-3 whitespace-nowrap transition-all duration-300
+                    ${isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}
+                  `}
+                >
+                  {label}
+                </span>
               </Link>
             )
           })}
         </nav>
       </aside>
 
-      {/* Channel Content */}
-      <main className="flex-1 overflow-y-auto">
-        {children}
-      </main>
+      {/* Main content wrapper */}
+      <div className="flex flex-col flex-1 min-w-0">
+        {/* Header */}
+        <CreateHeader toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+
+        {/* Page content */}
+        <main
+          className={`
+            pt-16 h-full overflow-y-auto transition-all duration-300
+            ${isSidebarOpen ? 'ml-64' : 'ml-16'}
+          `}
+        >
+          {children}
+        </main>
+      </div>
     </div>
   )
 }
