@@ -9,6 +9,7 @@ import {
   Component,
   ChevronLeft,
   ChevronRight,
+  PlusCircle
 } from "lucide-react";
 
 interface SidebarProps {
@@ -19,6 +20,7 @@ interface SidebarProps {
 const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
   const menuItems = [
     { icon: Home, label: "Home", href: "/" },
+    { icon: PlusCircle, label: "Create", href: "/create" },
     { icon: TrendingUp, label: "Trending", href: "/trending" },
     { icon: Component, label: "Shorts", href: "/shorts" },
     { icon: LaptopMinimalCheck, label: "Subscriptions", href: "/subscriptions" },
@@ -105,7 +107,7 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
             ${isExpanded ? "opacity-100" : "opacity-0"}
           `}
         >
-          © 2024 MOSAIC
+          © {new Date().getFullYear()} MOSAIC
         </div>
       </div>
     </aside>
