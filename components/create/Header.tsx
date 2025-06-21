@@ -13,18 +13,19 @@ import {
 } from "react-icons/fi"
 import { SquareChevronLeft, SquareChevronRight } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
-
+import { usePathname } from 'next/navigation'
 
 interface CreateHeaderProps {
-    toggleSidebar: () => void
-    isSidebarOpen: boolean
+    toggleSidebar?: () => void
+    isSidebarOpen?: boolean
   }
 
 const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
   const api_link = process.env.NEXT_PUBLIC_API_URL
-  useOutsideClick(profileMenuRef, () => setShowProfileMenu(false))
+  useOutsideClick([profileMenuRef], () => setShowProfileMenu(false))
 
   const [tagline, setTagline] = useState("Loading…")
   const { user, logout } = useAuth()
@@ -41,21 +42,27 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
     window.location.reload()
   }
 
+  // Check if we're in a channel-specific route
+  const isChannelRoute = pathname.match(/^\/create\/channels\/[^\/]+\//)
+
   return (
-    <header className="w-full bg-white dark:bg-gray-900/80 backdrop-blur-md shadow-sm z-50">
+    <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-900/80 backdrop-blur-md shadow-sm z-50">
       <div className="flex items-center h-16 px-4 justify-between">
         {/* Left section */}
         <div className="flex items-center gap-4">
-        <button
-            onClick={toggleSidebar}
-            className="text-gray-900 dark:text-gray-100 focus:outline-none"
-          >
-            {isSidebarOpen ? (
-              <SquareChevronLeft className="w-6 h-6" />
-            ) : (
-              <SquareChevronRight className="w-6 h-6" />
-            )}
-          </button>
+          {/* Only show toggle if we have the toggleSidebar function */}
+          {toggleSidebar && (
+            <button
+              onClick={toggleSidebar}
+              className="text-gray-900 dark:text-gray-100 focus:outline-none"
+            >
+              {isSidebarOpen ? (
+                <SquareChevronLeft className="w-6 h-6" />
+              ) : (
+                <SquareChevronRight className="w-6 h-6" />
+              )}
+            </button>
+          )}
 
           <div className="flex items-center gap-2">
             <Link
@@ -68,10 +75,17 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
               Creator
             </span>
           </div>
+          
+          {/* Show breadcrumb for channel routes */}
+          {isChannelRoute ? (
+            <div className="text-sm text-gray-600 dark:text-gray-400 ml-4 hidden sm:inline">
+              Channel Management
+            </div>
+          ) : (
             <span className="text-sm text-gray-600 dark:text-gray-400 ml-4 hidden sm:inline">
-                {tagline}
+              {tagline}
             </span>
-
+          )}
         </div>
 
         {/* Right section */}
