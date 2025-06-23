@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useParams } from 'next/navigation'
-import { Channel } from '@/types'
+import { DetailedChannel as Channel } from '@/types'
 import CreateHeader from '@/components/create/Header'
 import {
   BarChart,

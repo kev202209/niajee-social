@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, FC } from 'react';
-import { Channel } from '@/types';
+import { DetailedChannel as Channel } from '@/types';
 import { FiSettings, FiUsers, FiVideo, FiEye, FiPlus, FiRefreshCw } from 'react-icons/fi';
 
 const ChannelsPage: FC = () => {

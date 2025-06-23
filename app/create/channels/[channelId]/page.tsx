@@ -3,7 +3,7 @@
 import { useParams, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Channel } from '@/types'
+import { DetailedChannel as Channel } from '@/types'
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiClock, FiPlay, FiCalendar, FiSmartphone } from 'react-icons/fi'
 import ChannelOverviewSkeleton from './ChannelOverviewSkeleton'
 
