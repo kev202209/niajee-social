@@ -12,9 +12,10 @@ const MainContent: FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [initialLoadComplete, setInitialLoadComplete] = useState<boolean>(false);
+  const [hasMoreContent, setHasMoreContent] = useState<boolean>(true);
 
   // Function to fetch data from the backend
-  const fetchContent = async (pageNumber: number, isRetry: boolean = false) => {
+  const fetchContent = async (pageNumber: number, isRetry: boolean = false, signal?: AbortSignal) => {
     setLoading(true);
     if (isRetry) {
       setError(null);
@@ -22,12 +23,34 @@ const MainContent: FC = () => {
       setVideos([]);
       setShorts([]);
       setInitialLoadComplete(false);
+      setHasMoreContent(true);
     }
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/content?page=${pageNumber}`);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/content?page=${pageNumber}&limit=12`,
+        {
+          signal,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      if (signal?.aborted) {
+        return;
+      }
+      
       if (response.ok) {
         const data = await response.json();
+        
+        // Check if we have more content
+        const hasVideos = data.videos && data.videos.length > 0;
+        const hasShorts = data.shorts && data.shorts.length > 0;
+        
+        if (!hasVideos && !hasShorts) {
+          setHasMoreContent(false);
+        }
         
         if (isRetry || pageNumber === 1) {
           // Replace data on retry or initial load
@@ -35,27 +58,48 @@ const MainContent: FC = () => {
           setShorts(data.shorts || []);
         } else {
           // Append new data to existing state for pagination
-          setVideos((prev) => [...prev, ...(data.videos || [])]);
-          setShorts((prev) => [...prev, ...(data.shorts || [])]);
+          setVideos((prev) => {
+            const newVideos = data.videos || [];
+            const existingIds = new Set(prev.map(v => v.id));
+            const uniqueNewVideos = newVideos.filter((v: Video) => !existingIds.has(v.id));
+            return [...prev, ...uniqueNewVideos];
+          });
+          
+          setShorts((prev) => {
+            const newShorts = data.shorts || [];
+            const existingIds = new Set(prev.map(s => s.id));
+            const uniqueNewShorts = newShorts.filter((s: Short) => !existingIds.has(s.id));
+            return [...prev, ...uniqueNewShorts];
+          });
         }
       } else {
-        setError("Failed to load content");
-        console.error("Failed to fetch content");
+        setError(`Failed to load content (${response.status})`);
+        console.error("Failed to fetch content:", response.statusText);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        return; // Request was aborted, don't set error
+      }
       setError("Something went wrong while loading content");
       console.error("Error fetching content", error);
     } finally {
-      setLoading(false);
-      if (pageNumber === 1) {
-        setInitialLoadComplete(true);
+      if (!signal?.aborted) {
+        setLoading(false);
+        if (pageNumber === 1) {
+          setInitialLoadComplete(true);
+        }
       }
     }
   };
 
   // Fetch initial content and additional pages as the "page" state updates
   useEffect(() => {
-    fetchContent(page);
+    const abortController = new AbortController();
+    fetchContent(page, false, abortController.signal);
+    
+    return () => {
+      abortController.abort();
+    };
   }, [page]);
 
   // Handle retry functionality
@@ -67,7 +111,7 @@ const MainContent: FC = () => {
   const observer = useRef<IntersectionObserver | null>(null);
   const lastSegmentRef = useCallback(
     (node: HTMLDivElement | null) => {
-      if (loading) return;
+      if (loading || !hasMoreContent) return;
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {
@@ -77,7 +121,7 @@ const MainContent: FC = () => {
       });
       if (node) observer.current.observe(node);
     },
-    [loading]
+    [loading, hasMoreContent]
   );
 
   // Show skeleton during initial load
@@ -160,8 +204,8 @@ const MainContent: FC = () => {
   // Show content with optional refresh button in header
   return (
     <div className="h-[calc(100vh-4rem)] overflow-y-auto">
-      {/* Optional header with refresh button */}
-      <div className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-4">
+      {/* Header with refresh button */}
+      <div className="sticky top-0 z-10 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Discover
@@ -182,15 +226,24 @@ const MainContent: FC = () => {
       </div>
 
       <div className="p-4 flex flex-col gap-8">
+        {/* Display shorts first if available */}
+        {shorts.length > 0 && (
+          <div className="mb-6">
+            <ShortsRow shorts={shorts} />
+          </div>
+        )}
+
+        {/* Display video chunks */}
         {videoChunks.map((chunk, index) => (
           <div key={index}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {chunk.map((video) => (
                 <VideoCard key={video.id} video={video} />
               ))}
             </div>
-            {shorts.length > 0 && <ShortsRow shorts={shorts} />}
-            {index === videoChunks.length - 1 && (
+            
+            {/* Add ref to last chunk for infinite scroll */}
+            {index === videoChunks.length - 1 && hasMoreContent && (
               <div ref={lastSegmentRef} className="h-1" />
             )}
           </div>
@@ -202,6 +255,15 @@ const MainContent: FC = () => {
             <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
               <FiRefreshCw className="w-4 h-4 animate-spin" />
               <span className="text-sm">Loading more content...</span>
+            </div>
+          </div>
+        )}
+
+        {/* End of content indicator */}
+        {!hasMoreContent && videos.length > 0 && (
+          <div className="flex justify-center py-8">
+            <div className="text-gray-500 dark:text-gray-400 text-sm">
+              You've reached the end! 🎉
             </div>
           </div>
         )}

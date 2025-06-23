@@ -1,11 +1,9 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { Video } from "../../types";
 import Image from "next/image";
-import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle } from "react-icons/fi";
+import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiUser } from "react-icons/fi";
 import Link from "next/link";
 import timeAgo from "../../app/utils/timeAgo";
-
-
 
 function useOutsideClick(
   ref: React.RefObject<HTMLElement | null>,
@@ -23,15 +21,27 @@ function useOutsideClick(
   }, [ref, callback]);
 }
 
-
-
 const VideoCard: FC<{ video: Video }> = ({ video }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [volume, setVolume] = useState<number>(0.5);
   const [showOptions, setShowOptions] = useState<boolean>(false);
+  const [currentQuality, setCurrentQuality] = useState<string>('720p');
   const optionsRef = useRef<HTMLDivElement>(null);
+  
   useOutsideClick(optionsRef, () => setShowOptions(false));
+
+  // Get the best available quality
+  const getVideoSource = () => {
+    const qualities = ['1080p', '720p', '360p'];
+    for (const quality of qualities) {
+      if (video.videoUrl[quality]) {
+        return video.videoUrl[quality];
+      }
+    }
+    // Fallback to first available quality
+    return Object.values(video.videoUrl)[0] || '';
+  };
 
   const handleMouseEnter = () => {
     videoRef.current?.play();
@@ -68,31 +78,60 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
     }
   };
 
+  const formatDuration = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const formatViews = (views: number): string => {
+    if (views >= 1000000) {
+      return `${(views / 1000000).toFixed(1)}M`;
+    } else if (views >= 1000) {
+      return `${(views / 1000).toFixed(1)}K`;
+    }
+    return views.toString();
+  };
+
   return (
     <Link href={`/watch/${video.videoId}`}>
-      <div className="bg-white dark:bg-gray-800 rounded shadow cursor-pointer relative">
-        {/* Video Thumbnail Container with 3:2 Aspect Ratio */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer relative">
+        {/* Video Thumbnail Container with 16:9 Aspect Ratio */}
         <div
-          className="relative group rounded-t overflow-hidden aspect-[3/2]"
+          className="relative group rounded-t-lg overflow-hidden aspect-video"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
+          {/* Video Preview */}
           <video
             ref={videoRef}
-            src={video.videoSrc}
+            src={getVideoSource()}
+            poster={video.thumbnail}
             muted={isMuted}
             loop
             playsInline
-            className="absolute inset-0 object-cover w-full h-full rounded-b"
+            className="absolute inset-0 object-cover w-full h-full"
           />
-          {/* Volume Button & Slider */}
+          
+          {/* Duration Badge */}
+          <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
+            {formatDuration(video.duration)}
+          </div>
+          
+          {/* Volume Controls */}
           <button
             onClick={toggleMute}
-            className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+            className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
           >
             {isMuted ? <FiVolumeX /> : <FiVolume />}
           </button>
-          <div className="absolute bottom-12 right-2 opacity-0 group-hover:opacity-100 transition">
+          
+          <div className="absolute bottom-12 left-2 opacity-0 group-hover:opacity-100 transition">
             <input
               type="range"
               min="0"
@@ -100,70 +139,99 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
               step="0.01"
               value={volume}
               onChange={handleVolumeChange}
-              className="w-24 transform -rotate-90"
+              className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
             />
           </div>
         </div>
+        
         {/* Details Section */}
-        <div className="p-2 relative overflow-visible">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <Image
-                src={video.channelAvatar}
-                alt={video.channelName}
-                width={24}
-                height={24}
-                className="rounded-full h-6 w-6"
-              />
-              <span className="line-clamp-2 ml-2 font-thin text-gray-900 dark:text-gray-100 text-base">
-                {video.title}
-              </span>
-
-
+        <div className="p-3 relative overflow-visible">
+          <div className="flex gap-3">
+            {/* Channel Avatar */}
+            <div className="flex-shrink-0">
+              {video.channel.avatar ? (
+                <Image
+                  src={video.channel.avatar}
+                  alt={video.channel.name}
+                  width={36}
+                  height={36}
+                  className="rounded-full w-9 h-9 object-cover"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                  <FiUser className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </div>
+              )}
             </div>
-            <div className="relative" ref={optionsRef}>
+            
+            {/* Video Info */}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight line-clamp-2 mb-1">
+                {video.title}
+              </h3>
+              
+              <div className="flex items-center gap-1 mb-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                  {video.channel.name}
+                </p>
+                {video.channel.verified && (
+                  <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs">✓</span>
+                  </div>
+                )}
+              </div>
+              
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {formatViews(video.views)} views • {timeAgo(video.createdAt)}
+              </p>
+            </div>
+            
+            {/* Options Menu */}
+            <div className="relative flex-shrink-0" ref={optionsRef}>
               <button
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   setShowOptions(!showOptions);
                 }}
-                className="p-1"
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
-                {/* Rotated to display vertical three-dot icon */}
-                <FiMoreHorizontal
-                  style={{ transform: "rotate(90deg)" }}
-                  className="text-gray-900 dark:text-gray-100"
-                />
+                <FiMoreHorizontal className="text-gray-600 dark:text-gray-400 w-4 h-4" />
               </button>
+              
               {showOptions && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-2 z-100">
-                  <button className="flex items-center w-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                    <FiPlusCircle className="mr-2" />
-                    <span className="text-sm">Add to Queue</span>
+                <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                  <button 
+                    className="flex items-center w-full px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    <FiPlusCircle className="mr-3 w-4 h-4" />
+                    Add to Queue
                   </button>
-                  <button className="flex items-center w-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                    <FiFlag className="mr-2" />
-                    <span className="text-sm">Report</span>
+                  <button 
+                    className="flex items-center w-full px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    <FiFlag className="mr-3 w-4 h-4" />
+                    Report
                   </button>
-                  <button className="flex items-center w-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                    <FiXCircle className="mr-2" />
-                    <span className="text-sm">Not Interested</span>
+                  <button 
+                    className="flex items-center w-full px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    <FiXCircle className="mr-3 w-4 h-4" />
+                    Not Interested
                   </button>
-                  <button className="flex items-center w-full p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-                    <FiMessageCircle className="mr-2" />
-                    <span className="text-sm">Send Feedback</span>
+                  <button 
+                    className="flex items-center w-full px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    onClick={(e) => e.preventDefault()}
+                  >
+                    <FiMessageCircle className="mr-3 w-4 h-4" />
+                    Send Feedback
                   </button>
                 </div>
               )}
             </div>
-          </div>
-          <div className="mt-1">
-            <p className="text-xs text-gray-600 dark:text-gray-300">
-              {video.channelName}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {video.views} views • {timeAgo(video.age)}
-            </p>
           </div>
         </div>
       </div>
@@ -171,5 +239,4 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
   );
 };
 
-
-export default VideoCard
+export default VideoCard;
