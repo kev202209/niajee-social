@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import axios, { AxiosProgressEvent } from 'axios';
 import { Channel } from '@/types';
 import { FiUpload, FiPlay, FiX, FiLoader, FiCheck, FiImage, FiVideo, FiSmartphone } from 'react-icons/fi';
+import { io, Socket } from 'socket.io-client';
 
 interface UploadForm {
   title: string;
@@ -27,6 +28,25 @@ interface UploadForm {
   location?: string;
 }
 
+interface UploadProgressData {
+  step: 'received' | 'processing' | 'thumbnail' | 'saving' | 'complete';
+  progress: number;
+  message: string;
+  videoId?: string;
+  shortId?: string;
+  currentQuality?: string;
+  totalQualities?: number;
+  currentQualityIndex?: number;
+  timestamp?: string;
+}
+
+interface UploadErrorData {
+  step: string;
+  message: string;
+  error?: any;
+  timestamp?: string;
+}
+
 const ChannelUploadPage: FC = () => {
   const params = useParams();
   const router = useRouter();
@@ -40,12 +60,15 @@ const ChannelUploadPage: FC = () => {
     category: '',
     visibility: 'public',
     contentType: 'video',
+    caption: '', // Initialize as empty string instead of undefined
+    song: '', // Initialize as empty string instead of undefined
     commentsEnabled: true,
     allowLikes: true,
     allowDuet: true,
     isPublic: true,
     isSensitive: false,
     mentions: [],
+    location: '', // Initialize as empty string instead of undefined
   });
   
   const [videoPreview, setVideoPreview] = useState<string>('');
@@ -60,6 +83,16 @@ const ChannelUploadPage: FC = () => {
   const [success, setSuccess] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [cancelTokenSource, setCancelTokenSource] = useState<any>(null);
+  
+  // Processing state
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState<string>('');
+  const [processingMessage, setProcessingMessage] = useState<string>('');
+  const [processingProgress, setProcessingProgress] = useState<number>(0);
+
+  // WebSocket state
+  const [uploadSocket, setUploadSocket] = useState<Socket | null>(null);
+  const [uploadId, setUploadId] = useState<string>('');
 
   // Progress tracking state
   const [uploadStartTime, setUploadStartTime] = useState<number>(0);
@@ -73,6 +106,72 @@ const ChannelUploadPage: FC = () => {
   useEffect(() => {
     fetchChannel();
   }, [channelId]);
+
+  // Initialize upload WebSocket connection
+  useEffect(() => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+    
+    // Connect to the upload namespace
+    const socket = io(`${API_URL}/upload`, {
+      withCredentials: true,
+    });
+
+    socket.on('connect', () => {
+      console.log('Upload socket connected:', socket.id);
+      setUploadSocket(socket);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Upload socket connection error:', error);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Upload socket disconnected:', reason);
+    });
+
+    // Listen for upload progress updates
+    socket.on('upload-progress', (data: UploadProgressData & { uploadId: string }) => {
+      console.log('Upload progress received:', data);
+      
+      if (data.uploadId === uploadId) {
+        setProcessingStep(data.step);
+        setProcessingMessage(data.message);
+        setProcessingProgress(data.progress);
+        
+        if (data.step === 'complete') {
+          setSuccess(`${form.contentType === 'short' ? 'Short' : 'Video'} uploaded successfully!`);
+          setUploading(false);
+          setIsProcessing(false);
+          
+          // Optionally redirect to the uploaded content
+          if (data.videoId) {
+            setTimeout(() => {
+              router.push(`/watch/${data.videoId}`);
+            }, 2000);
+          } else if (data.shortId) {
+            setTimeout(() => {
+              router.push(`/shorts/${data.shortId}`);
+            }, 2000);
+          }
+        }
+      }
+    });
+
+    // Listen for upload errors
+    socket.on('upload-error', (data: UploadErrorData & { uploadId: string }) => {
+      console.error('Upload error received:', data);
+      
+      if (data.uploadId === uploadId) {
+        setError(data.message);
+        setUploading(false);
+        setIsProcessing(false);
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [uploadId, router, form.contentType]);
 
   const fetchChannel = async () => {
     try {
@@ -90,14 +189,12 @@ const ChannelUploadPage: FC = () => {
   };
 
   const formatBytes = (bytes: number): string => {
-    // Handle undefined, null, NaN, or negative values
     if (!bytes || isNaN(bytes) || bytes < 0) return '0 Bytes';
     
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     
-    // Ensure i is within valid range
     const sizeIndex = Math.min(i, sizes.length - 1);
     const size = parseFloat((bytes / Math.pow(k, sizeIndex)).toFixed(2));
     
@@ -113,20 +210,17 @@ const ChannelUploadPage: FC = () => {
 
   const calculateUploadMetrics = (progressEvent: AxiosProgressEvent) => {
     const currentTime = Date.now();
-    const timeElapsed = (currentTime - uploadStartTime) / 1000; // seconds
+    const timeElapsed = (currentTime - uploadStartTime) / 1000;
     const uploadedBytes = progressEvent.loaded || 0;
     const totalBytes = progressEvent.total || 0;
     
-    // Only calculate if we have valid data and enough time has passed
-    if (timeElapsed > 1 && uploadedBytes > 0 && totalBytes > 0) { // Wait at least 1 second for more accurate speed
+    if (timeElapsed > 1 && uploadedBytes > 0 && totalBytes > 0) {
       const bytesPerSecond = uploadedBytes / timeElapsed;
       const remainingBytes = totalBytes - uploadedBytes;
       
-      // Only show speed if it's a reasonable number
       if (bytesPerSecond > 0 && !isNaN(bytesPerSecond) && isFinite(bytesPerSecond)) {
         setUploadSpeed(formatBytes(Math.round(bytesPerSecond)));
         
-        // Calculate ETA only if there are remaining bytes
         if (remainingBytes > 0) {
           const estimatedRemainingTime = remainingBytes / bytesPerSecond;
           if (!isNaN(estimatedRemainingTime) && isFinite(estimatedRemainingTime)) {
@@ -141,6 +235,11 @@ const ChannelUploadPage: FC = () => {
     }
   };
 
+  // Generate unique upload ID
+  const generateUploadId = (): string => {
+    return `upload_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
@@ -148,7 +247,8 @@ const ChannelUploadPage: FC = () => {
       const checked = (e.target as HTMLInputElement).checked;
       setForm(prev => ({ ...prev, [name]: checked }));
     } else {
-      setForm(prev => ({ ...prev, [name]: value }));
+      // Ensure the value is always a string
+      setForm(prev => ({ ...prev, [name]: value || '' }));
     }
   };
 
@@ -156,7 +256,6 @@ const ChannelUploadPage: FC = () => {
     setForm(prev => ({
       ...prev,
       contentType,
-      // Reset form fields when switching content type
       title: '',
       description: '',
       caption: '',
@@ -165,7 +264,6 @@ const ChannelUploadPage: FC = () => {
       mentions: [],
     }));
     
-    // Clear previews
     if (videoPreview) {
       URL.revokeObjectURL(videoPreview);
       setVideoPreview('');
@@ -178,15 +276,13 @@ const ChannelUploadPage: FC = () => {
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Different size limits for videos vs shorts
-      const maxSize = form.contentType === 'short' ? 100 * 1024 * 1024 : 500 * 1024 * 1024; // 100MB for shorts, 500MB for videos
+      const maxSize = form.contentType === 'short' ? 100 * 1024 * 1024 : 500 * 1024 * 1024;
       
       if (file.size > maxSize) {
         setError(`File size must be less than ${form.contentType === 'short' ? '100MB' : '500MB'}`);
         return;
       }
       
-      // Check video duration for shorts (should be less than 60 seconds)
       if (form.contentType === 'short') {
         const video = document.createElement('video');
         video.preload = 'metadata';
@@ -209,9 +305,8 @@ const ChannelUploadPage: FC = () => {
     const url = URL.createObjectURL(file);
     setVideoPreview(url);
     
-    // Auto-generate title from filename if empty
     if (!form.title) {
-      const filename = file.name.replace(/\.[^/.]+$/, ""); // Remove extension
+      const filename = file.name.replace(/\.[^/.]+$/, "");
       setForm(prev => ({ ...prev, title: filename }));
     }
   };
@@ -219,7 +314,7 @@ const ChannelUploadPage: FC = () => {
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      if (file.size > 5 * 1024 * 1024) {
         setError('Thumbnail file size must be less than 5MB');
         return;
       }
@@ -282,10 +377,14 @@ const ChannelUploadPage: FC = () => {
     if (cancelTokenSource) {
       cancelTokenSource.cancel('Upload cancelled by user');
       setUploading(false);
+      setIsProcessing(false);
       setUploadProgress(0);
+      setProcessingProgress(0);
       setUploadSpeed('');
       setEstimatedTime('');
       setUploadedBytes(0);
+      setProcessingStep('');
+      setProcessingMessage('');
     }
   };
 
@@ -302,28 +401,44 @@ const ChannelUploadPage: FC = () => {
       return;
     }
 
+    if (!uploadSocket) {
+      setError('Upload connection not ready. Please try again.');
+      return;
+    }
+
+    // Generate unique upload ID
+    const newUploadId = generateUploadId();
+    setUploadId(newUploadId);
+
     setUploading(true);
+    setIsProcessing(false);
     setError('');
     setSuccess('');
     setUploadProgress(0);
+    setProcessingProgress(0);
     setUploadSpeed('');
     setEstimatedTime('');
     setUploadedBytes(0);
     setUploadStartTime(Date.now());
+    setProcessingStep('');
+    setProcessingMessage('');
 
     // Create cancel token
     const source = axios.CancelToken.source();
     setCancelTokenSource(source);
 
     try {
+      const formData = new FormData();
+      formData.append('video', form.video);
+      formData.append('title', form.title);
+      formData.append('channelId', channelId);
+      formData.append('uploadId', newUploadId);
+      formData.append('socketId', uploadSocket.id || '');
+
       if (form.contentType === 'short') {
-        // For shorts, we need to handle file upload differently
-        // Since the shorts endpoint expects JSON, we'll need to upload the file first
         const metadata = await getVideoMetadata(form.video);
         
-        const formData = new FormData();
-        formData.append('video', form.video);
-        formData.append('title', form.title);
+        // Ensure all values are strings, not undefined
         formData.append('caption', form.description || form.caption || '');
         formData.append('song', form.song || '');
         formData.append('tags', JSON.stringify(form.tags));
@@ -337,10 +452,9 @@ const ChannelUploadPage: FC = () => {
         formData.append('allowDuet', form.allowDuet.toString());
         formData.append('isPublic', form.isPublic.toString());
         formData.append('isSensitive', form.isSensitive.toString());
-        formData.append('channelId', channelId);
 
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/upload`, // Assuming you have an upload endpoint for shorts
+          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/upload`,
           formData,
           {
             withCredentials: true,
@@ -353,24 +467,27 @@ const ChannelUploadPage: FC = () => {
                 ((progressEvent.loaded || 0) * 100) / (progressEvent.total || 1)
               );
               setUploadProgress(percentCompleted);
-              calculateUploadMetrics(progressEvent);
+              
+              if (percentCompleted === 100) {
+                setIsProcessing(true);
+                setProcessingStep('received');
+                setProcessingMessage('Upload complete, starting processing...');
+                setUploadSpeed('');
+                setEstimatedTime('');
+              } else {
+                calculateUploadMetrics(progressEvent);
+              }
             },
           }
         );
-
-        setSuccess('Short uploaded successfully!');
-        resetForm();
       } else {
-        // For regular videos
-        const formData = new FormData();
-        formData.append('video', form.video);
-        formData.append('title', form.title);
-        formData.append('description', form.description);
-        formData.append('category', form.category);
+        // For regular videos - ensure all values are strings
+        formData.append('description', form.description || '');
+        formData.append('category', form.category || '');
         formData.append('visibility', form.visibility);
         formData.append('tags', JSON.stringify(form.tags));
-        formData.append('channelId', channelId);
         
+        // Only append thumbnail if it exists
         if (form.thumbnail) {
           formData.append('thumbnail', form.thumbnail);
         }
@@ -389,13 +506,19 @@ const ChannelUploadPage: FC = () => {
                 ((progressEvent.loaded || 0) * 100) / (progressEvent.total || 1)
               );
               setUploadProgress(percentCompleted);
-              calculateUploadMetrics(progressEvent);
+              
+              if (percentCompleted === 100) {
+                setIsProcessing(true);
+                setProcessingStep('received');
+                setProcessingMessage('Upload complete, starting processing...');
+                setUploadSpeed('');
+                setEstimatedTime('');
+              } else {
+                calculateUploadMetrics(progressEvent);
+              }
             },
           }
         );
-
-        setSuccess('Video uploaded successfully!');
-        resetForm();
       }
     } catch (error: any) {
       if (axios.isCancel(error)) {
@@ -404,10 +527,11 @@ const ChannelUploadPage: FC = () => {
         console.error('Upload error:', error);
         setError(error.response?.data?.message || 'Upload failed. Please try again.');
       }
-    } finally {
       setUploading(false);
+      setIsProcessing(false);
       setCancelTokenSource(null);
       setUploadProgress(0);
+      setProcessingProgress(0);
       setUploadSpeed('');
       setEstimatedTime('');
       setUploadedBytes(0);
@@ -421,13 +545,14 @@ const ChannelUploadPage: FC = () => {
       tags: [],
       category: '',
       visibility: 'public',
-      contentType: form.contentType, // Keep the content type
+      contentType: form.contentType,
       commentsEnabled: true,
       allowLikes: true,
       allowDuet: true,
       isPublic: true,
       isSensitive: false,
       mentions: [],
+      location: '', // Reset location to empty string
     });
     
     if (videoPreview) {
@@ -436,9 +561,27 @@ const ChannelUploadPage: FC = () => {
     }
     setThumbnailPreview('');
     setUploadProgress(0);
+    setProcessingProgress(0);
     setUploadSpeed('');
     setEstimatedTime('');
     setUploadedBytes(0);
+    setIsProcessing(false);
+    setProcessingStep('');
+    setProcessingMessage('');
+  };
+
+  const getProcessingStepStatus = (step: string) => {
+    const stepOrder = ['received', 'processing', 'thumbnail', 'saving', 'complete'];
+    const currentIndex = stepOrder.indexOf(processingStep);
+    const stepIndex = stepOrder.indexOf(step);
+    
+    if (stepIndex < currentIndex) {
+      return 'completed';
+    } else if (stepIndex === currentIndex) {
+      return 'current';
+    } else {
+      return 'pending';
+    }
   };
 
   if (loading) {
@@ -955,55 +1098,186 @@ const ChannelUploadPage: FC = () => {
           </div>
         </div>
 
-        {/* Enhanced Upload Progress */}
+        {/* Enhanced Upload Progress with Real-time WebSocket Updates */}
         {uploading && (
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <FiLoader className="w-5 h-5 animate-spin text-blue-600 dark:text-blue-400" />
                 <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                  Uploading {form.contentType}...
+                  {isProcessing 
+                    ? (processingMessage || `Processing ${form.contentType}...`)
+                    : `Uploading ${form.contentType}...`
+                  }
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={cancelUpload}
-                className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition"
-              >
-                Cancel
-              </button>
+              {!isProcessing && (
+                <button
+                  type="button"
+                  onClick={cancelUpload}
+                  className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
             
             <div className="space-y-3">
               {/* Progress Bar */}
               <div className="flex items-center justify-between text-sm">
                 <span className="text-blue-600 dark:text-blue-300">
-                  {uploadProgress}% complete
+                  {isProcessing 
+                    ? `Processing... ${processingProgress}%` 
+                    : `${uploadProgress}% complete`
+                  }
                 </span>
-                <span className="text-gray-600 dark:text-gray-400">
-                  {formatBytes(uploadedBytes)} / {form.video ? formatBytes(form.video.size) : '0 B'}
-                </span>
+                {!isProcessing && (
+                  <span className="text-gray-600 dark:text-gray-400">
+                    {formatBytes(uploadedBytes)} / {form.video ? formatBytes(form.video.size) : '0 B'}
+                  </span>
+                )}
               </div>
               
               <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-3">
                 <div
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-300 relative overflow-hidden"
-                  style={{ width: `${uploadProgress}%` }}
+                  className={`h-3 rounded-full transition-all duration-500 relative overflow-hidden ${
+                    isProcessing 
+                      ? 'bg-gradient-to-r from-purple-500 to-blue-600' 
+                      : 'bg-blue-600'
+                  }`}
+                  style={{ 
+                    width: isProcessing 
+                      ? `${processingProgress}%` 
+                      : `${uploadProgress}%` 
+                  }}
                 >
                   {/* Animated gradient for active progress */}
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse" />
+                  
+                  {/* Processing animation */}
+                  {isProcessing && (
+                    <div 
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                      style={{ 
+                        animation: 'processing 2s ease-in-out infinite',
+                        transform: 'translateX(-100%)'
+                      }} 
+                    />
+                  )}
                 </div>
               </div>
               
-              {/* Upload Stats */}
+              {/* Upload/Processing Stats */}
               <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
-                <span>
-                  {uploadSpeed ? `Speed: ${uploadSpeed}/s` : 'Calculating speed...'}
-                </span>
-                <span>
-                  {estimatedTime && uploadProgress < 100 ? `ETA: ${estimatedTime}` : ''}
-                </span>
+                {isProcessing ? (
+                  <>
+                    <span className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                      Server is processing your {form.contentType}
+                    </span>
+                    <span className="text-purple-600 dark:text-purple-400">
+                      This may take a few minutes
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span>
+                      {uploadSpeed ? `Speed: ${uploadSpeed}/s` : 'Calculating speed...'}
+                    </span>
+                    <span>
+                      {estimatedTime && uploadProgress < 100 ? `ETA: ${estimatedTime}` : ''}
+                    </span>
+                  </>
+                )}
               </div>
+              
+              {/* Real-time Processing Steps */}
+              {isProcessing && (
+                <div className="mt-4 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                  <div className="flex items-center gap-2 text-xs text-purple-700 dark:text-purple-300 mb-3">
+                    <FiLoader className="w-3 h-3 animate-spin" />
+                    <span>Processing steps:</span>
+                  </div>
+                  
+                  <ul className="text-xs space-y-2">
+                    <li className="flex items-center gap-2">
+                      {getProcessingStepStatus('received') === 'completed' ? (
+                        <FiCheck className="w-3 h-3 text-green-500" />
+                      ) : getProcessingStepStatus('received') === 'current' ? (
+                        <FiLoader className="w-3 h-3 animate-spin text-blue-500" />
+                      ) : (
+                        <div className="w-3 h-3 border border-gray-300 rounded-full"></div>
+                      )}
+                      <span className={
+                        getProcessingStepStatus('received') === 'completed' 
+                          ? 'text-green-600 dark:text-green-400'
+                          : getProcessingStepStatus('received') === 'current'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-gray-400'
+                      }>
+                        Upload completed
+                      </span>
+                    </li>
+                    
+                    <li className="flex items-center gap-2">
+                      {getProcessingStepStatus('processing') === 'completed' ? (
+                        <FiCheck className="w-3 h-3 text-green-500" />
+                      ) : getProcessingStepStatus('processing') === 'current' ? (
+                        <FiLoader className="w-3 h-3 animate-spin text-blue-500" />
+                      ) : (
+                        <div className="w-3 h-3 border border-gray-300 rounded-full"></div>
+                      )}
+                      <span className={
+                        getProcessingStepStatus('processing') === 'completed' 
+                          ? 'text-green-600 dark:text-green-400'
+                          : getProcessingStepStatus('processing') === 'current'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-gray-400'
+                      }>
+                        {form.contentType === 'video' ? 'Generating video qualities' : 'Optimizing short video'}
+                      </span>
+                    </li>
+                    
+                    <li className="flex items-center gap-2">
+                      {getProcessingStepStatus('thumbnail') === 'completed' ? (
+                        <FiCheck className="w-3 h-3 text-green-500" />
+                      ) : getProcessingStepStatus('thumbnail') === 'current' ? (
+                        <FiLoader className="w-3 h-3 animate-spin text-blue-500" />
+                      ) : (
+                        <div className="w-3 h-3 border border-gray-300 rounded-full"></div>
+                      )}
+                      <span className={
+                        getProcessingStepStatus('thumbnail') === 'completed' 
+                          ? 'text-green-600 dark:text-green-400'
+                          : getProcessingStepStatus('thumbnail') === 'current'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-gray-400'
+                      }>
+                        Creating thumbnail
+                      </span>
+                    </li>
+                    
+                    <li className="flex items-center gap-2">
+                      {getProcessingStepStatus('saving') === 'completed' ? (
+                        <FiCheck className="w-3 h-3 text-green-500" />
+                      ) : getProcessingStepStatus('saving') === 'current' ? (
+                        <FiLoader className="w-3 h-3 animate-spin text-blue-500" />
+                      ) : (
+                        <div className="w-3 h-3 border border-gray-300 rounded-full"></div>
+                      )}
+                      <span className={
+                        getProcessingStepStatus('saving') === 'completed' 
+                          ? 'text-green-600 dark:text-green-400'
+                          : getProcessingStepStatus('saving') === 'current'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-gray-400'
+                      }>
+                        Finalizing upload
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1029,24 +1303,41 @@ const ChannelUploadPage: FC = () => {
           <button
             type="button"
             onClick={() => uploading ? cancelUpload() : window.history.back()}
-            className="flex-1 px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium"
+            disabled={isProcessing}
+            className={`flex-1 px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium ${
+              isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            {uploading ? 'Cancel Upload' : 'Cancel'}
+            {uploading ? (isProcessing ? 'Processing...' : 'Cancel Upload') : 'Cancel'}
           </button>
           <button
             type="submit"
-            disabled={uploading || !form.video || !form.title.trim()}
-            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2"
+            disabled={uploading || !form.video || !form.title.trim() || !uploadSocket}
+            className={`flex-1 px-6 py-3 rounded-lg transition font-medium flex items-center justify-center gap-2 ${
+              uploading 
+                ? (isProcessing 
+                    ? 'bg-purple-500 text-white cursor-not-allowed' 
+                    : 'bg-blue-500 text-white cursor-not-allowed')
+                : 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed'
+            }`}
           >
             {uploading ? (
-              <>
-                <FiLoader className="w-4 h-4 animate-spin" />
-                Uploading... ({uploadProgress}%)
-              </>
+              isProcessing ? (
+                <>
+                  <FiLoader className="w-4 h-4 animate-spin" />
+                  Processing... ({processingProgress}%)
+                </>
+              ) : (
+                <>
+                  <FiLoader className="w-4 h-4 animate-spin" />
+                  Uploading... ({uploadProgress}%)
+                </>
+              )
             ) : (
               <>
                 <FiUpload className="w-4 h-4" />
                 Upload {form.contentType === 'short' ? 'Short' : 'Video'}
+                {!uploadSocket && ' (Connecting...)'}
               </>
             )}
           </button>
