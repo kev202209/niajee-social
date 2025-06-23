@@ -23,7 +23,7 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
 
   // Check if we're in a channel-specific route
-  const isChannelRoute = pathname.match(/^\/create\/channels\/[^\/]+\//)
+  const isChannelRoute = pathname.match(/^\/create\/channels\/[^\/]+/)
   
   // If we're in a channel route, just render children without the layout
   if (isChannelRoute) {
