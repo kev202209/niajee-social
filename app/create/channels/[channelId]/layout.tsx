@@ -105,7 +105,7 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
               {channel?.avatar ? (
                 <img 
-                  src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/channels/${channel.avatar}`} 
+                  src={`${channel.avatar}`} 
                   alt={channel.name} 
                   className="w-full h-full rounded-full object-cover" 
                 />
