@@ -19,26 +19,64 @@ export interface User {
 }
 
 export interface Video {
-    id: number;
-    videoSrc: string;
-    videoId: string;
-    title: string;
-    channelAvatar: string;
-    channelName: string;
-    views: string;
-    age: string;
-  }
-  
-export interface Short {
-  id: number;
-  videoSrc: string;
+  id: string;
+  videoId: string;
+  videoUrl: {
+    [quality: string]: string; // e.g., "360p", "720p", "1080p"
+  };
+  thumbnail: string;
   title: string;
-  channelAvatar: string;
-  channelName: string;
-  views: string;
-  age: string;
-  }
-  
+  description: string;
+  duration: number;
+  views: number;
+  likes: number;
+  dislikes: number;
+  createdAt: string;
+  channel: {
+    id: string;
+    name: string;
+    avatar: string;
+    verified: boolean;
+  };
+}
+
+export interface Short {
+  id: string;
+  title: string;
+  videoUrl: string; // Shorts might still use a single URL
+  thumbnail?: string;
+  duration: number;
+  views: number;
+  likes: number;
+  createdAt: string;
+  channel: {
+    id: string;
+    name: string;
+    avatar: string;
+    verified: boolean;
+  };
+  // Additional short-specific fields
+  caption?: string;
+  tags?: string[];
+  mentions?: string[];
+  location?: string;
+  allowComments?: boolean;
+  allowLikes?: boolean;
+  allowDuet?: boolean;
+  isPublic?: boolean;
+  isSensitive?: boolean;
+}
+
+export interface Channel {
+  id: string;
+  name: string;
+  avatar: string;
+  verified: boolean;
+  description?: string;
+  subscriberCount?: number;
+  videoCount?: number;
+  createdAt?: string;
+}
 export interface Tweet {
   id: string;
   content: string;
@@ -56,7 +94,7 @@ export interface Tweet {
 }
 
 export interface mVideo {
-  _id: string;
+  id: string;
   videoId: string;
   title: string;
   description: string;
@@ -165,8 +203,8 @@ export interface Follow {
 
 
 
-export interface Channel {
-  id: string; // Changed from _id to id (uuid)
+export interface DetailedChannel {
+  id: string;
   name: string;
   handle: string; // New field - @channelname
   description: string | null; // Can be null
