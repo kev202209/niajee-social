@@ -42,20 +42,31 @@ export default function ChannelOverview() {
   const [overview, setOverview] = useState<ChannelOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
-
   useEffect(() => {
-    fetchChannelOverview()
+    const abortController = new AbortController()
+    fetchChannelOverview(abortController.signal)
+    
+    // Cleanup function to abort fetch when component unmounts or channelId changes
+    return () => {
+      abortController.abort()
+    }
   }, [channelId])
 
-  const fetchChannelOverview = async () => {
+  const fetchChannelOverview = async (signal?: AbortSignal) => {
     try {
       setLoading(true)
       setError('')
       
       // Fetch channel overview data
       const overviewResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}/overview`, {
-        credentials: 'include'
+        credentials: 'include',
+        signal: signal
       })
+      
+      // Check if the request was aborted
+      if (signal?.aborted) {
+        return
+      }
       
       if (!overviewResponse.ok) {
         throw new Error('Failed to fetch channel overview')
@@ -63,15 +74,31 @@ export default function ChannelOverview() {
       
       const overviewData = await overviewResponse.json()
       
+      // Check again if the request was aborted after parsing
+      if (signal?.aborted) {
+        return
+      }
+      
       // Fetch channel stats
       const statsResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}/stats`, {
-        credentials: 'include'
+        credentials: 'include',
+        signal: signal
       })
+      
+      // Check if the request was aborted
+      if (signal?.aborted) {
+        return
+      }
       
       let statsData = null
       if (statsResponse.ok) {
         const stats = await statsResponse.json()
         statsData = stats.stats
+      }
+      
+      // Final check before setting state
+      if (signal?.aborted) {
+        return
       }
       
       // Combine the data
@@ -93,10 +120,17 @@ export default function ChannelOverview() {
       
       setOverview(combinedData)
     } catch (error) {
+      // Don't update state if the request was aborted
+      if (signal?.aborted || (error as Error).name === 'AbortError') {
+        return
+      }
       console.error('Failed to fetch channel overview:', error)
       setError('Failed to load channel data')
     } finally {
-      setLoading(false)
+      // Only update loading state if not aborted
+      if (!signal?.aborted) {
+        setLoading(false)
+      }
     }
   }
 
@@ -149,7 +183,7 @@ export default function ChannelOverview() {
     return `${sign}${growth.toFixed(1)}% from last period`
   }
 
-  const getActivityIcon = (type: string): JSX.Element => {
+  const getActivityIcon = (type: string): React.ReactElement => {
     switch (type) {
       case 'video_published':
         return <FiVideo className="w-4 h-4 text-gray-400" />

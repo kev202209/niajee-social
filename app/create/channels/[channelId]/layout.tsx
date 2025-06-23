@@ -32,22 +32,38 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
   const channelId = params.channelId as string
   const [channel, setChannel] = useState<Channel | null>(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-
   useEffect(() => {
-    const fetchChannel = async () => {
+    const abortController = new AbortController()
+    
+    const fetchChannel = async (signal: AbortSignal) => {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}`, {
-          credentials: 'include'
+          credentials: 'include',
+          signal
         })
+        
+        if (signal.aborted) {
+          return
+        }
+        
         const data = await res.json()
-        setChannel(data.channel || data)
+        
+        if (!signal.aborted) {
+          setChannel(data.channel || data)
+        }
       } catch (error) {
-        console.error('Failed to fetch channel:', error)
+        if (!signal.aborted && (error as Error).name !== 'AbortError') {
+          console.error('Failed to fetch channel:', error)
+        }
       }
     }
 
     if (channelId) {
-      fetchChannel()
+      fetchChannel(abortController.signal)
+    }
+    
+    return () => {
+      abortController.abort()
     }
   }, [channelId])
 

@@ -8,8 +8,7 @@ const ChannelsPage: FC = () => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  const fetchChannels = async () => {
+  const fetchChannels = async (signal?: AbortSignal) => {
     try {
       setLoading(true);
       setError(null);
@@ -17,9 +16,14 @@ const ChannelsPage: FC = () => {
         `${process.env.NEXT_PUBLIC_API_URL}/api/channels/my-channel`,
         {
           method: 'GET',
-          credentials: 'include'
+          credentials: 'include',
+          signal
         }
       );
+      
+      if (signal?.aborted) {
+        return;
+      }
       
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
@@ -28,18 +32,29 @@ const ChannelsPage: FC = () => {
       const data = await res.json();
       console.log('API Response:', data);
       
-      // Extract the channels array from the response
-      setChannels(data.channels || []);
+      if (!signal?.aborted) {
+        // Extract the channels array from the response
+        setChannels(data.channels || []);
+      }
     } catch (err: any) {
-      console.error('Fetch error:', err);
-      setError(err.message || 'Failed to load channels.');
+      if (!signal?.aborted && (err as Error).name !== 'AbortError') {
+        console.error('Fetch error:', err);
+        setError(err.message || 'Failed to load channels.');
+      }
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    fetchChannels();
+    const abortController = new AbortController();
+    fetchChannels(abortController.signal);
+    
+    return () => {
+      abortController.abort();
+    };
   }, []);
 
   const handleManage = (channelId: string) => {
@@ -49,7 +64,6 @@ const ChannelsPage: FC = () => {
   const handleCreateChannel = () => {
     window.location.href = '/create/channels/new';
   };
-
   const handleRetry = () => {
     fetchChannels();
   };
