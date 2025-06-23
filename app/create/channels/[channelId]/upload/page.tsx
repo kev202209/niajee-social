@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, FC } from 'react';
+import React, { useState, useEffect, useRef, FC } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios, { AxiosProgressEvent } from 'axios';
 import { Channel } from '@/types';
@@ -60,15 +60,15 @@ const ChannelUploadPage: FC = () => {
     category: '',
     visibility: 'public',
     contentType: 'video',
-    caption: '', // Initialize as empty string instead of undefined
-    song: '', // Initialize as empty string instead of undefined
+    caption: '',
+    song: '',
     commentsEnabled: true,
     allowLikes: true,
     allowDuet: true,
     isPublic: true,
     isSensitive: false,
     mentions: [],
-    location: '', // Initialize as empty string instead of undefined
+    location: '',
   });
   
   const [videoPreview, setVideoPreview] = useState<string>('');
@@ -92,7 +92,9 @@ const ChannelUploadPage: FC = () => {
 
   // WebSocket state
   const [uploadSocket, setUploadSocket] = useState<Socket | null>(null);
-  const [uploadId, setUploadId] = useState<string>('');
+  
+  // 🔄 Use ref for uploadId tracking instead of state
+  const uploadIdRef = useRef<string>('');
 
   // Progress tracking state
   const [uploadStartTime, setUploadStartTime] = useState<number>(0);
@@ -111,9 +113,10 @@ const ChannelUploadPage: FC = () => {
   useEffect(() => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     
-    // Connect to the upload namespace
+    // Connect to the upload namespace with websocket transport
     const socket = io(`${API_URL}/upload`, {
       withCredentials: true,
+      transports: ['websocket'],
     });
 
     socket.on('connect', () => {
@@ -129,11 +132,12 @@ const ChannelUploadPage: FC = () => {
       console.log('Upload socket disconnected:', reason);
     });
 
-    // Listen for upload progress updates
+    // 🔄 Listen for upload progress updates - no dependency on uploadId state
     socket.on('upload-progress', (data: UploadProgressData & { uploadId: string }) => {
       console.log('Upload progress received:', data);
       
-      if (data.uploadId === uploadId) {
+      // 🔄 Use ref value for comparison
+      if (data.uploadId === uploadIdRef.current) {
         setProcessingStep(data.step);
         setProcessingMessage(data.message);
         setProcessingProgress(data.progress);
@@ -157,11 +161,12 @@ const ChannelUploadPage: FC = () => {
       }
     });
 
-    // Listen for upload errors
+    // 🔄 Listen for upload errors - no dependency on uploadId state
     socket.on('upload-error', (data: UploadErrorData & { uploadId: string }) => {
       console.error('Upload error received:', data);
       
-      if (data.uploadId === uploadId) {
+      // 🔄 Use ref value for comparison
+      if (data.uploadId === uploadIdRef.current) {
         setError(data.message);
         setUploading(false);
         setIsProcessing(false);
@@ -171,7 +176,7 @@ const ChannelUploadPage: FC = () => {
     return () => {
       socket.disconnect();
     };
-  }, [uploadId, router, form.contentType]);
+  }, []); // 🔄 Remove dependencies - listeners will always use current ref value
 
   const fetchChannel = async () => {
     try {
@@ -373,6 +378,7 @@ const ChannelUploadPage: FC = () => {
     });
   };
 
+  // 🔄 Cancel upload function
   const cancelUpload = () => {
     if (cancelTokenSource) {
       cancelTokenSource.cancel('Upload cancelled by user');
@@ -385,6 +391,8 @@ const ChannelUploadPage: FC = () => {
       setUploadedBytes(0);
       setProcessingStep('');
       setProcessingMessage('');
+      // 🔄 Clear upload ID ref on cancel
+      uploadIdRef.current = '';
     }
   };
 
@@ -406,9 +414,19 @@ const ChannelUploadPage: FC = () => {
       return;
     }
 
-    // Generate unique upload ID
+    // 🔄 Generate unique upload ID and store in ref
     const newUploadId = generateUploadId();
-    setUploadId(newUploadId);
+    uploadIdRef.current = newUploadId;
+
+    // ✅ Register the upload session and join room when socket is connected
+    if (uploadSocket.connected) {
+      console.log('Registering upload session:', newUploadId);
+      uploadSocket.emit('register-upload-session', { uploadId: newUploadId });
+      uploadSocket.emit('join-upload-room', { uploadId: newUploadId });
+    } else {
+      setError('Upload socket not connected. Please try again.');
+      return;
+    }
 
     setUploading(true);
     setIsProcessing(false);
@@ -432,8 +450,8 @@ const ChannelUploadPage: FC = () => {
       formData.append('video', form.video);
       formData.append('title', form.title);
       formData.append('channelId', channelId);
-      formData.append('uploadId', newUploadId);
-      formData.append('socketId', uploadSocket.id || '');
+      formData.append('uploadId', newUploadId); // ✅ This is crucial for backend tracking
+      formData.append('socketId', uploadSocket.id || ''); // ✅ Backend needs this to find the socket
 
       if (form.contentType === 'short') {
         const metadata = await getVideoMetadata(form.video);
@@ -493,7 +511,7 @@ const ChannelUploadPage: FC = () => {
         }
 
         const response = await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/video/upload`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/videos/upload`,
           formData,
           {
             withCredentials: true,
@@ -535,6 +553,8 @@ const ChannelUploadPage: FC = () => {
       setUploadSpeed('');
       setEstimatedTime('');
       setUploadedBytes(0);
+      // 🔄 Clear upload ID ref on error
+      uploadIdRef.current = '';
     }
   };
 
@@ -552,7 +572,7 @@ const ChannelUploadPage: FC = () => {
       isPublic: true,
       isSensitive: false,
       mentions: [],
-      location: '', // Reset location to empty string
+      location: '',
     });
     
     if (videoPreview) {
@@ -568,6 +588,8 @@ const ChannelUploadPage: FC = () => {
     setIsProcessing(false);
     setProcessingStep('');
     setProcessingMessage('');
+    // 🔄 Clear upload ID ref on reset
+    uploadIdRef.current = '';
   };
 
   const getProcessingStepStatus = (step: string) => {
@@ -1173,7 +1195,7 @@ const ChannelUploadPage: FC = () => {
                   <>
                     <span className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-                      Server is processing your {form.contentType}
+                      We are actively processing your {form.contentType}
                     </span>
                     <span className="text-purple-600 dark:text-purple-400">
                       This may take a few minutes
@@ -1234,7 +1256,7 @@ const ChannelUploadPage: FC = () => {
                           ? 'text-blue-600 dark:text-blue-400'
                           : 'text-gray-400'
                       }>
-                        {form.contentType === 'video' ? 'Generating video qualities' : 'Optimizing short video'}
+                        {form.contentType === 'video' ? 'Optimizing video quality' : 'Optimizing short video'}
                       </span>
                     </li>
                     
