@@ -27,7 +27,7 @@ const TweetFeed: FC = () => {
         // Handle the new API response structure
         const posts = data.posts || [];
         const transformedTweets: Tweet[] = posts.map((item: any) => ({
-          id: item.id, // Changed from item._id to item.id
+          id: item.id,
           content: item.content,
           username: item.user?.username || "Anonymous",
           displayName: item.user?.displayName || "@unknown", // Fixed property name
