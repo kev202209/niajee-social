@@ -13,7 +13,7 @@ import CommentsSection from "./CommentsSection";
 interface Channel {
   name: string;
   icon: string | null;
-  _id?: string;
+  id?: string;
 }
 
 interface Comment {
@@ -27,7 +27,7 @@ interface Comment {
 }
 
 interface ShortData {
-  _id: string;
+  id: string;
   videoSrc: string;
   title: string;
   views: string;
@@ -160,7 +160,7 @@ const ShortVideoPage = () => {
       const current = await fetchCurrentVideo(initialVideoId);
       if (current) {
         setCurrentVideo(current);
-        updateUrl(current._id);
+        updateUrl(current.id);
         const next = await fetchNextVideo();
         setNextVideo(next);
         setLoading(false);
@@ -222,7 +222,7 @@ const ShortVideoPage = () => {
     setTimeout(async () => {
       setVideoHistory((prev) => [...prev, currentVideo]);
       setCurrentVideo(nextVideo);
-      updateUrl(nextVideo._id);
+      updateUrl(nextVideo.id);
       setIsPaused(false);
       setIsMuted(true);
       if (currentVideoRef.current) {
@@ -244,7 +244,7 @@ const ShortVideoPage = () => {
     setTimeout(() => {
       setVideoHistory((prev) => prev.slice(0, -1));
       setCurrentVideo(prevVideo);
-      updateUrl(prevVideo._id);
+      updateUrl(prevVideo.id);
       setIsPaused(false);
       setIsMuted(true);
       if (currentVideoRef.current) {
