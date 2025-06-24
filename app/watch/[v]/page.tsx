@@ -1,4 +1,5 @@
 // This is a Server Component by default in Next.js 15 App Router
+
 import { Suspense } from "react";
 import VideoPlayer from "@/components/video/VideoPlayer";
 import Header from "@/components/watch/Header";
@@ -51,7 +52,7 @@ async function fetchVideoData(videoId: string) {
 }
 
 async function fetchSuggestedVideos(videoId: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/suggested?v=${videoId}`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/content/suggested?v=${videoId}`, {
     cache: "no-store",
     credentials: 'include', // Add this to include cookies
   });
@@ -81,14 +82,29 @@ function getHLSStreamUrl(videoId: string, quality: string) {
 }
 
 // Update the component to handle async params
-export default async function WatchPage({ params }: { params: { v: string } }) {
+export default async function WatchPage({ params }: { params: Promise<{ v: string }> }) {
   try {
+    // Await params first
+    const { v: videoId } = await params;
+    
     // Fetch data server-side
     const [video, suggestedVideos, comments] = await Promise.all([
-      fetchVideoData(params.v),
-      fetchSuggestedVideos(params.v),
-      fetchComments(params.v),
+      fetchVideoData(videoId),
+      fetchSuggestedVideos(videoId),
+      fetchComments(videoId),
     ]);
+
+    // Ensure video has proper streaming URLs
+    const processedVideo = {
+      ...video,
+      videoUrl: video.videoUrl || getHLSStreamUrl(videoId, 'auto'),
+      streamUrls: {
+        '720p': getVideoStreamUrl(videoId, '720p'),
+        '480p': getVideoStreamUrl(videoId, '480p'),
+        '360p': getVideoStreamUrl(videoId, '360p'),
+        auto: getHLSStreamUrl(videoId, 'auto')
+      }
+    };
 
     return (
       <>
@@ -99,7 +115,7 @@ export default async function WatchPage({ params }: { params: { v: string } }) {
             <div className="flex flex-col md:flex-row gap-4 ml-10">
               <div className="md:w-2/3 space-y-4">
                 <Suspense fallback={<div>Loading video…</div>}>
-                  <VideoPlayer video={video} />
+                  <VideoPlayer video={processedVideo} />
                 </Suspense>
                 <Suspense fallback={<div>Loading comments…</div>}>
                   <CommentsSection comments={comments} />
