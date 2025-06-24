@@ -48,6 +48,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
+  // Add this helper function at the top of your AuthProvider component
+  const updateUserProfilePicture = (user: User): User => {
+    if (user.profilePic && !user.profilePic.startsWith('http')) {
+      // Only add the base URL if it's not already a full URL
+      return {
+        ...user,
+        profilePic: `${process.env.NEXT_PUBLIC_API_URL}/uploads/profiles/${user.profilePic}`
+      };
+    }
+    return user;
+  };
+
   const checkAuth = async () => {
     try {
       const response = await fetch(`${api_link}/auth/verify`, {
@@ -57,7 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         const userData: User = await response.json();
-        setUser(userData);
+        // ✅ Update profile picture URL before setting user
+        const updatedUser = updateUserProfilePicture(userData);
+        setUser(updatedUser);
       } else {
         setUser(null);
       }
@@ -93,8 +107,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data.message || 'Login failed. Please check your internet connection.'
         );
       }
-
-      setUser(data.user);
+      // ✅ Update profile picture URL before setting user
+      const updatedUser = updateUserProfilePicture(data.user);
+      setUser(updatedUser);
     } catch (err) {
       const errorMessage = handleFetchError(err, 'Login failed');
       setError(errorMessage);
