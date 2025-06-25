@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { FiChevronLeft, FiChevronRight, FiClock, FiPlusCircle } from "react-icons/fi";
 import { SuggestedVideo } from "../../../types";
 import Link from "next/link";
+import timeAgo from "@/app/utils/timeAgo";
 
 export default function SuggestedVideos({ suggestedVideos }: { suggestedVideos: SuggestedVideo[] }) {
   const [tags] = useState([
@@ -138,6 +139,8 @@ export default function SuggestedVideos({ suggestedVideos }: { suggestedVideos: 
 
 function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
   const [hover, setHover] = useState(false);
+  const [imageError, setImageError] = useState(false);
+
   return (
     <Link href={`/watch/${video.id}`}>
       <div
@@ -145,30 +148,66 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
       >
-        <div className="relative w-40 h-24 flex-shrink-0">
-          <video
-            src={video.videoSrc}
-            loop
-            playsInline
-            className="object-cover w-full h-full rounded"
-          />
+        <div className="relative w-40 h-24 flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
+          {video.thumbnailUrl && !imageError ? (
+            <img
+              src={video.thumbnailUrl}
+              alt={video.title}
+              className="object-cover w-full h-full"
+              onError={() => setImageError(true)}
+              loading="lazy"
+            />
+          ) : (
+            // Fallback when no thumbnail or image fails to load
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700">
+              <div className="text-center">
+                <div className="w-8 h-8 mx-auto mb-1 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path
+                      fillRule="evenodd"
+                      d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </div>
+                <span className="text-xs text-gray-600 dark:text-gray-300">No thumbnail</span>
+              </div>
+            </div>
+          )}
+
+          {/* Duration badge */}
+          {video.duration && (
+            <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1.5 py-0.5 rounded">
+              {video.duration}
+            </div>
+          )}
+
+          {/* Hover overlay */}
           {hover && (
-            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black bg-opacity-50">
-              <button className="text-white">
-                <FiClock className="w-5 h-5" />
+            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black bg-opacity-50 transition-opacity">
+              <button className="text-white p-1.5 bg-black bg-opacity-50 rounded-full hover:bg-opacity-70 transition">
+                <FiClock className="w-4 h-4" />
               </button>
-              <button className="text-white">
-                <FiPlusCircle className="w-5 h-5" />
+              <button className="text-white p-1.5 bg-black bg-opacity-50 rounded-full hover:bg-opacity-70 transition">
+                <FiPlusCircle className="w-4 h-4" />
               </button>
             </div>
           )}
         </div>
-        <div className="flex flex-col">
-          <h3 className="font-semibold text-sm line-clamp-2">{video.title}</h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400">{video.channelName}</p>
-          <p className="text-xs text-gray-600 dark:text-gray-400">
-            {video.views} · {video.uploadDate}
+
+        <div className="flex flex-col flex-1 min-w-0">
+          <h3 className="font-semibold text-sm line-clamp-2 text-gray-900 dark:text-white mb-1">
+            {video.title}
+          </h3>
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
+            {video.channelName}
           </p>
+          <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+            <span>{video.views} views</span>
+            <span>•</span>
+            <span>{timeAgo(video.age)}</span>
+          </div>
         </div>
       </div>
     </Link>
