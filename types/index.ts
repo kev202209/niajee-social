@@ -95,10 +95,9 @@ export interface Tweet {
 
 export interface mVideo {
   id: string;
-  videoId: string;
   title: string;
   description: string;
-  tags: string;
+  tags: string[];
   visibility: 'public' | 'private' | 'unlisted';
   videoUrl: {
     '240p': string;
@@ -106,24 +105,37 @@ export interface mVideo {
     '480p': string;
     '720p': string;
     '1080p': string;
-    [key: string]: string; // For any other quality levels
+    [key: string]: string;
   };
+  videoSrc?: string; // For backward compatibility
   thumbnailUrl: string;
   duration: number;
-  format: string;
-  channelId: string;
+  fileSize: number;
+  resolution: string;
+  viewCount: number;
+  likeCount: number;
+  dislikeCount: number;
+  commentCount: number;
+  shareCount: number;
+  isPublic: boolean;
+  allowComments: boolean;
+  allowLikes: boolean;
+  category: string;
+  language: string;
+  monetization: {
+    enabled: boolean;
+    channelMonetized: boolean;
+    contentMonetized: boolean;
+  };
   createdAt: string;
   updatedAt: string;
-  // Additional fields needed for VideoMeta component
-  channelName: string;
-  channelAvatar: string;
-  likes: number;
-  dislikes?: number;
-  views: string;
-  uploadDate: string;
-  shares?: number;
-  comments?: number;
-  saved?: boolean;
+  channel: {
+    id: string;
+    name: string;
+    avatar: string;
+    verified: boolean;
+    monetized: boolean;
+  };
 }
 
 // Update SuggestedVideo to extend from mVideo
@@ -136,17 +148,35 @@ export interface SuggestedVideo extends Omit<mVideo, 'videoUrl'> {
   uploadDate: string;
   duration: number;
   thumbnailUrl: string;
+  age: string
 }
 
 export interface Comment {
   id: string;
-  username: string;
-  avatar: string;
-  age: string;
-  text: string;
-  likes: number;
+  content: string;
+  videoId: string;
+  parentId?: string | null;
+  user: {
+    id: string;
+    username: string;
+    displayName?: string;
+    profilePic?: string;
+  };
+  likeCount: number;
+  dislikeCount: number;
+  isLiked?: boolean;
+  isDisliked?: boolean;
+  createdAt: string;
+  updatedAt: string;
+  replies?: Comment[];
+  repliesCount?: number;
 }
 
+export interface CreateCommentDto {
+  text: string;
+  videoId: string;
+  parentId?: string;
+}
 
 export interface Post {
   id: string ;
