@@ -88,10 +88,9 @@ export default async function WatchPage({ params }: { params: Promise<{ v: strin
     const { v: videoId } = await params;
     
     // Fetch data server-side
-    const [video, suggestedVideos, comments] = await Promise.all([
+    const [video, suggestedVideos] = await Promise.all([
       fetchVideoData(videoId),
       fetchSuggestedVideos(videoId),
-      fetchComments(videoId),
     ]);
 
     // Ensure video has proper streaming URLs
@@ -118,7 +117,10 @@ export default async function WatchPage({ params }: { params: Promise<{ v: strin
                   <VideoPlayer video={processedVideo} />
                 </Suspense>
                 <Suspense fallback={<div>Loading comments…</div>}>
-                  <CommentsSection comments={comments} />
+                  <CommentsSection 
+                    videoId={videoId} 
+                    allowComments={video.allowComments} 
+                  />
                 </Suspense>
               </div>
               <div className="md:w-1/3">
