@@ -187,7 +187,77 @@ export function useVideoPlayer({
     setTimeout(() => setPlayPauseAnim(null), 1000);
   }, [isPlaying]);
 
-  useEffect(() => { const onKey = (e: KeyboardEvent) => { if (e.code === 'Space' && !(document.activeElement instanceof HTMLInputElement)) { e.preventDefault(); togglePlay(); } }; document.addEventListener('keydown', onKey); return () => document.removeEventListener('keydown', onKey); }, [togglePlay]);
+  // Helper function to check if user is typing
+  const isUserTyping = useCallback(() => {
+    const activeElement = document.activeElement;
+    return activeElement && (
+      activeElement.tagName === 'INPUT' ||
+      activeElement.tagName === 'TEXTAREA' ||
+      activeElement.tagName === 'SELECT' ||
+      (activeElement as HTMLElement).isContentEditable ||
+      activeElement.getAttribute('role') === 'textbox' ||
+      activeElement.getAttribute('contenteditable') === 'true'
+    );
+  }, []);
+
+  // Update the Space key handler
+  useEffect(() => { 
+    const onKey = (e: KeyboardEvent) => { 
+      if (e.code === 'Space' && !isUserTyping()) { 
+        e.preventDefault(); 
+        togglePlay(); 
+      } 
+    }; 
+    document.addEventListener('keydown', onKey); 
+    return () => document.removeEventListener('keydown', onKey); 
+  }, [togglePlay, isUserTyping]);
+
+  // Update the keyboard controls handler
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // Don't handle video shortcuts if user is typing
+      if (isUserTyping()) return;
+
+      switch (e.code) {
+        case 'ArrowUp': 
+          e.preventDefault(); 
+          setVolume(v => Math.min(1, v + 0.03)); 
+          setVolumeIndicator({ type: 'up', value: Math.min(1, volume + 0.03) });
+          if (volumeTimeoutRef.current) clearTimeout(volumeTimeoutRef.current);
+          volumeTimeoutRef.current = setTimeout(() => setVolumeIndicator({ type: null, value: 0 }), 1000);
+          break;
+        case 'ArrowDown': 
+          e.preventDefault(); 
+          setVolume(v => Math.max(0, v - 0.03)); 
+          setVolumeIndicator({ type: 'down', value: Math.max(0, volume - 0.03) });
+          if (volumeTimeoutRef.current) clearTimeout(volumeTimeoutRef.current);
+          volumeTimeoutRef.current = setTimeout(() => setVolumeIndicator({ type: null, value: 0 }), 1000);
+          break;
+        case 'ArrowLeft': 
+          e.preventDefault(); 
+          handleRewind(); 
+          break;
+        case 'ArrowRight': 
+          e.preventDefault(); 
+          handleForward(); 
+          break;
+        case 'KeyM': 
+          e.preventDefault(); 
+          toggleMute(); 
+          break;
+        case 'KeyF':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
+        case 'KeyK':
+          e.preventDefault();
+          togglePlay();
+          break;
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [handleRewind, handleForward, toggleMute, toggleFullscreen, togglePlay, isUserTyping, volume]);
 
   // Mouse idle
   useEffect(() => {
@@ -204,22 +274,6 @@ export function useVideoPlayer({
     }
     return () => { if (c) c.removeEventListener('mousemove', onMove); };
   }, [isPlaying]);
-
-  // Keyboard controls
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (document.activeElement instanceof HTMLInputElement) return;
-      switch (e.code) {
-        case 'ArrowUp': e.preventDefault(); setVolume(v => Math.min(1, v + 0.03)); break;
-        case 'ArrowDown': e.preventDefault(); setVolume(v => Math.max(0, v - 0.03)); break;
-        case 'ArrowLeft': e.preventDefault(); handleRewind(); break;
-        case 'ArrowRight': e.preventDefault(); handleForward(); break;
-        case 'KeyM': e.preventDefault(); toggleMute(); break;
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [handleRewind, handleForward, toggleMute]);
 
   return {
     videoRef, // Return the passed videoRef
