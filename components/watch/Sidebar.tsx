@@ -6,7 +6,11 @@ import {
   Library,
   History,
   Download,
+  PlusCircle,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
+import Link from "next/link";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -20,30 +24,100 @@ const Sidebar: FC<SidebarProps> = ({ isOpen, onClose }) => {
         isOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
-      <ul className="space-y-2 p-4">
-        <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <Home className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
-          <span className="text-gray-900 dark:text-gray-100">Home</span>
+      {/* Close button with chevron */}
+      <div className="flex justify-end p-4 pb-2">
+        <button
+          onClick={onClose}
+          className="p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full transition-colors"
+          aria-label="Close sidebar"
+        >
+          <ChevronLeft className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+        </button>
+      </div>
+
+      <ul className="space-y-2 px-4 pb-4">
+        {/* Home */}
+        <li>
+          <Link 
+            href="/" 
+            className="flex items-center w-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer transition-colors"
+            onClick={onClose}
+          >
+            <Home className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
+            <span className="text-gray-900 dark:text-gray-100">Home</span>
+          </Link>
         </li>
-        <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <TrendingUp className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
-          <span className="text-gray-900 dark:text-gray-100">Trending</span>
+
+        {/* Create */}
+        <li>
+          <Link 
+            href="/create" 
+            className="flex items-center w-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer transition-colors"
+            onClick={onClose}
+          >
+            <PlusCircle className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
+            <span className="text-gray-900 dark:text-gray-100">Create</span>
+          </Link>
         </li>
-        <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <LaptopMinimalCheck className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
-          <span className="text-gray-900 dark:text-gray-100">Subscriptions</span>
+
+        {/* Trending */}
+        <li>
+          <Link 
+            href="/trending" 
+            className="flex items-center w-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer transition-colors"
+            onClick={onClose}
+          >
+            <TrendingUp className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
+            <span className="text-gray-900 dark:text-gray-100">Trending</span>
+          </Link>
         </li>
-        <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <Library className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
-          <span className="text-gray-900 dark:text-gray-100">Library</span>
+
+        {/* Subscriptions */}
+        <li>
+          <Link 
+            href="/subscriptions" 
+            className="flex items-center w-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer transition-colors"
+            onClick={onClose}
+          >
+            <LaptopMinimalCheck className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
+            <span className="text-gray-900 dark:text-gray-100">Subscriptions</span>
+          </Link>
         </li>
-        <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <History className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
-          <span className="text-gray-900 dark:text-gray-100">History</span>
+
+        {/* Library */}
+        <li>
+          <Link 
+            href="/library" 
+            className="flex items-center w-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer transition-colors"
+            onClick={onClose}
+          >
+            <Library className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
+            <span className="text-gray-900 dark:text-gray-100">Library</span>
+          </Link>
         </li>
-        <li className="flex items-center p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer">
-          <Download className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
-          <span className="text-gray-900 dark:text-gray-100">Downloads</span>
+
+        {/* History */}
+        <li>
+          <Link 
+            href="/history" 
+            className="flex items-center w-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer transition-colors"
+            onClick={onClose}
+          >
+            <History className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
+            <span className="text-gray-900 dark:text-gray-100">History</span>
+          </Link>
+        </li>
+
+        {/* Downloads */}
+        <li>
+          <Link 
+            href="/downloads" 
+            className="flex items-center w-full p-2 hover:bg-gray-200 dark:hover:bg-gray-800 rounded cursor-pointer transition-colors"
+            onClick={onClose}
+          >
+            <Download className="w-5 h-5 mr-3 text-gray-700 dark:text-gray-200" />
+            <span className="text-gray-900 dark:text-gray-100">Downloads</span>
+          </Link>
         </li>
       </ul>
     </aside>

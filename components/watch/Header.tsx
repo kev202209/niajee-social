@@ -10,10 +10,10 @@ import {
   FiSettings,
   FiLogOut,
   FiPlus,
-  FiMenu,
 } from "react-icons/fi";
-import Sidebar from "./Sidebar"; // Adjust the import path if needed
-import { useAuth } from "@/contexts/AuthContext"; // Add this import
+import { ChevronRight, ChevronLeft } from "lucide-react"; // ✅ Import both icons
+import Sidebar from "./Sidebar";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header: FC = () => {
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
@@ -22,7 +22,6 @@ const Header: FC = () => {
   const api_link = process.env.NEXT_PUBLIC_API_URL;
 
   const handleOutsideClick = useCallback((e: MouseEvent) => {
-    // Check if click is outside both the profile menu and header
     if (!headerRef.current?.contains(e.target as Node)) {
       setShowProfileMenu(false);
     }
@@ -33,7 +32,6 @@ const Header: FC = () => {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [handleOutsideClick]);
 
-  // State to control sidebar visibility
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   const toggleSidebar = useCallback((e?: React.MouseEvent) => {
@@ -61,18 +59,14 @@ const Header: FC = () => {
       .catch(() => setTagline("Craft your digital legacy."));
   }, []);
 
-  // Add auth context
   const { user, logout } = useAuth();
 
-  // Add logout handler
   const handleLogout = async () => {
     await logout();
-    // Reload the page after logout
   };
 
   return (
     <>
-      {/* Dim overlay; clicking it will close the sidebar */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black opacity-50 z-40"
@@ -90,11 +84,16 @@ const Header: FC = () => {
           <div className="flex items-center space-x-6">
             <button
               onClick={toggleSidebar}
-              className="text-gray-900 dark:text-gray-100 focus:outline-none z-50"
+              className="text-gray-900 dark:text-gray-100 focus:outline-none z-50 p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+              aria-label={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
             >
-              <FiMenu className="w-3 h-3" />
+              {/* ✅ Dynamic icon based on sidebar state */}
+              {isSidebarOpen ? (
+                <ChevronLeft className="w-5 h-5" />
+              ) : (
+                <ChevronRight className="w-5 h-5" />
+              )}
             </button>
-            {/* Ensure extra-bold styling works here */}
             <Link
               href="/"
               className="font-extrabold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient"
@@ -102,11 +101,6 @@ const Header: FC = () => {
               MOSAIC
             </Link>
           </div>
-
-          {/* Center: Tagline */}
-          {/* <div className="text-gray-900 dark:text-gray-100 text-sm italic">
-            {tagline}
-          </div> */}
 
           {/* Center: Search Bar */}
           <div className="flex-1 mx-4 flex justify-center">
@@ -181,7 +175,6 @@ const Header: FC = () => {
         </div>
       </header>
 
-      {/* Render the Sidebar */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </>
   );
