@@ -9,38 +9,45 @@ import ShortsSkeleton from './ShortSkeleton';
 import VideoActions from "./VideoActions";
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import CommentsSection from "./CommentsSection";
+import { Comment } from "@/types";
 
-interface Channel {
-  name: string;
-  icon: string | null;
-  id?: string;
-}
-
-interface Comment {
-  id: number;
-  username: string;
-  userIcon: string | null;
-  age: string;
-  text: string;
-  likes: string;
-  repliesCount?: number;
-}
-
+// Backend data structure for shorts
 interface ShortData {
   id: string;
-  videoSrc: string;
   title: string;
-  views: string;
-  channel: Channel;
-  caption: string;
-  song: string;
-  commentsEnabled: boolean;
-  comments: Comment[];
+  description: string;
+  videoUrl: string;
+  thumbnailUrl: string | null;
+  duration: number;
+  viewCount: number;
+  likeCount: number;
+  commentCount: number;
+  isPublic: boolean;
+  allowComments: boolean;
+  allowDuet: boolean;
+  monetization: {
+    enabled: boolean;
+    reason: string | null;
+  };
+  tags: string[];
+  mentions: string[];
+  location: string | null;
+  createdAt: string;
+  channel: {
+    id: string;
+    name: string;
+    handle: string;
+    avatar: string;
+    verified: boolean;
+  };
+  user: {
+    id: string;
+    username: string;
+    displayName: string;
+    profilePic: string;
+    verified: boolean;
+  };
 }
-
-// Helper: ensure URL is absolute.
-const getFullUrl = (url: string): string =>
-  url.startsWith("http") ? url : `${process.env.NEXT_PUBLIC_API_URL}${url}`;
 
 const ShortVideoPage = () => {
   const params = useParams();
@@ -62,7 +69,7 @@ const ShortVideoPage = () => {
 
   // Refs for the scroll container and current video element.
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const currentVideoRef = useRef<HTMLVideoElement>(null);
+  const currentVideoRef = useRef<HTMLVideoElement>(null!);
 
   // Add keyboard navigation handler
   useEffect(() => {
@@ -76,7 +83,7 @@ const ShortVideoPage = () => {
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [currentVideo, nextVideo, videoHistory]); // Add dependencies
+  }, [currentVideo, nextVideo, videoHistory]);
 
   useEffect(() => {
     const handleScroll = (event: WheelEvent) => {
@@ -92,8 +99,7 @@ const ShortVideoPage = () => {
       container.addEventListener("wheel", handleScroll);
       return () => container.removeEventListener("wheel", handleScroll);
     }
-  }, [currentVideo, nextVideo, videoHistory]); // Add dependencies
-
+  }, [currentVideo, nextVideo, videoHistory]);
 
   // On mount, read the saved volume cookie.
   useEffect(() => {
@@ -115,19 +121,20 @@ const ShortVideoPage = () => {
   // Fetch current video by ID or default.
   const fetchCurrentVideo = async (videoId?: string): Promise<ShortData | null> => {
     try {
-      let data: ShortData;
+      let apiData: ShortData;
       if (videoId) {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`);
-        data = await res.json();
+        if (!res.ok) throw new Error('Failed to fetch video');
+        apiData = await res.json();
       } else {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`
         );
+        if (!res.ok) throw new Error('Failed to fetch videos');
         const result = await res.json();
-        data = result.shorts[0];
+        apiData = result.shorts[0];
       }
-      data.videoSrc = getFullUrl(data.videoSrc);
-      return data;
+      return apiData;
     } catch (err) {
       console.error(err);
       return null;
@@ -140,10 +147,10 @@ const ShortVideoPage = () => {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`
       );
+      if (!res.ok) throw new Error('Failed to fetch next video');
       const result = await res.json();
-      const data: ShortData = result.shorts[0];
-      data.videoSrc = getFullUrl(data.videoSrc);
-      return data;
+      const apiData = result.shorts[0];
+      return apiData;
     } catch (err) {
       console.error(err);
       return null;
@@ -255,110 +262,113 @@ const ShortVideoPage = () => {
 
   // Toggle comments panel visibility.
   const toggleComments = () => {
-    setShowComments((prev) => !prev);
+    console.log('toggleComments called, current showComments:', showComments); // Debug log
+    setShowComments((prev) => {
+      console.log('Setting showComments from', prev, 'to', !prev); // Debug log
+      return !prev;
+    });
   };
 
   if (loading || !currentVideo) {
     return <ShortsSkeleton />;
   }
 
-    
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 relative">
       <Sidebar isOpen={false} onClose={() => {}} />
       <Header />
 
-      <div className="pt-20">
+      <div className="pt-16"> {/* Reduced padding */}
         <div
           ref={scrollContainerRef}
           className="h-screen overflow-hidden flex justify-center"
         >
           <div className="h-[200vh] w-full max-w-[500px] relative">
-            {/* Current Video Container with relative positioning */}
+            {/* Current Video Container */}
             <div className="relative h-screen">
-  {/* Current Video Container */}
-  <div className={`flex items-center justify-center h-full transition-all duration-300 ${showComments ? "md:mr-40" : ""}`}>
-    <VideoPlayer
-      videoRef={currentVideoRef}
-      videoSrc={currentVideo.videoSrc}
-      isMuted={isMuted}
-      isPaused={isPaused}
-      volume={volume}
-      onVolumeChange={handleVolumeChange}
-      toggleMute={toggleMute}
-      togglePlayPause={togglePlayPause}
-      channel={currentVideo.channel}
-      caption={currentVideo.caption}
-      song={currentVideo.song}
-    />
-  </div>
-  {/* Video Actions: always absolutely positioned */}
-  <div className="absolute 
-  bottom-1/3 transform translate-y-1/3 // Moved down from center on mobile
-  right-0 
-  sm:bottom-auto sm:right-[px] sm:top-[60%] sm:-translate-y-1/2 // Moved down on larger screens
-  p-5 
-  rounded-l-lg 
-  backdrop-blur-sm 
-  transition-all duration-300
-  z-10">
-  <VideoActions onToggleComments={toggleComments} />
-  {showComments && (
-    <div className="mt-4">
-      <CommentsSection
-        comments={currentVideo.comments}
-        commentsEnabled={currentVideo.commentsEnabled}
-      />
-    </div>
-  )}
-</div> 
-    </div>
+              {/* Video Player Container */}
+              <div className="flex items-center justify-center h-full">
+                <VideoPlayer
+                  videoRef={currentVideoRef}
+                  videoSrc={currentVideo.videoUrl}
+                  isMuted={isMuted}
+                  isPaused={isPaused}
+                  volume={volume}
+                  onVolumeChange={handleVolumeChange}
+                  toggleMute={toggleMute}
+                  togglePlayPause={togglePlayPause}
+                  channel={{
+                    name: currentVideo.channel.name,
+                    icon: currentVideo.channel.avatar,
+                  }}
+                  caption={currentVideo.description || ""}
+                  song="Original Audio"
+                />
+              </div>
 
+              {/* Video Actions - Better positioned */}
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
+                <VideoActions 
+                  onToggleComments={toggleComments}
+                  likeCount={currentVideo.likeCount}
+                />
+              </div>
 
-            {/* Next Video Preview (second viewport) */}
+              {/* Comments Section - Remove the absolute wrapper */}
+              {showComments && (
+                <CommentsSection
+                  comments={[]} // Will be populated when comments API is implemented
+                  commentsEnabled={currentVideo.allowComments}
+                  onClose={() => setShowComments(false)}
+                />
+              )}
+            </div>
+
+            {/* Next Video Preview */}
             <div className="h-screen flex items-center justify-center">
               {nextVideo ? (
                 <VideoPlayer
-                  videoRef={null} // preview video doesn't need a ref
-                  videoSrc={nextVideo.videoSrc}
+                  videoRef={null}
+                  videoSrc={nextVideo.videoUrl}
                   isMuted={true}
                   isPaused={true}
                   volume={volume}
                   onVolumeChange={handleVolumeChange}
                   toggleMute={() => {}}
                   togglePlayPause={() => {}}
-                  channel={nextVideo.channel}
-                  caption={nextVideo.caption}
-                  song={nextVideo.song}
+                  channel={{
+                    name: nextVideo.channel.name,
+                    icon: nextVideo.channel.avatar,
+                  }}
+                  caption={nextVideo.description || ""}
+                  song="Original Audio"
                 />
               ) : (
-                // <div className="flex items-center justify-center h-full text-gray-500">
-                //   Loading next video...
-                // </div>
                 <ShortsSkeleton />
               )}
             </div>
           </div>
         </div>
 
-        {/* Navigation arrows */}
-      {/* Updated Navigation arrows - hidden on small screens */}
-      <div className="hidden md:flex absolute right-4 top-1/2 transform -translate-y-1/2 flex-col items-center space-y-4">
-        <button
-          onClick={handleScrollUp}
-          className="bg-black/50 hover:bg-black/70 p-2 rounded transition-colors duration-200"
-          aria-label="Previous video"
-        >
-          <FaArrowUp className="w-6 h-6 text-white" />
-        </button>
-        <button
-          onClick={handleScrollDown}
-          className="bg-black/50 hover:bg-black/70 p-2 rounded transition-colors duration-200"
-          aria-label="Next video"
-        >
-          <FaArrowDown className="w-6 h-6 text-white" />
-        </button>
-      </div>
+        {/* Navigation arrows - Better positioned */}
+        <div className="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 flex-col items-center space-y-4 z-10">
+          <button
+            onClick={handleScrollUp}
+            disabled={videoHistory.length === 0}
+            className="bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed p-3 rounded-full transition-all duration-200"
+            aria-label="Previous video"
+          >
+            <FaArrowUp className="w-5 h-5 text-white" />
+          </button>
+          <button
+            onClick={handleScrollDown}
+            disabled={!nextVideo}
+            className="bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed p-3 rounded-full transition-all duration-200"
+            aria-label="Next video"
+          >
+            <FaArrowDown className="w-5 h-5 text-white" />
+          </button>
+        </div>
       </div>
     </div>
   );
