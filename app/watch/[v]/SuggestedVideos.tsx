@@ -141,6 +141,13 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
   const [hover, setHover] = useState(false);
   const [imageError, setImageError] = useState(false);
 
+  const isNew = (() => {
+    const now = new Date();
+    const published = new Date(video.age);
+    const diffMs = now.getTime() - published.getTime();
+    return diffMs < 24 * 60 * 60 * 1000; // less than 1 day
+  })();
+
   return (
     <Link href={`/watch/${video.id}`}>
       <div
@@ -180,6 +187,13 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
           {video.duration && (
             <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1.5 py-0.5 rounded">
               {video.duration}
+            </div>
+          )}
+
+          {/* New badge */}
+          {isNew && (
+            <div className="absolute top-1 right-1 text-white border border-red-500 text-xs px-2 py-0.5 rounded-full">
+              New
             </div>
           )}
 
