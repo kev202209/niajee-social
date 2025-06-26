@@ -135,6 +135,7 @@ export interface mVideo {
     avatar: string;
     verified: boolean;
     monetized: boolean;
+    followerCount: number;
   };
 }
 
@@ -289,4 +290,98 @@ export interface DetailedChannel {
   // Optional fields for UI
   isSubscribed?: boolean;
   hasJoined?: boolean;
+}
+
+export interface Blog {
+  id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt: string;
+  featuredImage?: string;
+  status: 'draft' | 'published' | 'archived';
+  category: string;
+  tags: string[];
+  readTime: number;
+  views: number;
+  likes: number;
+  comments: number;
+  isLiked?: boolean;
+  isBookmarked?: boolean;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: string;
+    username: string;
+    displayName: string;
+    profilePic?: string;
+    verified: boolean;
+  };
+  series?: {
+    id: string;
+    title: string;
+    order: number;
+  };
+}
+
+export interface BlogComment {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  likes: number;
+  isLiked?: boolean;
+  author: {
+    id: string;
+    username: string;
+    displayName: string;
+    profilePic?: string;
+    verified: boolean;
+  };
+  replies?: BlogComment[];
+}
+
+export interface BlogSeries {
+  id: string;
+  title: string;
+  description: string;
+  slug: string;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: string;
+    username: string;
+    displayName: string;
+    profilePic?: string;
+    verified: boolean;
+  };
+  blogs: Blog[];
+}
+
+export interface CreateBlogDto {
+  title: string;
+  content: string;
+  excerpt?: string;
+  category: string;
+  tags: string[];
+  status: 'draft' | 'published';
+  featuredImage?: File;
+  seriesId?: string;
+}
+
+export interface UpdateBlogDto extends Partial<CreateBlogDto> {}
+
+export interface CreateBlogCommentDto {
+  content: string;
+  parentId?: string;
+}
+
+export interface BlogFilterDto {
+  category?: string;
+  tags?: string[];
+  search?: string;
+  sortBy?: 'latest' | 'popular' | 'trending';
+  page?: number;
+  limit?: number;
 }
