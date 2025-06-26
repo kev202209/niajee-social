@@ -8,7 +8,7 @@ import BlogCard from './components/BlogCard';
 import BlogSearch from './components/BlogSearch';
 import BlogFilters from './components/BlogFilters';
 import BlogSkeleton from './components/BlogSkeleton';
-import Pagination from '@/components/ui/Pagination';
+import Pagination from '@/components/blog/Pagination';
 import { Blog, BlogFilterDto } from '@/types';
 import { FiPlus, FiTrendingUp, FiStar, FiClock } from 'react-icons/fi';
 import Link from 'next/link';
