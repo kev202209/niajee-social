@@ -224,20 +224,27 @@ const ChannelUploadPage = () => {
       if (form.contentType === 'short') {
         const metadata = await getVideoMetadata(form.video);
         
-        // Ensure all values are strings, not undefined
-        formData.append('caption', form.description || form.caption || '');
-        formData.append('song', form.song || '');
-        formData.append('tags', JSON.stringify(form.tags));
-        formData.append('mentions', JSON.stringify(form.mentions));
+        // ✅ UPDATED: Use correct field names for shorts API
+        formData.append('caption', form.description || form.caption || ''); // ✅ Backend expects 'caption'
+        formData.append('song', form.song || ''); // ✅ New song field
+        formData.append('tags', JSON.stringify(form.tags || []));
+        formData.append('mentions', JSON.stringify(form.mentions || []));
         formData.append('location', form.location || '');
         formData.append('duration', metadata.duration.toString());
         formData.append('fileSize', form.video.size.toString());
         formData.append('resolution', metadata.resolution);
-        formData.append('commentsEnabled', form.commentsEnabled.toString());
-        formData.append('allowLikes', form.allowLikes.toString());
-        formData.append('allowDuet', form.allowDuet.toString());
-        formData.append('isPublic', form.isPublic.toString());
-        formData.append('isSensitive', form.isSensitive.toString());
+        
+        // ✅ UPDATED: Use correct boolean field names
+        formData.append('commentsEnabled', (form.commentsEnabled ?? true).toString()); // ✅ Backend expects 'commentsEnabled'
+        formData.append('allowLikes', (form.allowLikes ?? true).toString());
+        formData.append('allowDuet', (form.allowDuet ?? true).toString());
+        formData.append('isPublic', (form.isPublic ?? true).toString());
+        formData.append('isSensitive', (form.isSensitive ?? false).toString());
+
+        // ✅ Optional thumbnail for shorts
+        if (form.thumbnail) {
+          formData.append('thumbnail', form.thumbnail);
+        }
 
         await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/upload`,
@@ -277,7 +284,7 @@ const ChannelUploadPage = () => {
         formData.append('description', form.description || '');
         formData.append('category', form.category || '');
         formData.append('visibility', form.visibility);
-        formData.append('tags', JSON.stringify(form.tags));
+        formData.append('tags', JSON.stringify(form.tags || []));
         
         // Only append thumbnail if it exists
         if (form.thumbnail) {
@@ -407,15 +414,13 @@ const ChannelUploadPage = () => {
                 clearVideo={clearVideo}
               />
 
-              {/* Thumbnail Upload (only for long-form videos) */}
-              {form.contentType === 'video' && (
-                <ThumbnailUploader
-                  thumbnailPreview={thumbnailPreview}
-                  handleThumbnailChange={handleThumbnailChange}
-                  uploading={uploadState.uploading}
-                  clearThumbnail={clearThumbnail}
-                />
-              )}
+              {/* Thumbnail Upload (for both videos and shorts now) */}
+              <ThumbnailUploader
+                thumbnailPreview={thumbnailPreview}
+                handleThumbnailChange={handleThumbnailChange}
+                uploading={uploadState.uploading}
+                clearThumbnail={clearThumbnail}
+              />
             </div>
 
             {/* Right Column - Content Details */}

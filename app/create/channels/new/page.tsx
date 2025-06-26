@@ -12,6 +12,14 @@ interface CreateChannelForm {
   isPublic: boolean;
   allowComments: boolean;
   avatar?: File;
+  // NEW FIELDS
+  teamEnabled?: boolean;
+  maxTeamMembers?: number;
+  membershipEnabled?: boolean;
+  membershipType?: 'free' | 'paid' | 'tiered';
+  membershipPrice?: number;
+  membershipCurrency?: string;
+  membershipDescription?: string;
 }
 
 const CreateChannelPage: FC = () => {
@@ -23,6 +31,12 @@ const CreateChannelPage: FC = () => {
     category: '',
     isPublic: true,
     allowComments: true,
+    // NEW DEFAULTS
+    teamEnabled: false,
+    maxTeamMembers: 10,
+    membershipEnabled: false,
+    membershipType: 'free',
+    membershipCurrency: 'USD',
   });
   
   const [avatarPreview, setAvatarPreview] = useState<string>('');
@@ -44,8 +58,10 @@ const CreateChannelPage: FC = () => {
 
     setHandleChecking(true);
     try {
+      // UPDATED: Handle formatting to include @
+      const formattedHandle = handle.startsWith('@') ? handle : `@${handle}`;
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/channels/check-handle/${handle}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/channels/check-handle/${formattedHandle}`,
         { credentials: 'include' }
       );
       const data = await response.json();
@@ -64,6 +80,9 @@ const CreateChannelPage: FC = () => {
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setForm(prev => ({ ...prev, [name]: checked }));
+    } else if (type === 'number') {
+      const numValue = parseInt(value) || 0;
+      setForm(prev => ({ ...prev, [name]: numValue }));
     } else {
       setForm(prev => ({ ...prev, [name]: value }));
       
@@ -112,11 +131,26 @@ const CreateChannelPage: FC = () => {
     try {
       const formData = new FormData();
       formData.append('name', form.name);
-      formData.append('handle', form.handle);
+      // UPDATED: Ensure handle has @ prefix
+      const formattedHandle = form.handle.startsWith('@') ? form.handle : `@${form.handle}`;
+      formData.append('handle', formattedHandle);
       formData.append('description', form.description);
       formData.append('category', form.category);
       formData.append('isPublic', form.isPublic.toString());
       formData.append('allowComments', form.allowComments.toString());
+      
+      // NEW FIELDS
+      formData.append('teamEnabled', (form.teamEnabled || false).toString());
+      formData.append('maxTeamMembers', (form.maxTeamMembers || 10).toString());
+      formData.append('membershipEnabled', (form.membershipEnabled || false).toString());
+      formData.append('membershipType', form.membershipType || 'free');
+      if (form.membershipPrice) {
+        formData.append('membershipPrice', form.membershipPrice.toString());
+      }
+      formData.append('membershipCurrency', form.membershipCurrency || 'USD');
+      if (form.membershipDescription) {
+        formData.append('membershipDescription', form.membershipDescription);
+      }
       
       if (form.avatar) {
         formData.append('avatar', form.avatar);
@@ -130,7 +164,8 @@ const CreateChannelPage: FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        router.push(`/create/channels/${data.channel.id}`);
+        // UPDATED: Navigate to channel overview
+        router.push(`/create/channels/${data.id}`);
       } else {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to create channel');
@@ -194,7 +229,7 @@ const CreateChannelPage: FC = () => {
           />
         </div>
 
-        {/* Channel Handle */}
+        {/* Channel Handle - UPDATED */}
         <div>
           <label htmlFor="handle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Channel Handle *
@@ -268,7 +303,7 @@ const CreateChannelPage: FC = () => {
           </select>
         </div>
 
-        {/* Settings */}
+        {/* Settings - UPDATED */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Channel Settings</h3>
           
@@ -309,6 +344,137 @@ const CreateChannelPage: FC = () => {
               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
             />
           </div>
+
+          {/* NEW TEAM SETTINGS */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label htmlFor="teamEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Enable Team Features
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Allow team members to help manage your channel
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              id="teamEnabled"
+              name="teamEnabled"
+              checked={form.teamEnabled || false}
+              onChange={handleInputChange}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+          </div>
+
+          {form.teamEnabled && (
+            <div>
+              <label htmlFor="maxTeamMembers" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Maximum Team Members
+              </label>
+              <input
+                type="number"
+                id="maxTeamMembers"
+                name="maxTeamMembers"
+                value={form.maxTeamMembers || 10}
+                onChange={handleInputChange}
+                min="1"
+                max="50"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              />
+            </div>
+          )}
+
+          {/* NEW MEMBERSHIP SETTINGS */}
+          <div className="flex items-center justify-between">
+            <div>
+              <label htmlFor="membershipEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Enable Memberships
+              </label>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Allow viewers to become paid members
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              id="membershipEnabled"
+              name="membershipEnabled"
+              checked={form.membershipEnabled || false}
+              onChange={handleInputChange}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+          </div>
+
+          {form.membershipEnabled && (
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="membershipType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Membership Type
+                </label>
+                <select
+                  id="membershipType"
+                  name="membershipType"
+                  value={form.membershipType || 'free'}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                >
+                  <option value="free">Free</option>
+                  <option value="paid">Paid</option>
+                  <option value="tiered">Tiered</option>
+                </select>
+              </div>
+
+              {form.membershipType === 'paid' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="membershipPrice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Monthly Price
+                    </label>
+                    <input
+                      type="number"
+                      id="membershipPrice"
+                      name="membershipPrice"
+                      value={form.membershipPrice || ''}
+                      onChange={handleInputChange}
+                      min="0"
+                      step="0.01"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="membershipCurrency" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Currency
+                    </label>
+                    <select
+                      id="membershipCurrency"
+                      name="membershipCurrency"
+                      value={form.membershipCurrency || 'USD'}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    >
+                      <option value="USD">USD</option>
+                      <option value="EUR">EUR</option>
+                      <option value="GBP">GBP</option>
+                      <option value="CAD">CAD</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label htmlFor="membershipDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Membership Description
+                </label>
+                <textarea
+                  id="membershipDescription"
+                  name="membershipDescription"
+                  value={form.membershipDescription || ''}
+                  onChange={handleInputChange}
+                  placeholder="Describe what members get..."
+                  rows={3}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Error Message */}
