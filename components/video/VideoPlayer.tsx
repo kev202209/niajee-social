@@ -1,6 +1,6 @@
 // components/VideoPlayer.tsx
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { mVideo } from '../../types';
 import { useVideoPlayer } from '../../hooks/useVideoPlayer';
 import VideoContainer from './VideoContainer';
@@ -10,8 +10,9 @@ import ProgressBar from './ProgressBar';
 import ControlBar from './ControlBar';
 import VideoMeta from './VideoMeta';
 import Hls from 'hls.js';
+import BufferingSpinner from './BufferingSpinner';
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5000';
+const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 interface VideoProps {
   video: mVideo;
@@ -19,23 +20,25 @@ interface VideoProps {
 
 export default function VideoPlayer({ video }: { video: mVideo }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [hlsInstance, setHlsInstance] = useState<Hls | null>(null);
-  
-  // Pass videoRef to useVideoPlayer hook
+
+  // Use the controls object from the hook
   const controls = useVideoPlayer({
-    videoRef, // Pass the ref directly
+    videoRef: videoRef,
     src: `${backendUrl}/${video.videoUrl['720p']}`,
     videoUrls: video.videoUrl,
     autoplay: true
-  });
+  }) as ReturnType<typeof useVideoPlayer> & { setHlsInstance?: (hls: Hls) => void };
+
+  // Use buffering from controls
+  const { buffering, setBuffering } = controls;
 
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement) return;
 
     // Destroy existing HLS instance
-    if (hlsInstance) {
-      hlsInstance.destroy();
+    if (controls.hlsInstance) {
+      controls.hlsInstance.destroy();
     }
 
     const hlsPath = video.videoUrl['720p'];
@@ -70,7 +73,7 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
 
       hls.loadSource(streamUrl);
       hls.attachMedia(videoElement);
-      setHlsInstance(hls);
+      controls.setHlsInstance?.(hls);
 
       return () => {
         hls.destroy();
@@ -84,15 +87,23 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
   return (
     <div className="space-y-4">
       <div className="relative" ref={controls.containerRef}>
+        {/* Buffering Spinner */}
+        {buffering && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
+            <BufferingSpinner />
+          </div>
+        )}
         <VideoContainer 
           controls={controls} 
           videoRef={videoRef}
           className="w-full h-full rounded"
+          onWaiting={() => setBuffering && setBuffering(true)}
+          onPlaying={() => setBuffering && setBuffering(false)}
         />
         <PlayPauseOverlay controls={controls} />
         <VolumeSeekIndicator controls={controls} />
         <ProgressBar controls={controls} />
-        <ControlBar controls={controls} />
+        <ControlBar controls={controls} videoId={video.id} />
       </div>
       <VideoMeta video={video} />
     </div>

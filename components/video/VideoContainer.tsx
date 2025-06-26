@@ -21,6 +21,7 @@ export default function VideoContainer({
         className={`w-full h-full object-contain ${className}`}
         playsInline
         onClick={controls.togglePlay}
+        autoPlay
         style={{
           // Prevent default browser styling
           WebkitAppearance: 'none',

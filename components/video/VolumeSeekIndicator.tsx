@@ -18,7 +18,7 @@ export default function VolumeSeekIndicator({ controls }: { controls: VideoPlaye
         <div className="flex-1 flex justify-center">
           <div className="bg-black/60 px-6 py-4 rounded-lg flex flex-col items-center">
             {volumeIndicator.type === 'up' ? <FiVolume2 className="text-white text-4xl mb-2" /> : <FiVolumeX className="text-white text-4xl mb-2" />}
-            <span className="text-white text-lg">{volumeIndicator.value}%</span>
+            <span className="text-white text-lg">{Math.round(volumeIndicator.value * 100)}%</span>
           </div>
         </div>
       )}

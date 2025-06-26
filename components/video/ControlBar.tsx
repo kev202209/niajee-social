@@ -5,7 +5,7 @@ import { FiRewind, FiPlay, FiPause, FiFastForward, FiVolume2, FiVolumeX, FiToggl
 import { VideoPlayerControls } from '../../hooks/useVideoPlayer';
 import SettingsPopup from './SettingsPopup';
 
-export default function ControlBar({ controls }: { controls: VideoPlayerControls }) {
+export default function ControlBar({ controls, videoId }: { controls: VideoPlayerControls, videoId: string }) {
   const [showVolSlider, setShowVolSlider] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
@@ -26,7 +26,13 @@ export default function ControlBar({ controls }: { controls: VideoPlayerControls
         <button title="Subtitles" className="hover:text-gray-300"><FiMessageSquare /></button>
         <div className="relative">
           <button onClick={() => setShowSettings(prev => !prev)} title="Settings" className="hover:text-gray-300"><FiSettings /></button>
-          {showSettings && <SettingsPopup controls={controls} />}
+          {showSettings && (
+            <SettingsPopup
+              controls={controls}
+              videoId={videoId}
+              onClose={() => setShowSettings(false)}
+            />
+          )}
         </div>
         <button onClick={controls.toggleMiniplayer} title="Miniplayer" className="hover:text-gray-300"><FiAirplay /></button>
         <button onClick={controls.toggleCinemaMode} title="Cinema Mode" className="hover:text-gray-300"><FiMonitor /></button>
