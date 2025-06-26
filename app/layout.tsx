@@ -4,6 +4,7 @@ import Header from '@/components/Header'
 import { Providers } from '@/components/Providers'
 import { AuthProvider } from '@/contexts/AuthContext'
 import type { Metadata } from 'next'
+import { Toaster } from '@/components/ui/sonner'
 
 export const metadata: Metadata = {
   title: 'Mosaic - Social Media Super App',
@@ -26,6 +27,7 @@ export default function RootLayout({
       <body className="min-h-screen bg-gray-100 dark:bg-gray-900 scrollbar scrollbar-dark">
         <AuthProvider>
           <Providers>
+            <Toaster position="top-right" richColors closeButton />
             <main className="">{children}</main>
           </Providers>
         </AuthProvider>
