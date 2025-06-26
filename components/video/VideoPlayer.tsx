@@ -102,7 +102,6 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
         />
         <PlayPauseOverlay controls={controls} />
         <VolumeSeekIndicator controls={controls} />
-        <ProgressBar controls={controls} />
         <ControlBar controls={controls} videoId={video.id} />
       </div>
       <VideoMeta video={video} />
