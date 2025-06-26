@@ -140,18 +140,18 @@ export default function VideoMeta({ video }: VideoMetaProps) {
   return (
     <div className="space-y-4">
       {/* Video Title */}
-      <h1 className="text-2xl font-bold leading-tight">{video.title}</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold leading-tight break-words">{video.title}</h1>
       
       {/* Channel Info and Subscribe Section */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-3">
           <img 
             src={video.channel.avatar} 
             alt={video.channel.name}
-            className="w-10 h-10 rounded-full object-cover"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
           />
           <div className="flex flex-col">
-            <p className="font-semibold text-base">{video.channel.name}</p>
+            <p className="font-semibold text-base sm:text-lg">{video.channel.name}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {followerCount === 0 ? '' : `${formatViewCount(followerCount)} ${followerCount === 1 ? 'follower' : 'followers'}`}
             </p>
@@ -174,9 +174,9 @@ export default function VideoMeta({ video }: VideoMetaProps) {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1">
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-1">
+          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
             <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 rounded-l-full transition-colors">
               <FiThumbsUp className="w-4 h-4" />
               <span>{formatViewCount(video.likeCount)}</span>
@@ -189,17 +189,17 @@ export default function VideoMeta({ video }: VideoMetaProps) {
           
           <Button variant="secondary" size="md">
             <FiShare className="w-4 h-4" />
-            Share
+            <span className="hidden xs:inline">Share</span>
           </Button>
           
           <Button variant="secondary" size="md">
             <FiDownload className="w-4 h-4" />
-            Download
+            <span className="hidden xs:inline">Download</span>
           </Button>
           
           <Button variant="secondary" size="md">
             <FiSave className="w-4 h-4" />
-            Save
+            <span className="hidden xs:inline">Save</span>
           </Button>
         </div>
         
@@ -210,7 +210,7 @@ export default function VideoMeta({ video }: VideoMetaProps) {
 
       {/* Video Stats and Description */}
       <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 space-y-3">
-        <div className="flex items-center gap-2 text-sm font-medium">
+        <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
           <span>{formatViewCount(video.viewCount)} views</span>
           <span className="text-gray-500">•</span>
           <span>{timeAgo(video.createdAt)}</span>
