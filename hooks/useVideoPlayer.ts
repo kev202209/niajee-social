@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
 export interface VideoPlayerControls {
+  buffering: boolean;
   videoRef: React.RefObject<HTMLVideoElement | null>;
   containerRef: React.RefObject<HTMLDivElement | null>;
   isPlaying: boolean;
@@ -39,6 +40,10 @@ export interface VideoPlayerControls {
   handleProgressClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   changeVideoQuality: (quality: string) => void;
   getNetworkSpeed: () => number | null;
+  setBuffering?: (b: boolean) => void;
+  setVideoQuality?: (q: string) => void;
+  hlsInstance?: Hls | null;
+  setHlsInstance?: (hls: Hls | null) => void;
 }
 
 export function useVideoPlayer({ 
@@ -57,6 +62,7 @@ export function useVideoPlayer({
   const mouseIdleTimerRef = useRef<NodeJS.Timeout | null>(null);
   const volumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [buffering, setBuffering] = useState(false);
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -65,7 +71,17 @@ export function useVideoPlayer({
   const [playPauseAnim, setPlayPauseAnim] = useState<'play' | 'pause' | null>(null);
 
   // Volume
-  const [volume, setVolume] = useState(1);
+    const getInitialVolume = () => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem('video-volume');
+      if (saved !== null) {
+        const v = parseFloat(saved);
+        if (!isNaN(v)) return v;
+      }
+    }
+    return 0.5;
+  };
+  const [volume, setVolume] = useState(getInitialVolume);
   const [isMuted, setIsMuted] = useState(false);
   const [volumeIndicator, setVolumeIndicator] = useState<{ type: 'up' | 'down' | null; value: number }>({ type: null, value: 0 });
 
@@ -81,6 +97,9 @@ export function useVideoPlayer({
 
   // Add video URLs state
   const [videoUrl, setVideoUrl] = useState(videoUrls);
+
+  // HLS instance state
+  const [hlsInstance, setHlsInstance] = useState<Hls | null>(null);
 
   function getNetworkSpeed() {
     const connection = (navigator as any).connection || (navigator as any).mozConnection || (navigator as any).webkitConnection;
@@ -155,16 +174,34 @@ export function useVideoPlayer({
   const [isCinemaMode, setIsCinemaMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Read saved volume
+  // Read saved volume from localStorage on mount
   useEffect(() => {
-    const cookie = document.cookie.split('; ').find(c => c.startsWith('volume='));
-    if (cookie) {
-      const v = parseFloat(cookie.split('=')[1]);
-      if (!isNaN(v)) { setVolume(v); if (videoRef.current) videoRef.current.volume = v; }
+    try {
+      const saved = localStorage.getItem('video-volume');
+      if (saved !== null) {
+        const v = parseFloat(saved);
+        if (!isNaN(v)) {
+          setVolume(v);
+          if (videoRef.current) videoRef.current.volume = v;
+        }
+      }
+    } catch (e) {
+      // Ignore localStorage errors
     }
   }, []);
 
-  useEffect(() => { if (videoRef.current) videoRef.current.volume = isMuted ? 0 : volume; }, [volume, isMuted]);
+  // Save volume to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('video-volume', String(volume));
+    } catch (e) {
+      // Ignore localStorage errors
+    }
+  }, [volume]);
+
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.volume = isMuted ? 0 : volume;
+  }, [volume, isMuted]);
 
   // Metadata & time updates
   useEffect(() => {
@@ -276,6 +313,7 @@ export function useVideoPlayer({
   }, [isPlaying]);
 
   return {
+    buffering,
     videoRef, // Return the passed videoRef
     containerRef,
     isPlaying,
@@ -309,6 +347,10 @@ export function useVideoPlayer({
     handlePlaybackSpeedChange,
     handleProgressClick,
     changeVideoQuality,
-    getNetworkSpeed
+    getNetworkSpeed,
+    setBuffering,
+    setVideoQuality: (q: string) => setVideoQuality(q as any),
+    hlsInstance,
+    setHlsInstance,
   };
 }
