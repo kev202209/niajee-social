@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FiThumbsUp, FiThumbsDown, FiShare, FiDownload, FiSave, FiMoreVertical } from 'react-icons/fi';
 import { mVideo as Video } from '../../types';
 import timeAgo from '../../app/utils/timeAgo';
+import Button from '../ui/CustomButton';
+import { toast } from "sonner";
 
 interface VideoMetaProps {
   video: Video;
@@ -22,6 +24,9 @@ const formatViewCount = (count: number) => {
 export default function VideoMeta({ video }: VideoMetaProps) {
   const [descExpanded, setDescExpanded] = useState(false);
   const [shouldShowMore, setShouldShowMore] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [followerCount, setFollowerCount] = useState(video.channel.followerCount);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
 
   // Check if description content overflows
@@ -50,6 +55,88 @@ export default function VideoMeta({ video }: VideoMetaProps) {
     }
   }, [video.description]);
 
+  // Check initial follow status
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/channels/${video.channel.id}/follow-status`,
+          {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              'Accept': 'application/json',
+            }
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsFollowing(data.isFollowing);
+        }
+      } catch (error) {
+        console.error('Error checking follow status:', error);
+      }
+    };
+
+    checkFollowStatus();
+  }, [video.channel.id]);
+
+  // Handle follow/unfollow
+  const handleFollowToggle = async () => {
+    if (isFollowLoading) return;
+
+    try {
+      setIsFollowLoading(true);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/channels/${video.channel.id}/follow`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to toggle follow');
+      }
+
+      const data = await response.json();
+      
+      // Update local state based on response
+      setIsFollowing(data.isSubscribed);
+      
+      // Update follower count
+      if (data.isSubscribed) {
+        setFollowerCount(prev => prev + 1);
+      } else {
+        setFollowerCount(prev => Math.max(0, prev - 1));
+      }
+
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+
+      if (error instanceof Error) {
+        if (error.message === 'Cannot subscribe to your own channel') {
+          toast.error('You cannot follow your own channel');
+        } else if (error.message === 'Channel not found') {
+          toast.error('Channel not found');
+        } else {
+          toast.error('Failed to update follow status. Please try again.');
+        }
+      } else {
+        toast.error('Failed to update follow status. Please try again.');
+      }
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Video Title */}
@@ -66,19 +153,23 @@ export default function VideoMeta({ video }: VideoMetaProps) {
           <div className="flex flex-col">
             <p className="font-semibold text-base">{video.channel.name}</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {/* Add subscriber count if available */}
-              {video.channelSubscribers ? `${formatViewCount(video.channelSubscribers)} subscribers` : ''}
+              {followerCount === 0 ? '' : `${formatViewCount(followerCount)} ${followerCount === 1 ? 'follower' : 'followers'}`}
             </p>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
-          <button className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-            Join
-          </button>
-          <button className="px-6 py-2 text-sm font-medium bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors">
-            Subscribe
-          </button>
+          <Button variant="outline" size="md">
+            Membership
+          </Button>
+          <Button 
+            variant={isFollowing ? "secondary" : "primary"} 
+            size="md"
+            onClick={handleFollowToggle}
+            disabled={isFollowLoading}
+          >
+            {isFollowLoading ? 'Loading...' : (isFollowing ? 'Following' : 'Follow')}
+          </Button>
         </div>
       </div>
 
@@ -96,20 +187,20 @@ export default function VideoMeta({ video }: VideoMetaProps) {
             </button>
           </div>
           
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          <Button variant="secondary" size="md">
             <FiShare className="w-4 h-4" />
-            <span>Share</span>
-          </button>
+            Share
+          </Button>
           
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          <Button variant="secondary" size="md">
             <FiDownload className="w-4 h-4" />
-            <span>Download</span>
-          </button>
+            Download
+          </Button>
           
-          <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          <Button variant="secondary" size="md">
             <FiSave className="w-4 h-4" />
-            <span>Save</span>
-          </button>
+            Save
+          </Button>
         </div>
         
         <button className="p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
