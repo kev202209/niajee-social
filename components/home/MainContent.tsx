@@ -43,13 +43,15 @@ const MainContent: FC = () => {
       
       if (response.ok) {
         const data = await response.json();
-        
-        // Check if we have more content
-        const hasVideos = data.videos && data.videos.length > 0;
-        const hasShorts = data.shorts && data.shorts.length > 0;
-        
-        if (!hasVideos && !hasShorts) {
-          setHasMoreContent(false);
+
+        // Use hasMore from backend response if present
+        if (typeof data.hasMore === 'boolean') {
+          setHasMoreContent(data.hasMore);
+        } else {
+          // fallback: infer from videos/shorts length
+          const hasVideos = data.videos && data.videos.length > 0;
+          const hasShorts = data.shorts && data.shorts.length > 0;
+          setHasMoreContent(hasVideos || hasShorts);
         }
         
         if (isRetry || pageNumber === 1) {
@@ -229,7 +231,7 @@ const MainContent: FC = () => {
         {/* Display shorts first if available */}
         {shorts.length > 0 && (
           <div className="mb-6">
-            <ShortsRow shorts={shorts} />
+            <ShortsRow shorts={shorts} hasMore={shorts.length > 4} />
           </div>
         )}
 
