@@ -90,27 +90,38 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
 
   return (
     <Link href={`/shorts/${short.id}`}>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer relative w-40 flex-shrink-0">
+      <div className="bg-inherit rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer relative w-40 flex-shrink-0">
         {/* Short Video Container with 9:16 Aspect Ratio */}
         <div
           className="relative group rounded-t-xl overflow-hidden aspect-[9/16]"
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          <video
-            ref={videoRef}
-            src={short.videoUrl}
-            poster={short.thumbnail}
-            muted={isMuted}
-            loop
-            playsInline
-            className="absolute inset-0 object-cover w-full h-full"
-          />
+          {short.thumbnail ? (
+            <video
+              ref={videoRef}
+              src={short.videoUrl}
+              poster={short.thumbnail}
+              muted={isMuted}
+              loop
+              playsInline
+              className="absolute inset-0 object-cover w-full h-full"
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={short.videoUrl}
+              muted={isMuted}
+              loop
+              playsInline
+              className="absolute inset-0 object-cover w-full h-full"
+            />
+          )}
           
           {/* Duration Badge */}
-          <div className="absolute top-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
+          {/* <div className="absolute top-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
             {formatDuration(short.duration)}
-          </div>
+          </div> */}
           
           {/* Volume Button & Slider */}
           <button
@@ -155,7 +166,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
             
             {/* Title and Options */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm line-clamp-2 leading-tight">
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm truncate w-full leading-tight">
                 {short.title}
               </h3>
             </div>
@@ -172,21 +183,12 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
             </button>
           </div>
           
-          {/* Channel name and stats */}
-          <div className="flex items-center gap-1 mb-1">
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              {short.channel.name}
-            </p>
-            {short.channel.verified && (
-              <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs">✓</span>
-              </div>
-            )}
-          </div>
-          
-          <div className="text-xs text-gray-500 dark:text-gray-400">
-            {formatViews(short.views)} views
-          </div>
+          {/* Views count only if >= 10 */}
+          {short.views >= 10 && (
+            <div className="text-xs text-gray-500 dark:text-gray-400">
+              {formatViews(short.views)} views
+            </div>
+          )}
         </div>
         
         {/* Render dropdown menu using the portal so it isn't confined by the Shorts section */}
