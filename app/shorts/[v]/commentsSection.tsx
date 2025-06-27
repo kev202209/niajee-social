@@ -9,6 +9,7 @@ import {
   FiArrowDown,
   FiShare2,
 } from 'react-icons/fi';
+import { useAuth } from "@/contexts/AuthContext"; // Add this import
 
 interface Comment {
   id: number;
@@ -28,6 +29,7 @@ interface CommentsSectionProps {
 
 const CommentsSection: FC<CommentsSectionProps> = ({ comments, commentsEnabled, onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
+  const { user } = useAuth(); // Get the logged-in user
 
   useEffect(() => {
     // Trigger animation after component mounts
@@ -166,7 +168,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({ comments, commentsEnabled, 
           <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-900">
             <div className="flex items-center space-x-3">
               <img
-                src="/placeholder.png"
+                src={user?.profilePic || "/placeholder.png"}
                 alt="User"
                 className="w-8 h-8 rounded-full flex-shrink-0"
               />
@@ -294,7 +296,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({ comments, commentsEnabled, 
           <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-900">
             <div className="flex items-center space-x-3">
               <img
-                src="/placeholder.png"
+                src={user?.profilePic || "/placeholder.png"}
                 alt="User"
                 className="w-8 h-8 rounded-full flex-shrink-0"
               />
