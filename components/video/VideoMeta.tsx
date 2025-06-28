@@ -140,11 +140,16 @@ export default function VideoMeta({ video }: VideoMetaProps) {
           <Button variant="outline" size="md">
             Membership
           </Button>
-          <Button 
-            variant={isFollowing ? "secondary" : "primary"} 
+          <Button
+            variant={isFollowing ? undefined : "primary"}
             size="md"
             onClick={handleFollowToggle}
             disabled={isFollowLoading}
+            className={
+              isFollowing
+                ? "relative bg-gradient-animation dark:bg-gradient-animation-dark text-white border-0 shadow font-semibold"
+                : ""
+            }
           >
             {isFollowLoading ? 'Loading...' : (isFollowing ? 'Following' : 'Follow')}
           </Button>
