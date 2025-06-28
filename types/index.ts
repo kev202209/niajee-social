@@ -136,6 +136,7 @@ export interface mVideo {
     verified: boolean;
     monetized: boolean;
     followerCount: number;
+    isSubscribed: true,
   };
 }
 

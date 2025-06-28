@@ -24,7 +24,8 @@ const formatViewCount = (count: number) => {
 export default function VideoMeta({ video }: VideoMetaProps) {
   const [descExpanded, setDescExpanded] = useState(false);
   const [shouldShowMore, setShouldShowMore] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(false);
+  // Use backend-provided isSubscribed for initial state
+  const [isFollowing, setIsFollowing] = useState<boolean | undefined>(undefined);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [followerCount, setFollowerCount] = useState(video.channel.followerCount);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
@@ -54,33 +55,6 @@ export default function VideoMeta({ video }: VideoMetaProps) {
       setTimeout(checkOverflow, 0);
     }
   }, [video.description]);
-
-  // Check initial follow status
-  useEffect(() => {
-    const checkFollowStatus = async () => {
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/channels/${video.channel.id}/follow-status`,
-          {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              'Accept': 'application/json',
-            }
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          setIsFollowing(data.isFollowing);
-        }
-      } catch (error) {
-        console.error('Error checking follow status:', error);
-      }
-    };
-
-    checkFollowStatus();
-  }, [video.channel.id]);
 
   // Handle follow/unfollow
   const handleFollowToggle = async () => {
@@ -136,6 +110,10 @@ export default function VideoMeta({ video }: VideoMetaProps) {
       setIsFollowLoading(false);
     }
   };
+
+  useEffect(() => {
+    setIsFollowing(!!video.channel.isSubscribed);
+  }, [video.channel.isSubscribed]);
 
   return (
     <div className="space-y-4">
