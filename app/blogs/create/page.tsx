@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/watch/Header';
 import Sidebar from '@/components/watch/Sidebar';
+import  Button  from "@/components/ui/CustomButton";
+import { toast } from "sonner";
 import RichTextEditor from '../components/RichTextEditor';
 import { CreateBlogDto } from '@/types';
 import { FiSave, FiEye, FiUpload, FiX, FiArrowLeft } from 'react-icons/fi';
@@ -48,11 +50,11 @@ export default function CreateBlogPage() {
   const [showPreview, setShowPreview] = useState(false);
 
   // Redirect if not authenticated
-  useEffect(() => {
-    if (!user) {
-      router.push('/login?redirect=/blogs/create');
-    }
-  }, [user, router]);
+  // useEffect(() => {
+  //   if (!user) {
+  //     router.push('/login?redirect=/blogs/create');
+  //   }
+  // }, [user, router]);
 
   const handleInputChange = (field: keyof CreateBlogDto, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -104,15 +106,16 @@ export default function CreateBlogPage() {
       e.preventDefault();
       const newTag = tagInput.trim().toLowerCase();
       
-      if (!formData.tags.includes(newTag) && formData.tags.length < 10) {
-        handleInputChange('tags', [...formData.tags, newTag]);
+      const tags = formData.tags ?? [];
+      if (!tags.includes(newTag) && tags.length < 10) {
+        handleInputChange('tags', [...tags, newTag]);
       }
       setTagInput('');
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    handleInputChange('tags', formData.tags.filter(tag => tag !== tagToRemove));
+    handleInputChange('tags', (formData.tags ?? []).filter(tag => tag !== tagToRemove));
   };
 
   const validateForm = () => {
@@ -136,7 +139,7 @@ export default function CreateBlogPage() {
       newErrors.excerpt = 'Excerpt must be at least 20 characters';
     }
 
-    if (formData.tags.length === 0) {
+    if ((formData.tags ?? []).length === 0) {
       newErrors.tags = 'At least one tag is required';
     }
 
@@ -145,19 +148,42 @@ export default function CreateBlogPage() {
   };
 
   const handleSubmit = async (status: 'draft' | 'published') => {
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
 
     setIsSubmitting(true);
-    
+
     try {
       const submitData = new FormData();
       submitData.append('title', formData.title);
       submitData.append('content', formData.content);
       submitData.append('excerpt', formData.excerpt || '');
-      submitData.append('category', formData.category);
-      submitData.append('tags', JSON.stringify(formData.tags));
+      submitData.append('category', formData.category || '');
+
+      // Send tags as array (tags[])
+      (formData.tags ?? []).forEach(tag => submitData.append('tags', tag));
+
       submitData.append('status', status);
-      
+
+      // Optional fields with defaults
+      submitData.append('subtitle', formData.subtitle || '');
+      submitData.append('slug', formData.slug || '');
+      submitData.append('channelId', formData.channelId || '');
+      submitData.append('allowComments', String(formData.allowComments ?? true));
+      submitData.append('allowHighlighting', String(formData.allowHighlighting ?? true));
+      submitData.append('allowResponses', String(formData.allowResponses ?? true));
+      submitData.append('isMonetized', String(formData.isMonetized ?? false));
+      submitData.append('isPremium', String(formData.isPremium ?? false));
+      submitData.append('category', formData.category || '');
+      // topics, seoMetadata, customCSS, isSensitive, contentWarning
+      (formData.topics || []).forEach(topic => submitData.append('topics', topic));
+      if (formData.seoMetadata) submitData.append('seoMetadata', JSON.stringify(formData.seoMetadata));
+      if (formData.customCSS) submitData.append('customCSS', formData.customCSS);
+      submitData.append('isSensitive', String(formData.isSensitive ?? false));
+      if (formData.contentWarning) submitData.append('contentWarning', formData.contentWarning);
+
       if (featuredImage) {
         submitData.append('featuredImage', featuredImage);
       }
@@ -171,11 +197,17 @@ export default function CreateBlogPage() {
       const data = await response.json();
 
       if (data.success) {
+        if (data.success) {
+          toast.success("Blog published successfully!");
+          router.push(`/blogs/${data.data.slug}`);
+        }        toast.success("Blog published successfully!");
         router.push(`/blogs/${data.data.slug}`);
       } else {
+        toast.error(data.message || 'Failed to create blog');
         setErrors({ submit: data.message || 'Failed to create blog' });
       }
     } catch (error: any) {
+      toast.error(error.message || 'Failed to create blog');
       setErrors({ submit: error.message || 'Failed to create blog' });
     } finally {
       setIsSubmitting(false);
@@ -226,14 +258,23 @@ export default function CreateBlogPage() {
                 <span>Save Draft</span>
               </button>
               
-              <button
+              <Button
                 onClick={() => handleSubmit('published')}
                 disabled={isSubmitting}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                className="flex items-center space-x-2"
               >
-                <FiSave className="w-4 h-4" />
-                <span>Publish</span>
-              </button>
+                {isSubmitting ? (
+                  <>
+                    <FiSave className="w-4 h-4 animate-spin" />
+                    <span>Publishing...</span>
+                  </>
+                ) : (
+                  <>
+                    <FiSave className="w-4 h-4" />
+                    <span>Publish</span>
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 
@@ -355,9 +396,9 @@ export default function CreateBlogPage() {
                   placeholder="Add tags for your blog..."
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                {formData.tags.length > 0 && (
+                {(formData.tags ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-3">
-                    {formData.tags.map((tag) => (
+                    {(formData.tags ?? []).map((tag) => (
                       <span
                         key={tag}
                         className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
@@ -447,10 +488,10 @@ export default function CreateBlogPage() {
                 />
 
                 {/* Tags */}
-                {formData.tags.length > 0 && (
+                {(formData.tags ?? []).length > 0 && (
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
                     <div className="flex flex-wrap gap-2">
-                      {formData.tags.map((tag) => (
+                      {(formData.tags ?? []).map((tag) => (
                         <span
                           key={tag}
                           className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-sm"
