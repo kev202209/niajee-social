@@ -146,7 +146,7 @@ const VideoActions = ({
               Report
             </button>
             <button className="w-full text-left px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-sm text-black dark:text-gray-100">
-              Don't recommend channel
+              Not Interested
             </button>
             <button className="w-full text-left px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-sm text-black dark:text-gray-100">
               Copy link
