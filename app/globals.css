@@ -119,6 +119,11 @@
   line-height: 1.5;
 }
 
+/* this setting is to esure that the pasted content is overwritten to have the site's css colors */
+
+.dark .prose * {
+  color: inherit !important;
+}
 
    /* Shadcn colors */
 

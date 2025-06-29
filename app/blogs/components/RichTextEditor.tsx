@@ -90,6 +90,30 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
     input.click();
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const html = e.clipboardData.getData('text/html');
+    const text = e.clipboardData.getData('text/plain');
+    let clean = html;
+
+    if (html) {
+      // Remove color styles (color: ... and color="...")
+      clean = html.replace(/color\s*:\s*[^;"]+;?/gi, '');
+      clean = clean.replace(/(<[^>]+) style="([^"]*)"/gi, (match, tag, style) => {
+        // Remove color from style attribute
+        const newStyle = style
+          .split(';')
+          .filter((s: string) => !s.trim().startsWith('color:'))
+          .join(';');
+        return newStyle.trim() ? `${tag} style="${newStyle}"` : tag;
+      });
+      document.execCommand('insertHTML', false, clean);
+    } else if (text) {
+      document.execCommand('insertText', false, text);
+    }
+    handleInput();
+  };
+
   const toolbarButtons = [
     {
       icon: FiBold,
@@ -206,6 +230,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
         ref={editorRef}
         contentEditable
         onInput={handleInput}
+        onPaste={handlePaste}
         className="min-h-[300px] p-4 focus:outline-none text-gray-900 dark:text-white"
         style={{ 
           wordBreak: 'break-word',
