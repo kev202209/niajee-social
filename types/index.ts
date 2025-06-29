@@ -362,13 +362,25 @@ export interface BlogSeries {
 
 export interface CreateBlogDto {
   title: string;
-  content: string;
+  subtitle?: string;
+  slug?: string;
   excerpt?: string;
-  category: string;
-  tags: string[];
-  status: 'draft' | 'published';
-  featuredImage?: File;
-  seriesId?: string;
+  content: string;
+  featuredImage?: File | string;
+  channelId?: string;
+  status?: 'draft' | 'published';
+  allowComments?: boolean;
+  allowHighlighting?: boolean;
+  allowResponses?: boolean;
+  isMonetized?: boolean;
+  isPremium?: boolean;
+  category?: string;
+  tags?: string[];
+  topics?: string[];
+  seoMetadata?: Record<string, any> | null;
+  customCSS?: string | null;
+  isSensitive?: boolean;
+  contentWarning?: string | null;
 }
 
 export interface UpdateBlogDto extends Partial<CreateBlogDto> {}
