@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { DetailedChannel as Channel } from '@/types'
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiClock, FiPlay, FiCalendar, FiSmartphone } from 'react-icons/fi'
 import ChannelOverviewSkeleton from './ChannelOverviewSkeleton'
+import Image from 'next/image'
 
 interface ChannelStats {
   totalViews: number | null;
@@ -298,8 +299,10 @@ export default function ChannelOverview() {
           {/* Channel Avatar */}
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
             {channel.avatar ? (
-              <img 
-                src={`${process.env.NEXT_PUBLIC_API_URL}/uploads/channels/${channel.avatar}`} 
+              <Image
+                width={64}
+                height={64} 
+                src={`${channel.avatar}`} 
                 alt={channel.name} 
                 className="w-full h-full rounded-full object-cover" 
               />

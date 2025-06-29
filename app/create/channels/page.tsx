@@ -13,7 +13,7 @@ const ChannelsPage: FC = () => {
       setLoading(true);
       setError(null);
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/channels/my-channel`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/channels/my-channels`,
         {
           method: 'GET',
           credentials: 'include',
