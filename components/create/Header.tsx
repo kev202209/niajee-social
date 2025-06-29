@@ -97,7 +97,7 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
               className="focus:outline-none"
             >
               <Image
-                src="/placeholder.png"
+                src={typeof user?.profilePic === "string" && user.profilePic ? user.profilePic : "/placeholder.png"}
                 alt="Profile"
                 width={36}
                 height={36}
