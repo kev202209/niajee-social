@@ -100,10 +100,11 @@ export default function BlogsPage() {
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
-        setBlogs(data.data.blogs || []);
-        setTotalPages(data.data.totalPages || 1);
+        const normalizedBlogs = (data.data.blogs || []).map(normalizeBlog);
+        setBlogs(normalizedBlogs);
+        setTotalPages(data.data.pagination?.totalPages || 1);
       } else {
         throw new Error(data.message || 'Failed to fetch blogs');
       }
@@ -131,7 +132,7 @@ export default function BlogsPage() {
       const data = await response.json();
       
       if (data.success) {
-        setFeaturedBlogs(data.data.blogs || []);
+        setFeaturedBlogs(data.data.blogs?.map(normalizeBlog) || []);
       }
     } catch (err: any) {
       console.error('Error fetching featured blogs:', err);
@@ -187,6 +188,20 @@ export default function BlogsPage() {
     setCurrentPage(1);
     router.push('/blogs');
   };
+
+  const normalizeBlog = (blog: any) => ({
+    ...blog,
+    category: Array.isArray(blog.category)
+      ? blog.category
+      : typeof blog.category === "string"
+        ? blog.category.replace(/[{}"]/g, '').split(',').map(s => s.trim()).filter(Boolean)
+        : [],
+    tags: Array.isArray(blog.tags)
+      ? blog.tags
+      : typeof blog.tags === "string"
+        ? blog.tags.split(',').map(s => s.trim()).filter(Boolean)
+        : [],
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

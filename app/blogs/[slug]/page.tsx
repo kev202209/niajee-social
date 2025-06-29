@@ -42,6 +42,20 @@ export default function BlogDetailPage() {
     }
   }, [blog]);
 
+  const normalizeBlog = (blog: any) => ({
+    ...blog,
+    category: Array.isArray(blog.category)
+      ? blog.category
+      : typeof blog.category === "string"
+        ? blog.category.replace(/[{}"]/g, '').split(',').map((s: string) => s.trim()).filter(Boolean)
+        : [],
+    tags: Array.isArray(blog.tags)
+      ? blog.tags
+      : typeof blog.tags === "string"
+        ? blog.tags.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : [],
+  });
+
   const fetchBlog = async () => {
     try {
       setLoading(true);
@@ -63,7 +77,7 @@ export default function BlogDetailPage() {
       const data = await response.json();
       
       if (data.success) {
-        setBlog(data.data);
+        setBlog(normalizeBlog(data.data));
         // Update page title
         document.title = `${data.data.title} | Mosaic Social`;
       } else {
@@ -302,12 +316,12 @@ export default function BlogDetailPage() {
 
                 <div className="flex items-center space-x-1">
                   <FiClock className="w-4 h-4" />
-                  <span>{blog.readTime} min read</span>
+                  <span>{blog.estimatedReadTime ?? 0} min read</span>
                 </div>
 
                 <div className="flex items-center space-x-1">
                   <FiEye className="w-4 h-4" />
-                  <span>{blog.views.toLocaleString()} views</span>
+                  <span>{blog.viewCount?.toLocaleString() ?? 0} views</span>
                 </div>
               </div>
 
@@ -342,10 +356,11 @@ export default function BlogDetailPage() {
 
             {/* Content */}
             <div className="px-6 pb-6">
-              <div 
-                className="prose prose-lg dark:prose-invert max-w-none prose-headings:text-gray-900 dark:prose-headings:text-white prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-strong:text-gray-900 dark:prose-strong:text-white"
-                dangerouslySetInnerHTML={{ __html: blog.content }}
-              />
+              <div className="prose prose-lg dark:prose-invert max-w-none">
+                {Array.isArray(blog.content)
+                  ? <pre>{JSON.stringify(blog.content, null, 2)}</pre>
+                  : <div dangerouslySetInnerHTML={{ __html: blog.content }} />}
+              </div>
             </div>
 
             {/* Tags */}
