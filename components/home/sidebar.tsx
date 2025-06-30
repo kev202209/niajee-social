@@ -9,7 +9,9 @@ import {
   Component,
   ChevronLeft,
   ChevronRight,
-  PlusCircle
+  PlusCircle,
+  Newspaper,
+  UsersRound
 } from "lucide-react";
 
 interface SidebarProps {
@@ -17,10 +19,13 @@ interface SidebarProps {
   setIsExpanded: (expanded: boolean) => void;
 }
 
+
 const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
   const menuItems = [
     { icon: Home, label: "Home", href: "/" },
     { icon: PlusCircle, label: "Create", href: "/create" },
+    { icon: Newspaper, label: "Blogs", href: "/blogs" },
+    { icon: UsersRound, label: "Community", href: `${process.env.NEXT_PUBLIC_SECOND_FRONTEND_URL}` },
     { icon: TrendingUp, label: "Trending", href: "/trending" },
     { icon: Component, label: "Shorts", href: "/shorts" },
     { icon: LaptopMinimalCheck, label: "Subscriptions", href: "/subscriptions" },
