@@ -291,7 +291,7 @@ export default function BlogDetailPage() {
                       alt={blog.author.displayName}
                       width={32}
                       height={32}
-                      className="rounded-full"
+                      className="rounded-full h-full w-full"
                     />
                     {blog.author.verified && (
                       <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
@@ -321,7 +321,7 @@ export default function BlogDetailPage() {
 
                 <div className="flex items-center space-x-1">
                   <FiEye className="w-4 h-4" />
-                  <span>{blog.viewCount?.toLocaleString() ?? 0} views</span>
+                  <span>{blog.viewCount?.toLocaleString() ?? 0} {blog.viewCount?.toLocaleString() === 1 ? 'view': 'views'}</span>
                 </div>
               </div>
 
