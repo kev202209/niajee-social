@@ -7,7 +7,8 @@ import Header from '@/components/watch/Header';
 import Sidebar from '@/components/watch/Sidebar';
 import  Button  from "@/components/ui/CustomButton";
 import { toast } from "sonner";
-import RichTextEditor from '../components/RichTextEditor';
+import BlockEditor from '../components/BlockEditor';
+import type { OutputData } from "@editorjs/editorjs";
 import { CreateBlogDto } from '@/types';
 import { FiSave, FiEye, FiUpload, FiX, FiArrowLeft } from 'react-icons/fi';
 import { useAuth } from '@/contexts/AuthContext';
@@ -35,7 +36,7 @@ export default function CreateBlogPage() {
   
   const [formData, setFormData] = useState<CreateBlogDto>({
     title: '',
-    content: '',
+    content: undefined, // Let Editor.js handle initialization
     excerpt: '',
     category: 'Technology',
     tags: [],
@@ -127,9 +128,11 @@ export default function CreateBlogPage() {
       newErrors.title = 'Title must be at least 10 characters';
     }
 
-    if (!formData.content.trim()) {
+    // Safe content validation
+    const hasContent = formData.content?.blocks && formData.content.blocks.length > 0;
+    if (!hasContent) {
       newErrors.content = 'Content is required';
-    } else if (formData.content.length < 100) {
+    } else if (JSON.stringify(formData.content).length < 100) {
       newErrors.content = 'Content must be at least 100 characters';
     }
 
@@ -158,7 +161,7 @@ export default function CreateBlogPage() {
     try {
       const submitData = new FormData();
       submitData.append('title', formData.title);
-      submitData.append('content', formData.content);
+      submitData.append('content', JSON.stringify(formData.content?.blocks ?? []));
       submitData.append('excerpt', formData.excerpt || '');
       submitData.append('category', formData.category || '');
 
@@ -187,7 +190,7 @@ export default function CreateBlogPage() {
       if (featuredImage) {
         submitData.append('featuredImage', featuredImage);
       }
-
+      console.log('---------Submitting data:', submitData);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs`, {
         method: 'POST',
         credentials: 'include',
@@ -214,8 +217,44 @@ export default function CreateBlogPage() {
     }
   };
 
+  // Add this helper function to render the content in preview
+  const renderEditorContent = (content: any) => {
+    if (!content || !content.blocks) {
+      return '<p>Your blog content will appear here...</p>';
+    }
+    
+    return content.blocks.map((block: any) => {
+      const alignment = block.tunes?.alignment || 'left';
+      const alignStyle = `text-align: ${alignment};`;
+      
+      switch (block.type) {
+        case 'header':
+          const level = block.data.level || 1;
+          return `<h${level} style="${alignStyle}">${block.data.text || ''}</h${level}>`;
+        
+        case 'paragraph':
+          return `<p style="${alignStyle}">${block.data.text || ''}</p>`;
+        
+        case 'list':
+          const items = block.data.items || [];
+          const listItems = items.map((item: string) => `<li>${item}</li>`).join('');
+          const listTag = block.data.style === 'ordered' ? 'ol' : 'ul';
+          return `<${listTag} style="${alignStyle}">${listItems}</${listTag}>`;
+        
+        case 'code':
+          return `<pre style="${alignStyle}"><code>${block.data.code || ''}</code></pre>`;
+        
+        case 'image':
+          return `<img src="${block.data.src}" alt="${block.data.alt || ''}" style="max-width: 100%; height: auto; ${alignStyle}" />`;
+        
+        default:
+          return `<p style="${alignStyle}">${block.data.text || ''}</p>`;
+      }
+    }).join('');
+  };
+
   if (!user) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
   return (
@@ -424,9 +463,9 @@ export default function CreateBlogPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Content *
                 </label>
-                <RichTextEditor
+                <BlockEditor
                   value={formData.content}
-                  onChange={(content) => handleInputChange('content', content)}
+                  onChange={(data) => handleInputChange('content', data)}
                   placeholder="Write your blog content here..."
                 />
                 {errors.content && (
@@ -483,7 +522,7 @@ export default function CreateBlogPage() {
                 <div 
                   className="prose prose-lg dark:prose-invert max-w-none"
                   dangerouslySetInnerHTML={{ 
-                    __html: formData.content || '<p>Your blog content will appear here...</p>' 
+                    __html: renderEditorContent(formData.content)
                   }}
                 />
 
