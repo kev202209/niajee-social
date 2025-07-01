@@ -1,3 +1,5 @@
+import type { OutputData } from "@editorjs/editorjs";
+
 export interface User {
   id: string;
   email: string;
@@ -293,11 +295,37 @@ export interface DetailedChannel {
   hasJoined?: boolean;
 }
 
+// Add this interface for the content structure
+interface ContentData {
+  time: number;
+  blocks: BlockData[];
+  version: string;
+}
+
+interface BlockData {
+  id: string;
+  type: 'paragraph' | 'header' | 'list' | 'code' | 'image';
+  data: {
+    text?: string;
+    level?: number;
+    style?: 'ordered' | 'unordered';
+    items?: string[];
+    code?: string;
+    src?: string;
+    alt?: string;
+    alignment?: 'left' | 'center' | 'right';
+  };
+  tunes?: {
+    alignment?: 'left' | 'center' | 'right';
+  };
+}
+
+// Update the Blog interface
 export interface Blog {
   id: string;
   title: string;
   slug: string;
-  content: string;
+  content: ContentData; // Changed from string to ContentData
   excerpt: string;
   featuredImage?: string;
   status: 'draft' | 'published' | 'archived';
@@ -326,46 +354,13 @@ export interface Blog {
   };
 }
 
-export interface BlogComment {
-  id: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-  likes: number;
-  isLiked?: boolean;
-  author: {
-    id: string;
-    username: string;
-    displayName: string;
-    profilePic?: string;
-    verified: boolean;
-  };
-  replies?: BlogComment[];
-}
-
-export interface BlogSeries {
-  id: string;
-  title: string;
-  description: string;
-  slug: string;
-  createdAt: string;
-  updatedAt: string;
-  author: {
-    id: string;
-    username: string;
-    displayName: string;
-    profilePic?: string;
-    verified: boolean;
-  };
-  blogs: Blog[];
-}
-
+// Update CreateBlogDto to use ContentData instead of OutputData
 export interface CreateBlogDto {
   title: string;
   subtitle?: string;
   slug?: string;
   excerpt?: string;
-  content: string;
+  content: OutputData;
   featuredImage?: File | string;
   channelId?: string;
   status?: 'draft' | 'published';
