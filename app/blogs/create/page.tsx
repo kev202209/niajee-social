@@ -179,7 +179,6 @@ export default function CreateBlogPage() {
       submitData.append('allowResponses', String(formData.allowResponses ?? true));
       submitData.append('isMonetized', String(formData.isMonetized ?? false));
       submitData.append('isPremium', String(formData.isPremium ?? false));
-      submitData.append('category', formData.category || '');
       // topics, seoMetadata, customCSS, isSensitive, contentWarning
       (formData.topics || []).forEach(topic => submitData.append('topics', topic));
       if (formData.seoMetadata) submitData.append('seoMetadata', JSON.stringify(formData.seoMetadata));
