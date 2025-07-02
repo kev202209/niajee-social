@@ -48,6 +48,7 @@ export default function WatchPage({ params }: { params: { v: string } }) {
             '720p': getVideoStreamUrl(videoId, '720p'),
             '480p': getVideoStreamUrl(videoId, '480p'),
             '360p': getVideoStreamUrl(videoId, '360p'),
+            '240p': getVideoStreamUrl(videoId, '240p'),
             auto: getHLSStreamUrl(videoId, 'auto')
           }
         };
