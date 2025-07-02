@@ -18,13 +18,28 @@ interface VideoProps {
   video: mVideo;
 }
 
+// Helper to pick the highest available quality
+const getBestQualityUrl = (videoUrl: Record<string, string>) => {
+  const preferredOrder = ['1080p', '720p', '480p', '360p', '240p'];
+  for (const q of preferredOrder) {
+    if (videoUrl[q]) return videoUrl[q];
+  }
+  // fallback to any available
+  const keys = Object.keys(videoUrl);
+  return keys.length > 0 ? videoUrl[keys[0]] : null;
+};
+
 export default function VideoPlayer({ video }: { video: mVideo }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Pick the best available quality
+  const bestQualityPath = getBestQualityUrl(video.videoUrl);
+  const streamUrl = bestQualityPath ? `${backendUrl}/${bestQualityPath}` : '';
+
   // Use the controls object from the hook
   const controls = useVideoPlayer({
-    videoRef: videoRef,
-    src: `${backendUrl}/${video.videoUrl['720p']}`,
+    videoRef: videoRef as React.RefObject<HTMLVideoElement>,
+    src: streamUrl,
     videoUrls: video.videoUrl,
     autoplay: true
   }) as ReturnType<typeof useVideoPlayer> & { setHlsInstance?: (hls: Hls) => void };
@@ -34,15 +49,12 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
 
   useEffect(() => {
     const videoElement = videoRef.current;
-    if (!videoElement) return;
+    if (!videoElement || !streamUrl) return;
 
     // Destroy existing HLS instance
     if (controls.hlsInstance) {
       controls.hlsInstance.destroy();
     }
-
-    const hlsPath = video.videoUrl['720p'];
-    const streamUrl = `${backendUrl}/${hlsPath}`;
 
     if (Hls.isSupported()) {
       const hls = new Hls({
@@ -78,11 +90,10 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
       return () => {
         hls.destroy();
       };
-    } 
-    else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+    } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
       videoElement.src = streamUrl;
     }
-  }, [video.videoUrl]);
+  }, [video.videoUrl, streamUrl]);
 
   return (
     <div className="space-y-4">
@@ -95,7 +106,7 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
         )}
         <VideoContainer 
           controls={controls} 
-          videoRef={videoRef}
+          videoRef={videoRef as React.RefObject<HTMLVideoElement>}
           className="w-full h-full rounded"
           onWaiting={() => setBuffering && setBuffering(true)}
           onPlaying={() => setBuffering && setBuffering(false)}
