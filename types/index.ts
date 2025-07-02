@@ -393,3 +393,22 @@ export interface BlogFilterDto {
   page?: number;
   limit?: number;
 }
+
+export interface BlogComment {
+  id: string;
+  content: string;
+  highlightedText: string | null;
+  highlightStartIndex: number | null;
+  highlightEndIndex: number | null;
+  likeCount: number;
+  parentId: string | null;
+  createdAt: string;
+  user: {
+    id: string;
+    username: string;
+    displayName: string;
+    profilePic?: string | null;
+    verified: boolean;
+  };
+  replies: BlogComment[];
+}
