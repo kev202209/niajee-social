@@ -324,33 +324,56 @@ interface BlockData {
 export interface Blog {
   id: string;
   title: string;
+  subtitle?: string | null;
   slug: string;
-  content: ContentData; // Changed from string to ContentData
   excerpt: string;
-  featuredImage?: string;
+  content: any[]; // Editor.js blocks array or [] (as in your response)
+  featuredImage?: string | null;
   status: 'draft' | 'published' | 'archived';
-  category: string;
-  tags: string[];
-  readTime: number;
-  views: number;
-  likes: number;
-  comments: number;
-  isLiked?: boolean;
-  isBookmarked?: boolean;
-  publishedAt?: string;
+  publishedAt?: string | null;
+  viewCount: number;
+  uniqueViewCount?: number;
+  likeCount: number;
+  commentCount: number;
+  shareCount?: number;
+  bookmarkCount?: number;
+  estimatedReadTime?: number;
+  averageReadTime?: number;
+  allowComments?: boolean;
+  allowHighlighting?: boolean;
+  allowResponses?: boolean;
+  isMonetized?: boolean;
+  isFeatured?: boolean;
+  isPremium?: boolean;
+  category: string | string[]; // Can be a stringified array or array
+  tags: string | string[];     // Can be a string or array
+  topics?: string[];           // Array of topics
+  seoMetadata?: Record<string, any> | null;
+  customCSS?: string | null;
+  isSensitive?: boolean;
+  contentWarning?: string | null;
+  analytics?: any;
+  version?: number;
+  lastEditedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   author: {
     id: string;
     username: string;
     displayName: string;
-    profilePic?: string;
+    profilePic?: string | null;
     verified: boolean;
+    bio?: string | null;
   };
-  series?: {
+    series?: {
     id: string;
     title: string;
     order: number;
+  };
+  channel?: any | null;
+  userInteraction?: {
+    liked: boolean;
+    bookmarked: boolean;
   };
 }
 
