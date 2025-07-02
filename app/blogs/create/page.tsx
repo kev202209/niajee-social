@@ -190,6 +190,7 @@ export default function CreateBlogPage() {
       if (featuredImage) {
         submitData.append('featuredImage', featuredImage);
       }
+      
       console.log('---------Submitting data:', submitData);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs`, {
         method: 'POST',
@@ -200,10 +201,7 @@ export default function CreateBlogPage() {
       const data = await response.json();
 
       if (data.success) {
-        if (data.success) {
-          toast.success("Blog published successfully!");
-          router.push(`/blogs/${data.data.slug}`);
-        }        toast.success("Blog published successfully!");
+        toast.success(`Blog ${status === 'published' ? 'published' : 'saved'} successfully!`);
         router.push(`/blogs/${data.data.slug}`);
       } else {
         toast.error(data.message || 'Failed to create blog');
