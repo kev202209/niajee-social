@@ -11,12 +11,17 @@ import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import CommentsSection from "./CommentsSection";
 import { Comment } from "@/types";
 
-// Backend data structure for shorts
+// Updated backend data structure for shorts
 interface ShortData {
   id: string;
   title: string;
-  description: string;
-  videoUrl: string;
+  description?: string;
+  videoUrl: {
+    [quality: string]: string;
+  } | string; // Handle both formats
+  videoSrc?: string; // Direct video source
+  masterPlaylist?: string; // HLS master playlist
+  qualities?: string[]; // Available qualities
   thumbnailUrl: string | null;
   duration: number;
   viewCount: number;
@@ -40,7 +45,7 @@ interface ShortData {
     avatar: string;
     verified: boolean;
   };
-  user: {
+  user?: {
     id: string;
     username: string;
     displayName: string;
@@ -70,6 +75,50 @@ const ShortVideoPage = () => {
   // Refs for the scroll container and current video element.
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentVideoRef = useRef<HTMLVideoElement>(null!);
+
+  // Helper function to get the best video URL
+  const getBestVideoUrl = (video: ShortData): string => {
+    // If videoSrc is provided, use it
+    if (video.videoSrc) {
+      return video.videoSrc;
+    }
+
+    // If masterPlaylist is provided, use it for HLS
+    if (video.masterPlaylist) {
+      return video.masterPlaylist;
+    }
+
+    // If videoUrl is a string, return it
+    if (typeof video.videoUrl === 'string') {
+      return video.videoUrl;
+    }
+
+    // If videoUrl is an object, pick the best quality
+    if (typeof video.videoUrl === 'object') {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+      const qualities = video.qualities || Object.keys(video.videoUrl);
+      
+      // Prefer higher quality first
+      const preferredQualities = ['1080p', '720p', '480p', '360p', '240p'];
+      
+      for (const quality of preferredQualities) {
+        if (video.videoUrl[quality]) {
+          return video.videoUrl[quality].startsWith('http') 
+            ? video.videoUrl[quality]
+            : `${backendUrl}/${video.videoUrl[quality]}`;
+        }
+      }
+      
+      // Fallback to first available quality
+      const firstQuality = Object.keys(video.videoUrl)[0];
+      if (firstQuality) {
+        const url = video.videoUrl[firstQuality];
+        return url.startsWith('http') ? url : `${backendUrl}/${url}`;
+      }
+    }
+
+    return '';
+  };
 
   // Add keyboard navigation handler
   useEffect(() => {
@@ -101,21 +150,28 @@ const ShortVideoPage = () => {
     }
   }, [currentVideo, nextVideo, videoHistory]);
 
-  // On mount, read the saved volume cookie.
+  // On mount, read the saved volume from localStorage.
   useEffect(() => {
-    const cookieStr = document.cookie.split("; ").find(row => row.startsWith("volume="));
-    if (cookieStr) {
-      const volValue = parseFloat(cookieStr.split("=")[1]);
-      if (!isNaN(volValue)) {
-        setVolume(volValue);
+    try {
+      const savedVolume = localStorage.getItem('video-volume');
+      if (savedVolume) {
+        const volValue = parseFloat(savedVolume);
+        if (!isNaN(volValue) && volValue >= 0 && volValue <= 1) {
+          setVolume(volValue);
+        }
       }
+    } catch (error) {
+      console.warn('Failed to read volume from localStorage:', error);
     }
   }, []);
 
-  // Update volume cookie (expires in 1 year).
-  const updateVolumeCookie = (vol: number) => {
-    const maxAge = 60 * 60 * 24 * 365; // seconds
-    document.cookie = `volume=${vol}; path=/; max-age=${maxAge}`;
+  // Update volume in localStorage
+  const updateVolumeStorage = (vol: number) => {
+    try {
+      localStorage.setItem('video-volume', vol.toString());
+    } catch (error) {
+      console.warn('Failed to save volume to localStorage:', error);
+    }
   };
 
   // Fetch current video by ID or default.
@@ -125,15 +181,28 @@ const ShortVideoPage = () => {
       if (videoId) {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`);
         if (!res.ok) throw new Error('Failed to fetch video');
-        apiData = await res.json();
+        const data = await res.json();
+        apiData = data.short || data; // Handle both response formats
       } else {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`
         );
         if (!res.ok) throw new Error('Failed to fetch videos');
         const result = await res.json();
-        apiData = result.shorts[0];
+        apiData = result.shorts[0] || result.data[0]; // Handle both response formats
       }
+
+      // Ensure user object exists (use channel data as fallback)
+      if (!apiData.user && apiData.channel) {
+        apiData.user = {
+          id: apiData.channel.id,
+          username: apiData.channel.handle.replace('@', ''),
+          displayName: apiData.channel.name,
+          profilePic: apiData.channel.avatar,
+          verified: apiData.channel.verified
+        };
+      }
+
       return apiData;
     } catch (err) {
       console.error(err);
@@ -149,7 +218,19 @@ const ShortVideoPage = () => {
       );
       if (!res.ok) throw new Error('Failed to fetch next video');
       const result = await res.json();
-      const apiData = result.shorts[0];
+      const apiData = result.shorts[0] || result.data[0]; // Handle both response formats
+      
+      // Ensure user object exists
+      if (!apiData.user && apiData.channel) {
+        apiData.user = {
+          id: apiData.channel.id,
+          username: apiData.channel.handle.replace('@', ''),
+          displayName: apiData.channel.name,
+          profilePic: apiData.channel.avatar,
+          verified: apiData.channel.verified
+        };
+      }
+
       return apiData;
     } catch (err) {
       console.error(err);
@@ -205,7 +286,7 @@ const ShortVideoPage = () => {
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVolume = parseFloat(e.target.value);
     setVolume(newVolume);
-    updateVolumeCookie(newVolume);
+    updateVolumeStorage(newVolume);
     if (currentVideoRef.current) {
       currentVideoRef.current.volume = newVolume;
       if (newVolume > 0 && isMuted) {
@@ -262,11 +343,7 @@ const ShortVideoPage = () => {
 
   // Toggle comments panel visibility.
   const toggleComments = () => {
-    console.log('toggleComments called, current showComments:', showComments); // Debug log
-    setShowComments((prev) => {
-      console.log('Setting showComments from', prev, 'to', !prev); // Debug log
-      return !prev;
-    });
+    setShowComments((prev) => !prev);
   };
 
   if (loading || !currentVideo) {
@@ -278,7 +355,7 @@ const ShortVideoPage = () => {
       <Sidebar isOpen={false} onClose={() => {}} />
       <Header />
 
-      <div className="pt-16"> {/* Reduced padding */}
+      <div className="pt-16">
         <div
           ref={scrollContainerRef}
           className="h-screen overflow-hidden flex justify-center"
@@ -290,7 +367,7 @@ const ShortVideoPage = () => {
               <div className="flex items-center justify-center h-full">
                 <VideoPlayer
                   videoRef={currentVideoRef}
-                  videoSrc={currentVideo.videoUrl}
+                  videoSrc={getBestVideoUrl(currentVideo)}
                   isMuted={isMuted}
                   isPaused={isPaused}
                   volume={volume}
@@ -301,12 +378,12 @@ const ShortVideoPage = () => {
                     name: currentVideo.channel.name,
                     icon: currentVideo.channel.avatar,
                   }}
-                  caption={currentVideo.description || ""}
+                  caption={currentVideo.description || currentVideo.title || ""}
                   song="Original Audio"
                 />
               </div>
 
-              {/* Video Actions - Better positioned */}
+              {/* Video Actions */}
               <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
                 <VideoActions 
                   onToggleComments={toggleComments}
@@ -314,10 +391,10 @@ const ShortVideoPage = () => {
                 />
               </div>
 
-              {/* Comments Section - Remove the absolute wrapper */}
+              {/* Comments Section */}
               {showComments && (
                 <CommentsSection
-                  comments={[]} // Will be populated when comments API is implemented
+                  shortId={currentVideo.id}
                   commentsEnabled={currentVideo.allowComments}
                   onClose={() => setShowComments(false)}
                 />
@@ -329,7 +406,7 @@ const ShortVideoPage = () => {
               {nextVideo ? (
                 <VideoPlayer
                   videoRef={null}
-                  videoSrc={nextVideo.videoUrl}
+                  videoSrc={getBestVideoUrl(nextVideo)}
                   isMuted={true}
                   isPaused={true}
                   volume={volume}
@@ -340,7 +417,7 @@ const ShortVideoPage = () => {
                     name: nextVideo.channel.name,
                     icon: nextVideo.channel.avatar,
                   }}
-                  caption={nextVideo.description || ""}
+                  caption={nextVideo.description || nextVideo.title || ""}
                   song="Original Audio"
                 />
               ) : (
@@ -350,7 +427,7 @@ const ShortVideoPage = () => {
           </div>
         </div>
 
-        {/* Navigation arrows - Better positioned */}
+        {/* Navigation arrows */}
         <div className="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 flex-col items-center space-y-4 z-10">
           <button
             onClick={handleScrollUp}
