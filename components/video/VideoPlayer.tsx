@@ -51,6 +51,10 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
     const videoElement = videoRef.current;
     if (!videoElement || !streamUrl) return;
 
+    // Clear any existing src to prevent conflicts
+    videoElement.src = '';
+    videoElement.removeAttribute('src');
+
     // Destroy existing HLS instance
     if (controls.hlsInstance) {
       controls.hlsInstance.destroy();
@@ -58,7 +62,7 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
 
     if (Hls.isSupported()) {
       const hls = new Hls({
-        debug: true,
+        debug: false, // Set to false to reduce console noise
         enableWorker: true,
         xhrSetup: (xhr, url) => {
           if (url.endsWith('.mpegts')) {
@@ -68,29 +72,45 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
+        console.error('HLS Error:', data);
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
+              console.log('Trying to recover from network error...');
               hls.startLoad();
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
+              console.log('Trying to recover from media error...');
               hls.recoverMediaError();
               break;
             default:
+              console.log('Fatal error, destroying HLS instance');
               hls.destroy();
               break;
           }
         }
       });
 
-      hls.loadSource(streamUrl);
-      hls.attachMedia(videoElement);
+      // Wait for the video element to be ready before loading
+      const loadHLS = () => {
+        hls.loadSource(streamUrl);
+        hls.attachMedia(videoElement);
+      };
+
+      // Load HLS immediately if video is ready, otherwise wait
+      if (videoElement.readyState >= 1) {
+        loadHLS();
+      } else {
+        videoElement.addEventListener('loadedmetadata', loadHLS, { once: true });
+      }
+
       controls.setHlsInstance?.(hls);
 
       return () => {
         hls.destroy();
       };
     } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+      // For Safari/iOS native HLS support
       videoElement.src = streamUrl;
     }
   }, [video.videoUrl, streamUrl]);
