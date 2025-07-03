@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { FiThumbsUp, FiThumbsDown, FiMoreHorizontal, FiHeart, FiMessageCircle, FiSend, FiChevronDown, FiChevronUp } from "react-icons/fi";
+import { useState, useEffect, useRef } from "react";
+import { FiThumbsUp, FiThumbsDown, FiMoreHorizontal, FiHeart, FiMessageCircle, FiSend, FiChevronDown, FiChevronUp, FiEdit3 } from "react-icons/fi";
 import { Comment, CreateCommentDto } from '../../../types';
 import { useAuth } from '@/contexts/AuthContext';
 import TextAreaWithLimit from '@/components/ui/TextAreaWithLimit';
@@ -22,11 +22,17 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
+  
+  // Edit functionality state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const editTextAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const { user } = useAuth();
   const isAuthenticated = !!user;
 
-  // ✅ Early return if comments are not allowed
+  // Early return if comments are not allowed
   if (!allowComments) {
     return (
       <div className="mt-8 p-6 text-center text-gray-600 dark:text-gray-400">
@@ -36,7 +42,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
     );
   }
 
-  // ✅ Updated fetch comments with new endpoints
+  // Fetch comments for videos
   const fetchComments = async () => {
     if (!videoId) {
       setLoading(false);
@@ -47,7 +53,6 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       setLoading(true);
       setError(null);
 
-      // ✅ Updated endpoint: GET /api/comments/video/{videoId}
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/comments/video/${videoId}`,
         { 
@@ -61,7 +66,6 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
 
       if (!response.ok) {
         if (response.status === 404) {
-          // Video not found or no comments
           setComments([]);
           setCommentsCount(0);
           return;
@@ -72,7 +76,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       const data = await response.json();
       setComments(data.comments || []);
       
-      // ✅ Updated endpoint: GET /api/comments/video/{videoId}/count
+      // Fetch comments count
       try {
         const countResponse = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/api/comments/video/${videoId}/count`,
@@ -89,7 +93,6 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
           const countData = await countResponse.json();
           setCommentsCount(countData.count || 0);
         } else {
-          // Fallback to comments array length
           setCommentsCount(data.comments?.length || 0);
         }
       } catch (countError) {
@@ -121,15 +124,13 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       setError(null);
 
       const commentData: CreateCommentDto = {
-        text: newComment.trim(),    // ✅ Changed from 'content' to 'text'
-        videoId,
-        parentId: undefined,       // ✅ Explicitly set to undefined for root comments
+        text: newComment.trim(),
+        parentId: undefined,
+        videoId: videoId,
       };
 
-      console.log('Sending comment data:', commentData); // Debug log
-
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/video/${videoId}`,
         {
           method: 'POST',
           credentials: 'include',
@@ -141,18 +142,12 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
         }
       );
 
-      console.log('Response status:', response.status); // Debug log
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.error('Response error:', errorData); // Debug log
         throw new Error(errorData.message || 'Failed to submit comment');
       }
 
       const data = await response.json();
-      console.log('Response data:', data); // Debug log
-
-      // Add new comment to the list
       setComments(prev => [data.comment, ...prev]);
       setCommentsCount(prev => prev + 1);
       setNewComment('');
@@ -173,15 +168,13 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       setError(null);
 
       const replyData: CreateCommentDto = {
-        text: replyContent.trim(),  // ✅ Changed from 'content' to 'text'
-        videoId,
-        parentId,                   // ✅ Set the parent ID for replies
+        text: replyContent.trim(),
+        parentId,
+        videoId: videoId,
       };
 
-      console.log('Sending reply data:', replyData); // Debug log
-
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/video/${videoId}`,
         {
           method: 'POST',
           credentials: 'include',
@@ -223,13 +216,79 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
     }
   };
 
+  // Edit comment
+  const handleEditComment = (comment: Comment) => {
+    setEditingId(comment.id);
+    setEditContent(comment.content);
+    setTimeout(() => editTextAreaRef.current?.focus(), 100);
+  };
+
+  const handleEditSubmit = async (commentId: string) => {
+    if (!editContent.trim() || submitting) return;
+
+    try {
+      setSubmitting(true);
+      setError(null);
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/video/comment/${commentId}`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ text: editContent.trim() }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to update comment');
+      }
+
+      const data = await response.json();
+
+      // Update comment in the list
+      setComments(prev => prev.map(comment => {
+        if (comment.id === commentId) {
+          return { ...comment, content: editContent.trim() };
+        }
+        // Also check replies
+        return {
+          ...comment,
+          replies: comment.replies?.map(reply => {
+            if (reply.id === commentId) {
+              return { ...reply, content: editContent.trim() };
+            }
+            return reply;
+          })
+        };
+      }));
+
+      setEditingId(null);
+      setEditContent('');
+    } catch (err: any) {
+      console.error('Error updating comment:', err);
+      setError(err.message || 'Failed to update comment');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditContent('');
+  };
+
   // Like comment
   const handleLikeComment = async (commentId: string) => {
     if (!isAuthenticated) return;
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/${commentId}/like`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/video/comment/${commentId}/like`,
         {
           method: 'POST',
           credentials: 'include',
@@ -275,11 +334,11 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
 
   // Delete comment
   const handleDeleteComment = async (commentId: string) => {
-    if (!isAuthenticated || !confirm('Are you sure you want to delete this comment?')) return;
+    setConfirmDeleteId(null);
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/${commentId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/video/comment/${commentId}`,
         {
           method: 'DELETE',
           credentials: 'include',
@@ -333,142 +392,214 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
   };
 
   // Comment component
-  const CommentItem = ({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) => (
-    <div className={`flex gap-3 ${isReply ? 'ml-12' : ''}`}>
-      <img
-        src={comment.user.profilePic || '/default-avatar.png'}
-        alt={comment.user.username}
-        className="w-10 h-10 rounded-full flex-shrink-0"
-        onError={(e) => {
-          (e.target as HTMLImageElement).src = '/default-avatar.png';
-        }}
-      />
-      <div className="flex-1 space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="font-semibold text-sm">
-            {comment.user.displayName || comment.user.username}
-          </span>
-          <span className="text-xs text-gray-500 dark:text-gray-400">
-            {formatTimeAgo(comment.createdAt)}
-          </span>
-        </div>
-        
-        <p className="text-sm leading-relaxed whitespace-pre-wrap">
-          {comment.content}
-        </p>
-        
-        <div className="flex items-center gap-4 text-sm">
-          <button
-            onClick={() => handleLikeComment(comment.id)}
-            className={`flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors ${
-              comment.isLiked ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'
-            }`}
-            disabled={!isAuthenticated}
-          >
-            <FiThumbsUp className="w-4 h-4" />
-            <span>{comment.likeCount || 0}</span>
-          </button>
+  const CommentItem = ({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) => {
+    const isOwn = user && comment.user.id === user.id;
+    
+    return (
+      <div className={`flex gap-3 ${isReply ? 'ml-12' : ''} relative`}>
+        <img
+          src={comment.user.profilePic || '/placeholder.png'}
+          alt={comment.user.username}
+          className="w-10 h-10 rounded-full flex-shrink-0"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = '/placeholder.png';
+          }}
+        />
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm">
+              {comment.user.displayName || comment.user.username}
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {formatTimeAgo(comment.createdAt)}
+            </span>
+            {isOwn && (
+              <span className="text-xs text-blue-500 font-semibold">(You)</span>
+            )}
+          </div>
           
-          <button
-            className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors"
-            disabled={!isAuthenticated}
-          >
-            <FiThumbsDown className="w-4 h-4" />
-          </button>
-          
-          {!isReply && isAuthenticated && (
-            <button
-              onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-              className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors"
-            >
-              Reply
-            </button>
-          )}
-          
-          {comment.user.id === user?.id && (
-            <button
-              onClick={() => handleDeleteComment(comment.id)}
-              className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors"
-            >
-              Delete
-            </button>
-          )}
-        </div>
-        
-        {/* Reply form */}
-        {replyingTo === comment.id && (
-          <div className="mt-3">
-            <div className="flex gap-3">
-              <img
-                src={user?.profilePic || '/default-avatar.png'}
-                alt="You"
-                className="w-8 h-8 rounded-full flex-shrink-0"
+          {editingId === comment.id ? (
+            <div className="space-y-2">
+              <TextAreaWithLimit
+                ref={editTextAreaRef}
+                value={editContent}
+                onChange={setEditContent}
+                placeholder="Edit your comment..."
+                maxChars={500}
+                minRows={2}
+                maxRows={6}
+                className="w-full"
               />
-              <div className="flex-1">
-                <TextAreaWithLimit
-                  value={replyContent}
-                  onChange={setReplyContent}
-                  placeholder={`Reply to ${comment.user.displayName || comment.user.username}...`}
-                  maxChars={500}
-                  minRows={1}
-                  maxRows={4}
-                  autoFocus
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleEditSubmit(comment.id)}
+                  disabled={!editContent.trim() || submitting}
+                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {submitting ? 'Saving...' : 'Save'}
+                </button>
+                <button
+                  onClick={handleCancelEdit}
+                  disabled={submitting}
+                  className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {comment.content}
+            </p>
+          )}
+          
+          {editingId !== comment.id && (
+            <div className="flex items-center gap-4 text-sm">
+              <button
+                onClick={() => handleLikeComment(comment.id)}
+                className={`flex items-center gap-1 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors ${
+                  comment.isLiked ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'
+                }`}
+                disabled={!isAuthenticated}
+              >
+                <FiThumbsUp className="w-4 h-4" />
+                <span>{comment.likeCount || 0}</span>
+              </button>
+              
+              <button
+                className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors"
+                disabled={!isAuthenticated}
+              >
+                <FiThumbsDown className="w-4 h-4" />
+              </button>
+              
+              {!isReply && isAuthenticated && (
+                <button
+                  onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                  className="text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors"
+                >
+                  Reply
+                </button>
+              )}
+              
+              {isOwn && (
+                <>
+                  <button
+                    onClick={() => handleEditComment(comment)}
+                    className="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-colors"
+                  >
+                    <FiEdit3 className="w-4 h-4" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteId(comment.id)}
+                    className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-2 py-1 rounded transition-colors"
+                  >
+                    Delete
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+          
+          {/* Confirm delete popup */}
+          {confirmDeleteId === comment.id && (
+            <div className="absolute z-10 left-20 top-16 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4">
+              <p className="text-sm text-gray-800 dark:text-gray-200 mb-3">
+                Are you sure you want to delete this comment?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleDeleteComment(comment.id)}
+                  className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Reply form */}
+          {replyingTo === comment.id && (
+            <div className="mt-3">
+              <div className="flex gap-3">
+                <img
+                  src={user?.profilePic || '/placeholder.png'}
+                  alt="You"
+                  className="w-8 h-8 rounded-full flex-shrink-0"
                 />
-                <div className="flex justify-end gap-2 mt-2">
-                  <button
-                    onClick={() => {
-                      setReplyingTo(null);
-                      setReplyContent('');
-                    }}
-                    className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => handleSubmitReply(comment.id)}
-                    disabled={!replyContent.trim() || submitting}
-                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {submitting ? 'Replying...' : 'Reply'}
-                  </button>
+                <div className="flex-1">
+                  <TextAreaWithLimit
+                    value={replyContent}
+                    onChange={setReplyContent}
+                    placeholder={`Reply to ${comment.user.displayName || comment.user.username}...`}
+                    maxChars={500}
+                    minRows={1}
+                    maxRows={4}
+                    autoFocus
+                  />
+                  <div className="flex justify-end gap-2 mt-2">
+                    <button
+                      onClick={() => {
+                        setReplyingTo(null);
+                        setReplyContent('');
+                      }}
+                      className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => handleSubmitReply(comment.id)}
+                      disabled={!replyContent.trim() || submitting}
+                      className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {submitting ? 'Replying...' : 'Reply'}
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-        
-        {/* Replies */}
-        {comment.replies && comment.replies.length > 0 && (
-          <div className="space-y-3">
-            <button
-              onClick={() => toggleReplies(comment.id)}
-              className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
-            >
-              {expandedReplies.has(comment.id) ? (
-                <>
-                  <FiChevronUp className="w-4 h-4" />
-                  Hide {comment.replies.length} replies
-                </>
-              ) : (
-                <>
-                  <FiChevronDown className="w-4 h-4" />
-                  Show {comment.replies.length} replies
-                </>
+          )}
+          
+          {/* Replies */}
+          {comment.replies && comment.replies.length > 0 && (
+            <div className="space-y-3">
+              <button
+                onClick={() => toggleReplies(comment.id)}
+                className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium"
+              >
+                {expandedReplies.has(comment.id) ? (
+                  <>
+                    <FiChevronUp className="w-4 h-4" />
+                    Hide {comment.replies.length} replies
+                  </>
+                ) : (
+                  <>
+                    <FiChevronDown className="w-4 h-4" />
+                    Show {comment.replies.length} replies
+                  </>
+                )}
+              </button>
+              
+              {expandedReplies.has(comment.id) && (
+                <div className="space-y-4">
+                  {comment.replies.map((reply) => (
+                    <CommentItem key={reply.id} comment={reply} isReply={true} />
+                  ))}
+                </div>
               )}
-            </button>
-            
-            {expandedReplies.has(comment.id) && (
-              <div className="space-y-4">
-                {comment.replies.map((reply) => (
-                  <CommentItem key={reply.id} comment={reply} isReply={true} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="mt-8 space-y-6">
@@ -476,7 +607,12 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <FiMessageCircle className="w-5 h-5" />
-          {commentsCount} Comments
+          {commentsCount} {commentsCount === 1 ? 'Comment' : 'Comments'}
+          {commentsCount > 0 && (
+            <span className="text-gray-500 dark:text-gray-400 text-sm">
+              ({comments.length} shown)
+            </span>
+          )}
         </h2>
         
         <select
@@ -495,7 +631,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
         <form onSubmit={handleSubmitComment} className="space-y-4">
           <div className="flex gap-3">
             <img
-              src={user?.profilePic || '/default-avatar.png'}
+              src={user?.profilePic || '/placeholder.png'}
               alt="You"
               className="w-10 h-10 rounded-full flex-shrink-0"
             />
