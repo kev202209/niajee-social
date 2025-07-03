@@ -1,12 +1,20 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { FiChevronLeft, FiChevronRight, FiClock, FiPlusCircle } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiClock, FiPlusCircle, FiAlertCircle, FiRefreshCw } from "react-icons/fi";
 import { SuggestedVideo } from "../../../types";
 import Link from "next/link";
 import timeAgo from "@/app/utils/timeAgo";
 
-export default function SuggestedVideos({ suggestedVideos }: { suggestedVideos: SuggestedVideo[] }) {
+interface SuggestedVideosProps {
+  videoId: string;
+}
+
+export default function SuggestedVideos({ videoId }: SuggestedVideosProps) {
+  const [suggestedVideos, setSuggestedVideos] = useState<SuggestedVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [tags] = useState([
     "All",
     "Music",
@@ -25,6 +33,37 @@ export default function SuggestedVideos({ suggestedVideos }: { suggestedVideos: 
 
   const tagRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch suggested videos
+  const fetchSuggestedVideos = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/content/suggested?v=${videoId}`, {
+        cache: "no-store",
+        credentials: 'include'
+      });
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
+      const data = await res.json();
+      setSuggestedVideos(data.videos || []);
+    } catch (err: any) {
+      console.error('Error fetching suggested videos:', err);
+      setError(err.message || 'Failed to load suggested videos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (videoId) {
+      fetchSuggestedVideos();
+    }
+  }, [videoId]);
 
   // On mount, measure the widths of the first three buttons plus gap.
   useEffect(() => {
@@ -74,8 +113,41 @@ export default function SuggestedVideos({ suggestedVideos }: { suggestedVideos: 
     }
   };
 
+  // Loading skeleton for suggested videos
+  const SuggestedVideoSkeleton = () => (
+    <div className="flex gap-2 p-2 animate-pulse">
+      <div className="w-40 h-24 bg-gray-300 dark:bg-gray-700 rounded"></div>
+      <div className="flex-1 space-y-2">
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded"></div>
+        <div className="h-4 bg-gray-300 dark:bg-gray-700 rounded w-3/4"></div>
+        <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded w-1/2"></div>
+      </div>
+    </div>
+  );
+
+  // Error state component
+  const ErrorState = () => (
+    <div className="text-center py-8">
+      <FiAlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+      <p className="text-gray-600 dark:text-gray-400 mb-4">
+        {error?.includes('Failed to fetch') || error?.includes('Network') 
+          ? 'Unable to load suggested videos. Please check your connection.'
+          : 'Failed to load suggested videos'
+        }
+      </p>
+      <button
+        onClick={fetchSuggestedVideos}
+        className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors mx-auto"
+      >
+        <FiRefreshCw className="w-4 h-4" />
+        Try Again
+      </button>
+    </div>
+  );
+
   return (
     <>
+      {/* Tags section */}
       <div className="relative mb-4">
         {showLeft && (
           <button
@@ -108,9 +180,6 @@ export default function SuggestedVideos({ suggestedVideos }: { suggestedVideos: 
                 </button>
               ))}
             </div>
-            {/* Internal border shadows */}
-            {/* <div className="pointer-events-none absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-gray-300 dark:from-gray-800 to-transparent" />
-            <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-gray-300 dark:from-gray-800 to-transparent" /> */}
           </div>
         </div>
         {showRight && (
@@ -122,11 +191,32 @@ export default function SuggestedVideos({ suggestedVideos }: { suggestedVideos: 
           </button>
         )}
       </div>
+
+      {/* Suggested videos section */}
       <div className="space-y-4">
-        {suggestedVideos.map((vid) => (
-          <SuggestedVideoCard key={vid.id} video={vid} />
-        ))}
+        {loading ? (
+          // Show skeleton loading state
+          [...Array(6)].map((_, i) => (
+            <SuggestedVideoSkeleton key={i} />
+          ))
+        ) : error ? (
+          // Show error state
+          <ErrorState />
+        ) : suggestedVideos.length > 0 ? (
+          // Show suggested videos
+          suggestedVideos.map((vid) => (
+            <SuggestedVideoCard key={vid.id} video={vid} />
+          ))
+        ) : (
+          // Show empty state
+          <div className="text-center py-8">
+            <p className="text-gray-600 dark:text-gray-400">
+              No suggested videos available
+            </p>
+          </div>
+        )}
       </div>
+
       <style jsx global>{`
         .overflow-x-auto::-webkit-scrollbar,
         .overflow-y-hidden::-webkit-scrollbar {
