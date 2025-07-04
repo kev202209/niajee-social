@@ -1,6 +1,7 @@
-import { FC, useEffect, useRef } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 import { FaVolumeMute, FaVolumeDown, FaVolumeUp, FaPause, FaPlay } from 'react-icons/fa';
 import Hls from 'hls.js';
+import ShortsProgressBar from './ShortsProgressBar';
 
 interface Channel {
   name: string;
@@ -35,6 +36,8 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
   song,
 }) => {
   const hlsRef = useRef<Hls | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
 
   useEffect(() => {
     const video = videoRef?.current;
@@ -106,11 +109,31 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
       video.play().catch(err => console.error('Regular video play failed:', err));
     }
 
+    // Add event listeners for progress tracking
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+    };
+
+    const handleDurationChange = () => {
+      setDuration(video.duration);
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('durationchange', handleDurationChange);
+
     return () => {
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('durationchange', handleDurationChange);
     };
   }, [videoSrc, videoRef]);
 
@@ -122,6 +145,14 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
       video.muted = isMuted;
     }
   }, [volume, isMuted, videoRef]);
+
+  // Handle seek functionality
+  const handleSeek = (time: number) => {
+    const video = videoRef?.current;
+    if (video) {
+      video.currentTime = time;
+    }
+  };
 
   // Determine which volume icon to display based on volume level
   const getVolumeIcon = () => {
@@ -202,27 +233,24 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
           </div>
         </div>
         
-        {/* Bottom overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black via-transparent pointer-events-auto">
-          <div className="flex items-center">
-            <img
-              src={channel.icon || "/placeholder.png"}
-              alt={channel.name}
-              className="w-8 h-8 rounded-full"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/placeholder.png';
-              }}
+        {/* Bottom overlay with progress bar */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-transparent pointer-events-auto">
+          {/* Progress bar at the very bottom - full width */}
+          <div className="absolute bottom-0 left-0 right-0 pointer-events-auto">
+            <ShortsProgressBar
+              currentTime={currentTime}
+              duration={duration}
+              onSeek={handleSeek}
+              className=""
             />
-            <span className="ml-2 text-white text-sm font-semibold">
-              {channel.name}
-            </span>
-            <button className="ml-4 bg-red-600 text-white px-3 py-1 rounded text-xs">
-              Subscribe
-            </button>
           </div>
-          <div className="mt-2 text-white text-xs">
-            <p>{caption}</p>
-            <p className="text-xs">{song}</p>
+          
+          {/* Content overlay - simplified without channel info */}
+          <div className="p-4 pb-6">
+            <div className="text-white text-sm">
+              <p className="font-medium">{caption}</p>
+              <p className="text-xs text-gray-300 mt-1">{song}</p>
+            </div>
           </div>
         </div>
       </div>
