@@ -19,9 +19,9 @@ interface ShortData {
   videoUrl: {
     [quality: string]: string;
   } | string; // Handle both formats
-  videoSrc?: string; // Direct video source
-  masterPlaylist?: string; // HLS master playlist
-  qualities?: string[]; // Available qualities
+  videoSrc?: string; // Direct video source URL
+  masterPlaylist?: string;
+  qualities?: string[];
   thumbnailUrl: string | null;
   duration: number;
   viewCount: number;
@@ -388,6 +388,12 @@ const ShortVideoPage = () => {
                 <VideoActions 
                   onToggleComments={toggleComments}
                   likeCount={currentVideo.likeCount}
+                  commentCount={currentVideo.commentCount}
+                  channel={{
+                    name: currentVideo.channel.name,
+                    icon: currentVideo.channel.avatar,
+                    verified: currentVideo.channel.verified,
+                  }}
                 />
               </div>
 
