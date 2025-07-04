@@ -4,21 +4,99 @@ import { FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiVolume, FiVo
 import DropdownMenuPortal from "./DropDownMenu";
 import Link from "next/link";
 import Image from "next/image";
+import Hls from 'hls.js';
 
 const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [volume, setVolume] = useState<number>(0.5);
   const [showOptions, setShowOptions] = useState<boolean>(false);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [videoReady, setVideoReady] = useState<boolean>(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
-  const handleMouseEnter = () => {
-    videoRef.current?.play();
+  // Setup HLS and video source
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement || !short.videoUrl) return;
+
+    // Clean up previous HLS instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    // Check if it's an HLS stream
+    if (short.videoUrl.includes('.m3u8')) {
+      if (Hls.isSupported()) {
+        const hls = new Hls({
+          debug: false,
+          enableWorker: true,
+          autoStartLoad: false,
+        });
+
+        hls.loadSource(short.videoUrl);
+        hls.attachMedia(videoElement);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setVideoReady(true);
+          videoElement.volume = volume;
+          videoElement.muted = true;
+        });
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            console.error('HLS Error:', data);
+            hls.destroy();
+          }
+        });
+
+        hlsRef.current = hls;
+      } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari native HLS support
+        videoElement.src = short.videoUrl;
+        videoElement.volume = volume;
+        videoElement.muted = true;
+        setVideoReady(true);
+      }
+    } else {
+      // Regular MP4 or other formats
+      videoElement.src = short.videoUrl;
+      videoElement.volume = volume;
+      videoElement.muted = true;
+      setVideoReady(true);
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [short.videoUrl, volume]);
+
+  const handleMouseEnter = async () => {
+    if (!videoReady || !videoRef.current) return;
+    
+    try {
+      if (hlsRef.current && !hlsRef.current.loadLevel) {
+        hlsRef.current.startLoad();
+      }
+      
+      await videoRef.current.play();
+      setIsPlaying(true);
+    } catch (error) {
+      console.error('Error playing video:', error);
+    }
   };
 
   const handleMouseLeave = () => {
-    videoRef.current?.pause();
+    if (videoRef.current && isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
   };
 
   const toggleMute = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -97,31 +175,14 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
         >
-          {short.thumbnail ? (
-            <video
-              ref={videoRef}
-              src={short.videoUrl}
-              poster={short.thumbnail}
-              muted={isMuted}
-              loop
-              playsInline
-              className="absolute inset-0 object-cover w-full h-full"
-            />
-          ) : (
-            <video
-              ref={videoRef}
-              src={short.videoUrl}
-              muted={isMuted}
-              loop
-              playsInline
-              className="absolute inset-0 object-cover w-full h-full"
-            />
-          )}
-          
-          {/* Duration Badge */}
-          {/* <div className="absolute top-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
-            {formatDuration(short.duration)}
-          </div> */}
+          <video
+            ref={videoRef}
+            poster={short.thumbnailUrl}
+            muted={isMuted}
+            loop
+            playsInline
+            className="absolute inset-0 object-cover w-full h-full"
+          />
           
           {/* Volume Button & Slider */}
           <button

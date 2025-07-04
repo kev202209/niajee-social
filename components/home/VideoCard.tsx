@@ -4,6 +4,7 @@ import Image from "next/image";
 import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiUser } from "react-icons/fi";
 import Link from "next/link";
 import timeAgo from "../../app/utils/timeAgo";
+import Hls from 'hls.js';
 
 function useOutsideClick(
   ref: React.RefObject<HTMLElement | null>,
@@ -23,10 +24,12 @@ function useOutsideClick(
 
 const VideoCard: FC<{ video: Video }> = ({ video }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const hlsRef = useRef<Hls | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [volume, setVolume] = useState<number>(0.5);
   const [showOptions, setShowOptions] = useState<boolean>(false);
-  const [currentQuality, setCurrentQuality] = useState<string>('720p');
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [videoReady, setVideoReady] = useState<boolean>(false);
   const optionsRef = useRef<HTMLDivElement>(null);
   
   useOutsideClick(optionsRef, () => setShowOptions(false));
@@ -43,12 +46,90 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
     return Object.values(video.videoUrl)[0] || '';
   };
 
-  const handleMouseEnter = () => {
-    videoRef.current?.play();
+  // Setup HLS and video source
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const videoSrc = getVideoSource();
+    if (!videoSrc) return;
+
+    // Clean up previous HLS instance
+    if (hlsRef.current) {
+      hlsRef.current.destroy();
+      hlsRef.current = null;
+    }
+
+    // Check if it's an HLS stream
+    if (videoSrc.includes('.m3u8')) {
+      if (Hls.isSupported()) {
+        const hls = new Hls({
+          debug: false,
+          enableWorker: true,
+          autoStartLoad: false, // Don't auto-load to save bandwidth
+        });
+
+        hls.loadSource(videoSrc);
+        hls.attachMedia(videoElement);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setVideoReady(true);
+          videoElement.volume = volume;
+          videoElement.muted = true; // Always start muted for autoplay
+        });
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            console.error('HLS Error:', data);
+            hls.destroy();
+          }
+        });
+
+        hlsRef.current = hls;
+      } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari native HLS support
+        videoElement.src = videoSrc;
+        videoElement.volume = volume;
+        videoElement.muted = true;
+        setVideoReady(true);
+      }
+    } else {
+      // Regular MP4 or other formats
+      videoElement.src = videoSrc;
+      videoElement.volume = volume;
+      videoElement.muted = true;
+      setVideoReady(true);
+    }
+
+    return () => {
+      if (hlsRef.current) {
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
+    };
+  }, [video, volume]);
+
+  const handleMouseEnter = async () => {
+    if (!videoReady || !videoRef.current) return;
+    
+    try {
+      // Start loading HLS if not already loaded
+      if (hlsRef.current && !hlsRef.current.loadLevel) {
+        hlsRef.current.startLoad();
+      }
+      
+      await videoRef.current.play();
+      setIsPlaying(true);
+    } catch (error) {
+      console.error('Error playing video:', error);
+    }
   };
 
   const handleMouseLeave = () => {
-    videoRef.current?.pause();
+    if (videoRef.current && isPlaying) {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
   };
 
   const toggleMute = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -110,8 +191,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
           {/* Video Preview */}
           <video
             ref={videoRef}
-            src={getVideoSource()}
-            poster={video.thumbnail}
+            poster={video.thumbnail} // Updated to match data structure
             muted={isMuted}
             loop
             playsInline
