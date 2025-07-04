@@ -46,7 +46,7 @@ export interface Short {
   id: string;
   title: string;
   videoUrl: string; // Shorts might still use a single URL
-  thumbnail?: string;
+  thumbnailUrl?: string;
   duration: number;
   views: number;
   likes: number;
