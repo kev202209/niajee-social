@@ -68,7 +68,7 @@ const VideoActions = ({
           {!following && (
             <button
               onClick={() => setFollowing(true)}
-              className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+              className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
             >
               <Plus size={14} className="text-white" />
             </button>
