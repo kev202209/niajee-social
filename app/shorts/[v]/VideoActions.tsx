@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import {
-  Heart,
   MessageCircle,
   Share2,
   MoreHorizontal,
   Bookmark,
   Plus,
 } from 'lucide-react';
+import LikeButton from "@/components/LikeButton"; // Import the new LikeButton
 
 interface VideoActionsProps {
   onToggleComments: () => void;
@@ -76,27 +76,17 @@ const VideoActions = ({
         </div>
       </div>
 
-      {/* Like Button with Heart */}
+      {/* Like Button with Animation */}
       <div className="flex flex-col items-center">
-        <button 
-          onClick={() => setLiked(!liked)}
-          className={`p-3 rounded-full backdrop-blur-sm transition-all ${
-            liked 
-              ? 'bg-red-500/20' 
-              : 'hover:bg-black/20'
-          }`}
-        >
-          <Heart 
-            size={26} 
-            className={`${
-              liked 
-                ? 'text-red-500 fill-red-500' 
-                : 'text-white hover:text-red-400'
-            } transition-colors`} 
+        <div className="p-3 rounded-full hover:bg-black/20 transition-all">
+          <LikeButton 
+            isLiked={liked}
+            onLike={(newLiked) => setLiked(newLiked)}
+            size={26}
           />
-        </button>
+        </div>
         <span className="text-xs mt-1 font-medium text-white">
-          {formatCount(likeCount + (liked && !isLiked ? 1 : 0))}
+          {formatCount(liked ? (isLiked ? likeCount : likeCount + 1) : likeCount)}
         </span>
       </div>
 
