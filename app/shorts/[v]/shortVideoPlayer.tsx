@@ -171,8 +171,8 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
     <div
       className="relative rounded-md overflow-hidden bg-black"
       style={{
-        height: '80vh',
-        width: `calc(80vh * 9 / 16)`,
+        height: '85vh', // Increased from 80vh
+        width: `calc(85vh * 9 / 16)`, // Increased proportionally to maintain 9:16 aspect ratio
       }}
     >
       <video
