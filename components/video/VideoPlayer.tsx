@@ -6,13 +6,10 @@ import { useVideoPlayer } from '../../hooks/useVideoPlayer';
 import VideoContainer from './VideoContainer';
 import PlayPauseOverlay from './PlayPauseOverlay';
 import VolumeSeekIndicator from './VolumeSeekIndicator';
-import ProgressBar from './ProgressBar';
 import ControlBar from './ControlBar';
 import VideoMeta from './VideoMeta';
 import Hls from 'hls.js';
 import BufferingSpinner from './BufferingSpinner';
-
-const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
 interface VideoProps {
   video: mVideo;
@@ -25,16 +22,15 @@ const getBestQualityUrl = (videoUrl: Record<string, string>) => {
     if (videoUrl[q]) return videoUrl[q];
   }
   // fallback to any available
-  const keys = Object.keys(videoUrl);
+  const keys = Object.keys(videoUrl).filter(key => key !== 'master');
   return keys.length > 0 ? videoUrl[keys[0]] : null;
 };
 
 export default function VideoPlayer({ video }: { video: mVideo }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Pick the best available quality
-  const bestQualityPath = getBestQualityUrl(video.videoUrl);
-  const streamUrl = bestQualityPath ? `${backendUrl}/${bestQualityPath}` : '';
+  // Use master playlist if available, otherwise use best quality
+  const streamUrl = video.masterPlaylist || getBestQualityUrl(video.videoUrl) || '';
 
   // Use the controls object from the hook
   const controls = useVideoPlayer({
@@ -49,7 +45,10 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
 
   useEffect(() => {
     const videoElement = videoRef.current;
-    if (!videoElement || !streamUrl) return;
+    if (!videoElement || !streamUrl) {
+      console.error('Missing video element or stream URL');
+      return;
+    }
 
     // Clear any existing src to prevent conflicts
     videoElement.src = '';
@@ -62,46 +61,53 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
 
     if (Hls.isSupported()) {
       const hls = new Hls({
-        debug: false, // Set to false to reduce console noise
+        debug: false, // Enable debug for troubleshooting
         enableWorker: true,
-        xhrSetup: (xhr, url) => {
-          if (url.endsWith('.mpegts')) {
-            xhr.responseType = 'arraybuffer';
-          }
-        }
+        capLevelToPlayerSize: true,
+        maxLoadingDelay: 4,
+        maxBufferLength: 30,
+        maxBufferSize: 60 * 1000 * 1000,
+      });
+
+      hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+        setBuffering && setBuffering(false);
+      });
+
+      hls.on(Hls.Events.LEVEL_LOADED, (event, data) => {
+      });
+
+      hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
       });
 
       hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('HLS Error:', data);
+        console.error('HLS Error:', event, data);
         if (data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
-              console.log('Trying to recover from network error...');
               hls.startLoad();
               break;
             case Hls.ErrorTypes.MEDIA_ERROR:
-              console.log('Trying to recover from media error...');
               hls.recoverMediaError();
               break;
             default:
-              console.log('Fatal error, destroying HLS instance');
               hls.destroy();
+              // Fallback to direct video source
+              videoElement.src = streamUrl;
               break;
           }
         }
       });
 
-      // Wait for the video element to be ready before loading
-      const loadHLS = () => {
+      // Set buffering state
+      setBuffering && setBuffering(true);
+
+      try {
         hls.loadSource(streamUrl);
         hls.attachMedia(videoElement);
-      };
-
-      // Load HLS immediately if video is ready, otherwise wait
-      if (videoElement.readyState >= 1) {
-        loadHLS();
-      } else {
-        videoElement.addEventListener('loadedmetadata', loadHLS, { once: true });
+      } catch (error) {
+        console.error('Error loading HLS source:', error);
+        // Fallback to direct video source
+        videoElement.src = streamUrl;
       }
 
       controls.setHlsInstance?.(hls);
@@ -112,8 +118,53 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
     } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
       // For Safari/iOS native HLS support
       videoElement.src = streamUrl;
+    } else {
+      console.error('HLS not supported and no native support');
     }
-  }, [video.videoUrl, streamUrl]);
+  }, [streamUrl, setBuffering]);
+
+  // Add event listeners to video element for debugging
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const handleLoadStart = () => console.log('Video load start');
+    const handleLoadedData = () => console.log('Video loaded data');
+    const handleCanPlay = () => console.log('Video can play');
+    const handleError = (e: Event) => console.error('Video error:', e);
+    const handleWaiting = () => {
+      console.log('Video waiting');
+      setBuffering && setBuffering(true);
+    };
+    const handlePlaying = () => {
+      console.log('Video playing');
+      setBuffering && setBuffering(false);
+    };
+
+    videoElement.addEventListener('loadstart', handleLoadStart);
+    videoElement.addEventListener('loadeddata', handleLoadedData);
+    videoElement.addEventListener('canplay', handleCanPlay);
+    videoElement.addEventListener('error', handleError);
+    videoElement.addEventListener('waiting', handleWaiting);
+    videoElement.addEventListener('playing', handlePlaying);
+
+    return () => {
+      videoElement.removeEventListener('loadstart', handleLoadStart);
+      videoElement.removeEventListener('loadeddata', handleLoadedData);
+      videoElement.removeEventListener('canplay', handleCanPlay);
+      videoElement.removeEventListener('error', handleError);
+      videoElement.removeEventListener('waiting', handleWaiting);
+      videoElement.removeEventListener('playing', handlePlaying);
+    };
+  }, [setBuffering]);
+
+  if (!streamUrl) {
+    return (
+      <div className="bg-gray-800 aspect-video flex items-center justify-center">
+        <p className="text-white">No video source available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -128,8 +179,6 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
           controls={controls} 
           videoRef={videoRef as React.RefObject<HTMLVideoElement>}
           className="w-full h-full rounded"
-          onWaiting={() => setBuffering && setBuffering(true)}
-          onPlaying={() => setBuffering && setBuffering(false)}
         />
         <PlayPauseOverlay controls={controls} />
         <VolumeSeekIndicator controls={controls} />
