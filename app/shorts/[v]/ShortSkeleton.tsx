@@ -16,7 +16,7 @@ const ShortsSkeleton = () => {
           <div className="h-[200vh] w-full relative">
             {/* Current Video Skeleton */}
             <div className="relative h-screen flex items-center justify-center">
-              <div className="aspect-[9/16] w-full max-w-[calc(80vh*9/16)] h-[80vh] bg-gray-300 dark:bg-gray-700 rounded-lg mx-auto" />
+              <div className="aspect-[9/16] w-full max-w-[calc(85vh*9/16)] h-[85vh] bg-gray-300 dark:bg-gray-700 rounded-lg mx-auto" />
               {/* Actions Bar Skeleton */}
               <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center space-y-6">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -39,7 +39,7 @@ const ShortsSkeleton = () => {
             </div>
             {/* Next Video Preview Skeleton */}
             <div className="h-screen flex items-center justify-center">
-              <div className="aspect-[9/16] w-full max-w-[calc(80vh*9/16)] h-[80vh] bg-gray-300 dark:bg-gray-700 rounded-lg mx-auto" />
+              <div className="aspect-[9/16] w-full max-w-[calc(85vh*9/16)] h-[85vh] bg-gray-300 dark:bg-gray-700 rounded-lg mx-auto" />
             </div>
           </div>
         </div>
