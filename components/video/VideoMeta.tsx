@@ -1,10 +1,11 @@
 // components/VideoMeta.tsx
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import { FiThumbsUp, FiThumbsDown, FiShare, FiDownload, FiSave, FiMoreVertical } from 'react-icons/fi';
+import { FiShare, FiDownload, FiSave, FiMoreVertical } from 'react-icons/fi';
 import { mVideo as Video } from '../../types';
 import timeAgo from '../../app/utils/timeAgo';
 import Button from '../ui/CustomButton';
+import LikeButton from '../LikeButton';
 import { toast } from "sonner";
 
 interface VideoMetaProps {
@@ -28,6 +29,8 @@ export default function VideoMeta({ video }: VideoMetaProps) {
   const [isFollowing, setIsFollowing] = useState<boolean | undefined>(undefined);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [followerCount, setFollowerCount] = useState(video.channel.followerCount);
+  const [likeCount, setLikeCount] = useState(video.likeCount);
+  const [isLiked, setIsLiked] = useState(false);
   const descriptionRef = useRef<HTMLParagraphElement>(null);
 
   // Check if description content overflows
@@ -55,6 +58,41 @@ export default function VideoMeta({ video }: VideoMetaProps) {
       setTimeout(checkOverflow, 0);
     }
   }, [video.description]);
+
+  // Handle like toggle
+  const handleLikeToggle = async (liked: boolean) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/videos/${video.id}/like`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to toggle like');
+      }
+
+      const data = await response.json();
+      
+      // Update local state
+      setIsLiked(data.isLiked);
+      setLikeCount(data.likeCount);
+
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      toast.error('Failed to update like status. Please try again.');
+      
+      // Revert the like state if API call failed
+      setIsLiked(!liked);
+    }
+  };
 
   // Handle follow/unfollow
   const handleFollowToggle = async () => {
@@ -159,15 +197,14 @@ export default function VideoMeta({ video }: VideoMetaProps) {
       {/* Action Buttons */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-1">
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 rounded-l-full transition-colors">
-              <FiThumbsUp className="w-4 h-4" />
-              <span>{formatViewCount(video.likeCount)}</span>
-            </button>
-            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600"></div>
-            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 rounded-r-full transition-colors">
-              <FiThumbsDown className="w-4 h-4" />
-            </button>
+          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden px-4 py-2">
+            <LikeButton
+              isLiked={isLiked}
+              onLike={handleLikeToggle}
+              size={18}
+              className="mr-2"
+            />
+            <span className="text-sm font-medium pl-2">{formatViewCount(likeCount)}</span>
           </div>
           
           <Button variant="secondary" size="md">
