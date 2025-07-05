@@ -111,12 +111,23 @@ export function useVideoPlayer({
 
   const changeVideoQuality = (quality: string) => {
     setVideoQuality(quality as any);
-    if (videoRef.current) {
+    if (videoRef.current && videoUrls[quality]) {
       const current = videoRef.current.currentTime;
-      const newUrl = `${process.env.NEXT_PUBLIC_API_URL}/${videoUrls[quality]}`;
-      videoRef.current.src = newUrl;
+      const wasPlaying = !videoRef.current.paused;
+      
+      // Use the full URL directly from videoUrls
+      const newUrl = videoUrls[quality];
+      
+      if (hlsInstance) {
+        hlsInstance.loadSource(newUrl);
+      } else {
+        videoRef.current.src = newUrl;
+      }
+      
       videoRef.current.currentTime = current;
-      videoRef.current.play();
+      if (wasPlaying) {
+        videoRef.current.play();
+      }
     }
   };
 
