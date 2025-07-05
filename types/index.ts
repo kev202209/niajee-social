@@ -124,6 +124,7 @@ export interface mVideo {
   allowLikes: boolean;
   category: string;
   language: string;
+  masterPlaylist?: string;
   monetization: {
     enabled: boolean;
     channelMonetized: boolean;
