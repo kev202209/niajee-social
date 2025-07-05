@@ -355,7 +355,7 @@ const ShortVideoPage = () => {
       <Sidebar isOpen={false} onClose={() => {}} />
       <Header />
 
-      <div className="pt-16">
+      <div className="pt-10">
         <div
           ref={scrollContainerRef}
           className="h-screen overflow-hidden flex justify-center"
