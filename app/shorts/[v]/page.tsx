@@ -7,6 +7,7 @@ import Sidebar from "@/components/watch/Sidebar";
 import VideoPlayer from "./shortVideoPlayer";
 import ShortsSkeleton from './ShortSkeleton';
 import VideoActions from "./VideoActions";
+import ReportModal from "./ReportModal"; 
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import CommentsSection from "./CommentsSection";
 import { Comment } from "@/types";
@@ -28,6 +29,8 @@ interface ShortData {
   likeCount: number;
   commentCount: number;
   isPublic: boolean;
+  isLiked: boolean;
+  isBookmarked: boolean;
   allowComments: boolean;
   allowDuet: boolean;
   monetization: {
@@ -44,6 +47,7 @@ interface ShortData {
     handle: string;
     avatar: string;
     verified: boolean;
+    isfollowed: boolean;
   };
   user?: {
     id: string;
@@ -71,6 +75,9 @@ const ShortVideoPage = () => {
   const [volume, setVolume] = useState(0.5);
   // New state: whether the comments panel is showing.
   const [showComments, setShowComments] = useState(false);
+  
+  // Add report modal state
+  const [showReport, setShowReport] = useState(false);
 
   // Refs for the scroll container and current video element.
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -346,6 +353,11 @@ const ShortVideoPage = () => {
     setShowComments((prev) => !prev);
   };
 
+  // Handle show report modal
+  const handleShowReport = () => {
+    setShowReport(true);
+  };
+
   if (loading || !currentVideo) {
     return <ShortsSkeleton />;
   }
@@ -386,9 +398,15 @@ const ShortVideoPage = () => {
               {/* Video Actions */}
               <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
                 <VideoActions 
+                  videoId={currentVideo.id}
+                  channelId={currentVideo.channel.id}
                   onToggleComments={toggleComments}
+                  onShowReport={handleShowReport} // Add this line
                   likeCount={currentVideo.likeCount}
                   commentCount={currentVideo.commentCount}
+                  isLiked={currentVideo.isLiked || false}
+                  isBookmarked={currentVideo.isBookmarked || false}
+                  isFollowing={currentVideo.channel.isfollowed || false}
                   channel={{
                     name: currentVideo.channel.name,
                     icon: currentVideo.channel.avatar,
@@ -453,6 +471,14 @@ const ShortVideoPage = () => {
           </button>
         </div>
       </div>
+
+      {/* Report Modal - Rendered at page level */}
+      <ReportModal
+        isOpen={showReport}
+        onClose={() => setShowReport(false)}
+        videoId={currentVideo.id}
+        videoTitle={currentVideo.title}
+      />
     </div>
   );
 };
