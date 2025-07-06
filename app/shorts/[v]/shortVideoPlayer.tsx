@@ -22,6 +22,13 @@ interface VideoPlayerProps {
   song: string;
 }
 
+// Add BufferingSpinner component
+const BufferingSpinner = () => (
+  <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/20">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+  </div>
+);
+
 const VideoPlayer: FC<VideoPlayerProps> = ({
   videoRef,
   videoSrc,
@@ -38,18 +45,77 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
   const hlsRef = useRef<Hls | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  // Add buffering state
+  const [isBuffering, setIsBuffering] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const video = videoRef?.current;
     if (!video || !videoSrc) return;
 
     console.log('Setting up video with source:', videoSrc);
+    
+    // Reset states
+    setIsBuffering(true);
+    setHasError(false);
+    setErrorMessage('');
 
     // Clean up previous HLS instance
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
     }
+
+    // Add video event listeners for buffering
+    const handleWaiting = () => {
+      console.log('Video waiting - buffering');
+      setIsBuffering(true);
+    };
+
+    const handleCanPlay = () => {
+      console.log('Video can play - buffering ended');
+      setIsBuffering(false);
+    };
+
+    const handlePlaying = () => {
+      console.log('Video playing - buffering ended');
+      setIsBuffering(false);
+    };
+
+    const handleLoadStart = () => {
+      console.log('Video load started');
+      setIsBuffering(true);
+    };
+
+    const handleError = (e: Event) => {
+      console.error('Video error:', e);
+      setIsBuffering(false);
+      setHasError(true);
+      setErrorMessage('Failed to load video');
+    };
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+    };
+
+    const handleDurationChange = () => {
+      setDuration(video.duration);
+    };
+
+    // Add all event listeners
+    video.addEventListener('waiting', handleWaiting);
+    video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('playing', handlePlaying);
+    video.addEventListener('loadstart', handleLoadStart);
+    video.addEventListener('error', handleError);
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('durationchange', handleDurationChange);
 
     // Check if it's an HLS stream
     if (videoSrc.includes('.m3u8')) {
@@ -67,23 +133,43 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
           console.log('HLS manifest parsed, attempting to play');
           video.volume = volume;
           video.muted = isMuted;
-          video.play().catch(err => console.error('HLS play failed:', err));
+          video.play().catch(err => {
+            console.error('HLS play failed:', err);
+            setHasError(true);
+            setErrorMessage('Failed to play video');
+            setIsBuffering(false);
+          });
         });
 
         hls.on(Hls.Events.ERROR, (event, data) => {
           console.error('HLS Error:', data);
           if (data.fatal) {
+            setIsBuffering(false);
+            setHasError(true);
+            setErrorMessage('Video streaming error');
+            
             switch (data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR:
                 console.log('Trying to recover from network error');
-                hls.startLoad();
+                setErrorMessage('Network error - retrying...');
+                setTimeout(() => {
+                  setHasError(false);
+                  setIsBuffering(true);
+                  hls.startLoad();
+                }, 2000);
                 break;
               case Hls.ErrorTypes.MEDIA_ERROR:
                 console.log('Trying to recover from media error');
-                hls.recoverMediaError();
+                setErrorMessage('Media error - retrying...');
+                setTimeout(() => {
+                  setHasError(false);
+                  setIsBuffering(true);
+                  hls.recoverMediaError();
+                }, 2000);
                 break;
               default:
                 hls.destroy();
+                setErrorMessage('Fatal video error');
                 break;
             }
           }
@@ -96,9 +182,17 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
         video.src = videoSrc;
         video.volume = volume;
         video.muted = isMuted;
-        video.play().catch(err => console.error('Native HLS play failed:', err));
+        video.play().catch(err => {
+          console.error('Native HLS play failed:', err);
+          setHasError(true);
+          setErrorMessage('Failed to play video');
+          setIsBuffering(false);
+        });
       } else {
         console.error('HLS is not supported in this browser');
+        setHasError(true);
+        setErrorMessage('Video format not supported');
+        setIsBuffering(false);
       }
     } else {
       // Regular MP4 or other formats
@@ -106,31 +200,24 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
       video.src = videoSrc;
       video.volume = volume;
       video.muted = isMuted;
-      video.play().catch(err => console.error('Regular video play failed:', err));
+      video.play().catch(err => {
+        console.error('Regular video play failed:', err);
+        setHasError(true);
+        setErrorMessage('Failed to play video');
+        setIsBuffering(false);
+      });
     }
-
-    // Add event listeners for progress tracking
-    const handleTimeUpdate = () => {
-      setCurrentTime(video.currentTime);
-    };
-
-    const handleLoadedMetadata = () => {
-      setDuration(video.duration);
-    };
-
-    const handleDurationChange = () => {
-      setDuration(video.duration);
-    };
-
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
-    video.addEventListener('durationchange', handleDurationChange);
 
     return () => {
       if (hlsRef.current) {
         hlsRef.current.destroy();
         hlsRef.current = null;
       }
+      video.removeEventListener('waiting', handleWaiting);
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('playing', handlePlaying);
+      video.removeEventListener('loadstart', handleLoadStart);
+      video.removeEventListener('error', handleError);
       video.removeEventListener('timeupdate', handleTimeUpdate);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('durationchange', handleDurationChange);
@@ -150,6 +237,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
   const handleSeek = (time: number) => {
     const video = videoRef?.current;
     if (video) {
+      setIsBuffering(true);
       video.currentTime = time;
     }
   };
@@ -171,8 +259,8 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
     <div
       className="relative rounded-md overflow-hidden bg-black"
       style={{
-        height: '85vh', // Increased from 80vh
-        width: `calc(85vh * 9 / 16)`, // Increased proportionally to maintain 9:16 aspect ratio
+        height: '85vh',
+        width: `calc(85vh * 9 / 16)`,
       }}
     >
       <video
@@ -193,6 +281,25 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
         }}
       />
       
+      {/* Buffering Spinner */}
+      {isBuffering && !hasError && <BufferingSpinner />}
+      
+      {/* Error State */}
+      {hasError && (
+        <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/80">
+          <div className="text-center text-white p-4">
+            <div className="text-red-500 text-4xl mb-2">⚠</div>
+            <p className="text-sm">{errorMessage}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-2 px-4 py-2 bg-white text-black rounded text-sm"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* Central click region */}
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <div
@@ -207,6 +314,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
           <button
             onClick={togglePlayPause}
             className="bg-black bg-opacity-70 p-2 rounded-full transition-transform duration-300"
+            disabled={isBuffering || hasError}
           >
             {isPaused ? (
               <FaPlay className="text-white text-xl" />
@@ -217,7 +325,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
           
           <div className="relative group">
             <div className="flex items-center bg-black bg-opacity-70 rounded-full overflow-hidden transition-all duration-300 w-12 group-hover:w-48">
-              <button onClick={toggleMute} className="p-2">
+              <button onClick={toggleMute} className="p-2" disabled={hasError}>
                 {getVolumeIcon()}
               </button>
               <input
@@ -228,6 +336,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
                 value={volume}
                 onChange={onVolumeChange}
                 className="w-32 hidden group-hover:block"
+                disabled={hasError}
               />
             </div>
           </div>
