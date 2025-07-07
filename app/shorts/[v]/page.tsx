@@ -28,6 +28,8 @@ interface ShortData {
   viewCount: number;
   likeCount: number;
   commentCount: number;
+  shareCount: number;
+  saveCount: number;
   isPublic: boolean;
   isLiked: boolean;
   isBookmarked: boolean;
@@ -47,7 +49,7 @@ interface ShortData {
     handle: string;
     avatar: string;
     verified: boolean;
-    isfollowed: boolean;
+    isFollowed: boolean;
   };
   user?: {
     id: string;
@@ -401,16 +403,18 @@ const ShortVideoPage = () => {
                   videoId={currentVideo.id}
                   channelId={currentVideo.channel.id}
                   onToggleComments={toggleComments}
-                  onShowReport={handleShowReport} // Add this line
+                  onShowReport={handleShowReport}
                   likeCount={currentVideo.likeCount}
                   commentCount={currentVideo.commentCount}
+                  shareCount={currentVideo.shareCount}
+                  saveCount={currentVideo.saveCount}
                   isLiked={currentVideo.isLiked || false}
                   isBookmarked={currentVideo.isBookmarked || false}
-                  isFollowing={currentVideo.channel.isfollowed || false}
                   channel={{
                     name: currentVideo.channel.name,
                     icon: currentVideo.channel.avatar,
                     verified: currentVideo.channel.verified,
+                    isFollowed: currentVideo.channel.isFollowed
                   }}
                 />
               </div>
