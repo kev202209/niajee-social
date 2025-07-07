@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   MessageCircle,
   Share2,
@@ -18,46 +18,62 @@ import { toast } from "sonner";
 import useOutsideClick from "@/hooks/useOutsideClick";
 import { formatCount } from '@/app/utils/formatCount';
 
-interface VideoActionsProps {
-  videoId: string;
-  channelId: string;
-  onToggleComments: () => void;
-  onShowReport: () => void;
-  likeCount?: number;
-  commentCount?: number;
-  saveCount?: number;
-  shareCount?: number;
-  isLiked?: boolean;
-  isBookmarked?: boolean;
+// Define the video data structure here or import it from a shared types file
+interface ShortData {
+  id: string;
+  title: string;
+  description?: string;
+  likeCount: number;
+  commentCount: number;
+  shareCount: number;
+  saveCount: number;
+  isLiked: boolean;
+  isBookmarked: boolean;
+  allowComments: boolean;
   channel: {
+    id: string;
     name: string;
-    icon: string;
-    verified?: boolean;
-    isFollowed?: boolean;
+    avatar: string;
+    verified: boolean;
+    isFollowed: boolean;
   };
 }
 
+interface VideoActionsProps {
+  video: ShortData;
+  onToggleComments: () => void;
+  onShowReport: () => void;
+}
+
 const VideoActions = ({ 
-  videoId,
-  channelId,
+  video,
   onToggleComments,
   onShowReport,
-  likeCount = 0,
-  commentCount = 0,
-  saveCount = 0,
-  shareCount = 0,
-  isLiked = false,
-  isBookmarked = false,
-  channel
 }: VideoActionsProps) => {
+  // Destructure properties from the video object
+  const { 
+    id: videoId, 
+    likeCount, 
+    commentCount, 
+    saveCount, 
+    shareCount, 
+    isLiked, 
+    isBookmarked, 
+    channel 
+  } = video;
+  const { id: channelId, isFollowed } = channel;
+
   const [showMenu, setShowMenu] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  
+  // State is now initialized directly from the video object's properties
   const [liked, setLiked] = useState(isLiked);
   const [currentLikeCount, setCurrentLikeCount] = useState(likeCount);
   const [currentSaveCount, setCurrentSaveCount] = useState(saveCount);
   const [currentShareCount, setCurrentShareCount] = useState(shareCount);
   const [bookmarked, setBookmarked] = useState(isBookmarked);
-  const [following, setFollowing] = useState(channel.isFollowed || false); // Fix: Use isFollowed
+  const [following, setFollowing] = useState(isFollowed);
+  
   const [loading, setLoading] = useState({
     like: false,
     bookmark: false,
@@ -65,15 +81,22 @@ const VideoActions = ({
     notInterested: false
   });
 
-  // Refs for outside click handling
+  // This effect now correctly syncs all state when the video object changes.
+  useEffect(() => {
+    setLiked(video.isLiked);
+    setBookmarked(video.isBookmarked);
+    setFollowing(video.channel.isFollowed);
+    setCurrentLikeCount(video.likeCount);
+    setCurrentSaveCount(video.saveCount);
+    setCurrentShareCount(video.shareCount);
+  }, [video]); // The only dependency needed is the video object itself.
+
   const menuRef = useRef<HTMLDivElement>(null);
   const shareRef = useRef<HTMLDivElement>(null);
 
-  // Outside click handlers
   useOutsideClick(menuRef, () => setShowMenu(false));
   useOutsideClick(shareRef, () => setShowShare(false));
 
-  // Handle report
   const handleReport = () => {
     setShowMenu(false);
     onShowReport();
@@ -140,10 +163,9 @@ const VideoActions = ({
       }
 
       const data = await response.json();
-      // Handle both isSubscribed (videos) and isFollowed (shorts)
-      setFollowing(data.isSubscribed || data.isFollowed);
+      setFollowing(data.isFollowed);
       
-      toast.success(data.isSubscribed || data.isFollowed ? 'Following channel' : 'Unfollowed channel');
+      // toast.success(data.isFollowed ? 'Following channel' : 'Unfollowed channel');
       
     } catch (error) {
       console.error('Error toggling follow:', error);
@@ -282,7 +304,7 @@ const VideoActions = ({
       <div className="relative flex flex-col items-center">
         <div className="relative">
           <img
-            src={channel.icon || "/placeholder.png"}
+            src={channel.avatar || "/placeholder.png"}
             alt={channel.name}
             className="w-12 h-12 rounded-full border-2 border-white object-cover"
             onError={(e) => {
