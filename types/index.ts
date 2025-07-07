@@ -114,11 +114,14 @@ export interface mVideo {
   duration: number;
   fileSize: number;
   resolution: string;
+  isLiked: boolean
+  isBookmarked: boolean
   viewCount: number;
   likeCount: number;
   dislikeCount: number;
   commentCount: number;
   shareCount: number;
+  saveCount: number;
   isPublic: boolean;
   allowComments: boolean;
   allowLikes: boolean;
@@ -139,7 +142,7 @@ export interface mVideo {
     verified: boolean;
     monetized: boolean;
     followerCount: number;
-    isSubscribed: true,
+    isFollowed: true,
   };
 }
 
