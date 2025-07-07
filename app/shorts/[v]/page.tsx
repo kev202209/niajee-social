@@ -188,17 +188,21 @@ const ShortVideoPage = () => {
     try {
       let apiData: ShortData;
       if (videoId) {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`,
+          { credentials: "include" }
+        );
         if (!res.ok) throw new Error('Failed to fetch video');
         const data = await res.json();
-        apiData = data.short || data; // Handle both response formats
+        apiData = data.short || data;
       } else {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`
+          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`,
+          { credentials: "include" }
         );
         if (!res.ok) throw new Error('Failed to fetch videos');
         const result = await res.json();
-        apiData = result.shorts[0] || result.data[0]; // Handle both response formats
+        apiData = result.shorts[0] || result.data[0];
       }
 
       // Ensure user object exists (use channel data as fallback)
@@ -223,11 +227,12 @@ const ShortVideoPage = () => {
   const fetchNextVideo = async (): Promise<ShortData | null> => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`
+        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`,
+        { credentials: "include" } // <-- Add this line
       );
       if (!res.ok) throw new Error('Failed to fetch next video');
       const result = await res.json();
-      const apiData = result.shorts[0] || result.data[0]; // Handle both response formats
+      const apiData = result.shorts[0] || result.data[0];
       
       // Ensure user object exists
       if (!apiData.user && apiData.channel) {
@@ -400,22 +405,9 @@ const ShortVideoPage = () => {
               {/* Video Actions */}
               <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
                 <VideoActions 
-                  videoId={currentVideo.id}
-                  channelId={currentVideo.channel.id}
+                  video={currentVideo}
                   onToggleComments={toggleComments}
                   onShowReport={handleShowReport}
-                  likeCount={currentVideo.likeCount}
-                  commentCount={currentVideo.commentCount}
-                  shareCount={currentVideo.shareCount}
-                  saveCount={currentVideo.saveCount}
-                  isLiked={currentVideo.isLiked || false}
-                  isBookmarked={currentVideo.isBookmarked || false}
-                  channel={{
-                    name: currentVideo.channel.name,
-                    icon: currentVideo.channel.avatar,
-                    verified: currentVideo.channel.verified,
-                    isFollowed: currentVideo.channel.isFollowed
-                  }}
                 />
               </div>
 
