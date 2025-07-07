@@ -139,15 +139,15 @@ export default function VideoMeta({ video }: VideoMetaProps) {
 
       const data = await response.json();
       
-      setIsFollowing(data.isSubscribed);
+      setIsFollowing(data.isFollowed);
       
-      if (data.isSubscribed) {
+      if (data.isFollowed) {
         setFollowerCount(prev => prev + 1);
       } else {
         setFollowerCount(prev => Math.max(0, prev - 1));
       }
 
-      toast.success(data.isSubscribed ? 'Following channel' : 'Unfollowed channel');
+      toast.success(data.isFollowed ? 'Following channel' : 'Unfollowed channel');
 
     } catch (error) {
       console.error('Error toggling follow:', error);
