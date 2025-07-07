@@ -18,35 +18,28 @@ import { mVideo as Video } from '../../types';
 import timeAgo from '../../app/utils/timeAgo';
 import Button from '../ui/CustomButton';
 import LikeButton from '../LikeButton';
-import ReportModal from '@/app/shorts/[v]/ReportModal'; // Import the report modal
+import ReportModal from '@/app/shorts/[v]/ReportModal';
 import { toast } from "sonner";
 import useOutsideClick from '@/hooks/useOutsideClick';
+import { formatCount } from '@/app/utils/formatCount';
 
 interface VideoMetaProps {
   video: Video;
 }
 
-// Format view count helper
-const formatViewCount = (count: number) => {
-  if (count >= 1000000) {
-    return `${(count / 1000000).toFixed(1)}M`;
-  } else if (count >= 1000) {
-    return `${(count / 1000).toFixed(1)}K`;
-  }
-  return count.toString();
-};
-
 export default function VideoMeta({ video }: VideoMetaProps) {
   const [descExpanded, setDescExpanded] = useState(false);
   const [shouldShowMore, setShouldShowMore] = useState(false);
-  const [isFollowing, setIsFollowing] = useState<boolean | undefined>(undefined);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
-  const [followerCount, setFollowerCount] = useState(video.channel.followerCount);
+  const [followerCount, setFollowerCount] = useState(video.channel.followerCount || 0);
+  const [isFollowing, setIsFollowing] = useState(video.channel.isFollowed || false);
   const [likeCount, setLikeCount] = useState(video.likeCount);
-  const [isLiked, setIsLiked] = useState(false);
+  const [shareCount, setShareCount] = useState(video.shareCount || 0);
+  const [saveCount, setSaveCount] = useState(video.saveCount || 0);
+  const [isLiked, setIsLiked] = useState(video.isLiked || false);
   
   // New states for additional functionality
-  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(video.isBookmarked || false);
   const [showShare, setShowShare] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
@@ -204,6 +197,13 @@ export default function VideoMeta({ video }: VideoMetaProps) {
       const data = await response.json();
       setIsBookmarked(data.isBookmarked);
       
+      // Update save count based on bookmark status
+      if (data.isBookmarked) {
+        setSaveCount(prev => prev + 1);
+      } else {
+        setSaveCount(prev => Math.max(0, prev - 1));
+      }
+      
       toast.success(data.isBookmarked ? 'Video saved' : 'Video removed from saved');
       
     } catch (error) {
@@ -220,7 +220,6 @@ export default function VideoMeta({ video }: VideoMetaProps) {
     setLoading(prev => ({ ...prev, download: true }));
     
     try {
-      // You might want to get the download URL from your API
       const downloadUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/videos/${video.id}/download`;
       
       const response = await fetch(downloadUrl, {
@@ -256,6 +255,9 @@ export default function VideoMeta({ video }: VideoMetaProps) {
     navigator.clipboard.writeText(window.location.href);
     toast.success('Link copied to clipboard');
     setShowShare(false);
+    
+    // Update share count when link is copied
+    setShareCount(prev => prev + 1);
   };
 
   const handleShare = (platform: string) => {
@@ -285,6 +287,9 @@ export default function VideoMeta({ video }: VideoMetaProps) {
     }
     
     setShowShare(false);
+    
+    // Update share count when shared
+    setShareCount(prev => prev + 1);
   };
 
   // Handle not interested
@@ -328,9 +333,9 @@ export default function VideoMeta({ video }: VideoMetaProps) {
     setShowReport(true);
   };
 
-  useEffect(() => {
-    setIsFollowing(!!video.channel.isSubscribed);
-  }, [video.channel.isSubscribed]);
+useEffect(() => {
+  setIsFollowing( video.channel.isFollowed || false);
+}, [ video.channel.isFollowed]);
 
   return (
     <>
@@ -349,7 +354,7 @@ export default function VideoMeta({ video }: VideoMetaProps) {
             <div className="flex flex-col">
               <p className="font-semibold text-base sm:text-lg">{video.channel.name}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {followerCount === 0 ? '' : `${formatViewCount(followerCount)} ${followerCount === 1 ? 'follower' : 'followers'}`}
+                {followerCount === 0 ? '' : `${formatCount(followerCount)} ${followerCount === 1 ? 'follower' : 'followers'}`}
               </p>
             </div>
           </div>
@@ -384,18 +389,22 @@ export default function VideoMeta({ video }: VideoMetaProps) {
                 size={18}
                 className="mr-2"
               />
-              <span className="text-sm font-medium pl-2">{formatViewCount(likeCount)}</span>
+              <span className="text-sm font-medium pl-2">{formatCount(likeCount)}</span>
             </div>
             
-            {/* Share Button */}
+            {/* Share Button with Count */}
             <div className="relative">
               <Button 
                 variant="secondary" 
                 size="md"
                 onClick={() => setShowShare(!showShare)}
+                className="flex items-center gap-2"
               >
                 <Share2 className="w-4 h-4" />
                 <span className="hidden xs:inline">Share</span>
+                <span className="text-sm font-medium">
+                  {formatCount(shareCount)}
+                </span>
               </Button>
               
               {showShare && (
@@ -475,13 +484,13 @@ export default function VideoMeta({ video }: VideoMetaProps) {
               </span>
             </Button>
             
-            {/* Save/Bookmark Button */}
+            {/* Save/Bookmark Button with Count */}
             <Button 
               variant="secondary" 
               size="md"
               onClick={handleBookmarkToggle}
               disabled={loading.bookmark}
-              className={isBookmarked ? 'text-yellow-600 dark:text-yellow-400' : ''}
+              className={`flex items-center gap-2 ${isBookmarked ? 'text-yellow-600 dark:text-yellow-400' : ''}`}
             >
               {loading.bookmark ? (
                 <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
@@ -492,6 +501,9 @@ export default function VideoMeta({ video }: VideoMetaProps) {
               )}
               <span className="hidden xs:inline">
                 {loading.bookmark ? 'Saving...' : (isBookmarked ? 'Saved' : 'Save')}
+              </span>
+              <span className="text-sm font-medium">
+                {formatCount(saveCount)}
               </span>
             </Button>
           </div>
@@ -533,7 +545,7 @@ export default function VideoMeta({ video }: VideoMetaProps) {
         {/* Video Stats and Description */}
         <div className="bg-gray-100 dark:bg-gray-800 rounded-xl p-4 space-y-3">
           <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
-            <span>{formatViewCount(video.viewCount)} views</span>
+            <span>{formatCount(video.viewCount)} views</span>
             <span className="text-gray-500">•</span>
             <span>{timeAgo(video.createdAt)}</span>
           </div>
@@ -563,7 +575,7 @@ export default function VideoMeta({ video }: VideoMetaProps) {
         onClose={() => setShowReport(false)}
         videoId={video.id}
         videoTitle={video.title}
-        type="videos" // Add this prop
+        type="videos"
       />
     </>
   );

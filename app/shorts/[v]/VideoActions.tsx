@@ -16,21 +16,24 @@ import {
 import LikeButton from "@/components/LikeButton";
 import { toast } from "sonner";
 import useOutsideClick from "@/hooks/useOutsideClick";
+import { formatCount } from '@/app/utils/formatCount';
 
 interface VideoActionsProps {
   videoId: string;
   channelId: string;
   onToggleComments: () => void;
-  onShowReport: () => void; // Add this prop
+  onShowReport: () => void;
   likeCount?: number;
   commentCount?: number;
+  saveCount?: number;
+  shareCount?: number;
   isLiked?: boolean;
   isBookmarked?: boolean;
-  isFollowing?: boolean;
   channel: {
     name: string;
     icon: string;
     verified?: boolean;
+    isFollowed?: boolean;
   };
 }
 
@@ -38,20 +41,23 @@ const VideoActions = ({
   videoId,
   channelId,
   onToggleComments,
-  onShowReport, // Add this prop
-  likeCount = 123,
-  commentCount = 45,
+  onShowReport,
+  likeCount = 0,
+  commentCount = 0,
+  saveCount = 0,
+  shareCount = 0,
   isLiked = false,
   isBookmarked = false,
-  isFollowing = false,
   channel
 }: VideoActionsProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [liked, setLiked] = useState(isLiked);
   const [currentLikeCount, setCurrentLikeCount] = useState(likeCount);
+  const [currentSaveCount, setCurrentSaveCount] = useState(saveCount);
+  const [currentShareCount, setCurrentShareCount] = useState(shareCount);
   const [bookmarked, setBookmarked] = useState(isBookmarked);
-  const [following, setFollowing] = useState(isFollowing);
+  const [following, setFollowing] = useState(channel.isFollowed || false); // Fix: Use isFollowed
   const [loading, setLoading] = useState({
     like: false,
     bookmark: false,
@@ -70,7 +76,7 @@ const VideoActions = ({
   // Handle report
   const handleReport = () => {
     setShowMenu(false);
-    onShowReport(); // Call the parent function
+    onShowReport();
   };
 
   // Handle like toggle
@@ -134,9 +140,10 @@ const VideoActions = ({
       }
 
       const data = await response.json();
-      setFollowing(data.isSubscribed);
+      // Handle both isSubscribed (videos) and isFollowed (shorts)
+      setFollowing(data.isSubscribed || data.isFollowed);
       
-      toast.success(data.isSubscribed ? 'Following channel' : 'Unfollowed channel');
+      toast.success(data.isSubscribed || data.isFollowed ? 'Following channel' : 'Unfollowed channel');
       
     } catch (error) {
       console.error('Error toggling follow:', error);
@@ -174,6 +181,13 @@ const VideoActions = ({
 
       const data = await response.json();
       setBookmarked(data.isBookmarked);
+      
+      // Update save count optimistically
+      if (data.isBookmarked) {
+        setCurrentSaveCount(prev => prev + 1);
+      } else {
+        setCurrentSaveCount(prev => Math.max(0, prev - 1));
+      }
       
       toast.success(data.isBookmarked ? 'Video saved' : 'Video removed from saved');
       
@@ -224,6 +238,10 @@ const VideoActions = ({
   const handleCopyLink = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success('Link copied to clipboard');
+    setShowShare(false);
+    
+    // Update share count when link is copied
+    setCurrentShareCount(prev => prev + 1);
   };
 
   const handleShare = (platform: string) => {
@@ -253,15 +271,9 @@ const VideoActions = ({
     }
     
     setShowShare(false);
-  };
-
-  const formatCount = (count: number) => {
-    if (count >= 1000000) {
-      return `${(count / 1000000).toFixed(1)}M`;
-    } else if (count >= 1000) {
-      return `${(count / 1000).toFixed(1)}K`;
-    }
-    return count.toString();
+    
+    // Update share count when shared
+    setCurrentShareCount(prev => prev + 1);
   };
 
   return (
@@ -321,7 +333,7 @@ const VideoActions = ({
         </span>
       </div>
 
-      {/* Bookmark Button */}
+      {/* Bookmark Button with Count */}
       <div className="flex flex-col items-center">
         <button 
           onClick={handleBookmarkToggle}
@@ -345,10 +357,12 @@ const VideoActions = ({
             />
           )}
         </button>
-        <span className="text-xs mt-1 font-medium text-white">Save</span>
+        <span className="text-xs mt-1 font-medium text-white">
+          {formatCount(currentSaveCount)}
+        </span>
       </div>
 
-      {/* Share Button */}
+      {/* Share Button with Count */}
       <div className="relative flex flex-col items-center">
         <button 
           onClick={() => setShowShare(!showShare)} 
@@ -356,7 +370,9 @@ const VideoActions = ({
         >
           <Share2 size={26} className="text-white" />
         </button>
-        <span className="text-xs mt-1 font-medium text-white">Share</span>
+        <span className="text-xs mt-1 font-medium text-white">
+          {formatCount(currentShareCount)}
+        </span>
         
         {showShare && (
           <div 
