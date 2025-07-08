@@ -19,9 +19,11 @@ import timeAgo from '../../app/utils/timeAgo';
 import Button from '../ui/CustomButton';
 import LikeButton from '../LikeButton';
 import ReportModal from '@/app/shorts/[v]/ReportModal';
+import ShareModal from './ShareModal';
 import { toast } from "sonner";
 import useOutsideClick from '@/hooks/useOutsideClick';
 import { formatCount } from '@/app/utils/formatCount';
+import ShareService from '@/app/utils/ShareService';
 
 interface VideoMetaProps {
   video: Video;
@@ -40,9 +42,9 @@ export default function VideoMeta({ video }: VideoMetaProps) {
   
   // New states for additional functionality
   const [isBookmarked, setIsBookmarked] = useState(video.isBookmarked || false);
-  const [showShare, setShowShare] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [loading, setLoading] = useState({
     bookmark: false,
     download: false,
@@ -50,11 +52,9 @@ export default function VideoMeta({ video }: VideoMetaProps) {
   });
 
   const descriptionRef = useRef<HTMLParagraphElement>(null);
-  const shareRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
 
   // Outside click handlers
-  useOutsideClick(shareRef, () => setShowShare(false));
   useOutsideClick(moreMenuRef, () => setShowMoreMenu(false));
 
   // Check if description content overflows
@@ -250,46 +250,39 @@ export default function VideoMeta({ video }: VideoMetaProps) {
     }
   };
 
-  // Handle share
-  const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
-    toast.success('Link copied to clipboard');
-    setShowShare(false);
-    
-    // Update share count when link is copied
-    setShareCount(prev => prev + 1);
+  // Handle share with proper native share timing
+  const handleShare = async () => {
+    const result = await ShareService.share(
+      video.id,
+      video.title,
+      'video'
+    );
+
+    if (result.success) {
+      // Native share succeeded
+      if (result.shareCount) {
+        setShareCount(result.shareCount);
+      } else {
+        setShareCount(prev => prev + 1);
+      }
+      toast.success('Shared successfully!');
+    } else if (result.rateLimited) {
+      // Rate limited
+      toast.error(`You've shared this video too many times. Please wait ${result.timeLeft} before sharing again.`);
+    } else if (result.userCancelled) {
+      // User cancelled native share, do nothing
+    } else if (result.showFallback) {
+      // Show fallback modal
+      setShowShareModal(true);
+    }
   };
 
-  const handleShare = (platform: string) => {
-    const url = encodeURIComponent(window.location.href);
-    const text = encodeURIComponent(`Check out this video: ${video.title}`);
-    
-    let shareUrl = '';
-    
-    switch (platform) {
-      case 'facebook':
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-        break;
-      case 'twitter':
-        shareUrl = `https://twitter.com/intent/tweet?url=${url}&text=${text}`;
-        break;
-      case 'email':
-        shareUrl = `mailto:?subject=${text}&body=${url}`;
-        break;
-      default:
-        return;
-    }
-    
-    if (platform === 'email') {
-      window.location.href = shareUrl;
+  const handleShareComplete = (newCount?: number) => {
+    if (newCount !== undefined) {
+      setShareCount(newCount);
     } else {
-      window.open(shareUrl, '_blank', 'noopener,noreferrer');
+      setShareCount(prev => prev + 1);
     }
-    
-    setShowShare(false);
-    
-    // Update share count when shared
-    setShareCount(prev => prev + 1);
   };
 
   // Handle not interested
@@ -382,7 +375,7 @@ useEffect(() => {
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1">
-            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden px-4 py-2">
+            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2">
               <LikeButton
                 isLiked={isLiked}
                 onLike={handleLikeToggle}
@@ -392,87 +385,27 @@ useEffect(() => {
               <span className="text-sm font-medium pl-2">{formatCount(likeCount)}</span>
             </div>
             
-            {/* Share Button with Count */}
-            <div className="relative">
-              <Button 
-                variant="secondary" 
-                size="md"
-                onClick={() => setShowShare(!showShare)}
-                className="flex items-center gap-2"
-              >
-                <Share2 className="w-4 h-4" />
-                <span className="hidden xs:inline">Share</span>
-                <span className="text-sm font-medium">
-                  {formatCount(shareCount)}
-                </span>
-              </Button>
-              
-              {showShare && (
-                <div 
-                  ref={shareRef}
-                  className="absolute top-full mt-2 right-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 min-w-64 z-50"
-                >
-                  <h3 className="font-medium mb-3 text-gray-900 dark:text-white">Share this video</h3>
-                  <div className="space-y-3">
-                    {/* Quick copy link */}
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="text" 
-                        readOnly 
-                        value={window.location.href} 
-                        className="bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 text-xs text-gray-900 dark:text-white flex-1 truncate"
-                      />
-                      <button 
-                        onClick={handleCopyLink} 
-                        className="bg-blue-500 hover:bg-blue-600 px-3 py-1 rounded text-xs transition-colors text-white flex items-center gap-1"
-                      >
-                        <Copy size={12} />
-                        Copy
-                      </button>
-                    </div>
-                    
-                    {/* Share buttons */}
-                    <div className="flex flex-col space-y-1">
-                      <button 
-                        onClick={() => handleShare('facebook')}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm text-gray-900 dark:text-white flex items-center gap-2"
-                      >
-                        <Facebook size={16} className="text-blue-500" />
-                        Share on Facebook
-                      </button>
-                      <button 
-                        onClick={() => handleShare('twitter')}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm text-gray-900 dark:text-white flex items-center gap-2"
-                      >
-                        <Twitter size={16} className="text-blue-400" />
-                        Share on Twitter
-                      </button>
-                      <button 
-                        onClick={() => handleShare('email')}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm text-gray-900 dark:text-white flex items-center gap-2"
-                      >
-                        <Mail size={16} className="text-gray-400" />
-                        Share via Email
-                      </button>
-                      <button 
-                        onClick={handleCopyLink}
-                        className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-sm text-gray-900 dark:text-white flex items-center gap-2"
-                      >
-                        <Link size={16} className="text-gray-400" />
-                        Copy Link
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Share Button - Direct like blog */}
+            <Button 
+              variant="secondary" 
+              size="md"
+              onClick={handleShare}
+              className="flex items-center gap-2 bg-inherit"
+            >
+              <Share2 className="w-4 h-4" />
+              <span className="hidden xs:inline">Share</span>
+              <span className="text-sm font-medium">
+                {formatCount(shareCount)}
+              </span>
+            </Button>
             
-            {/* Download Button */}
+            {/* Updated Download Button */}
             <Button 
               variant="secondary" 
               size="md"
               onClick={handleDownload}
               disabled={loading.download}
+              className="bg-inherit"
             >
               {loading.download ? (
                 <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
@@ -484,13 +417,13 @@ useEffect(() => {
               </span>
             </Button>
             
-            {/* Save/Bookmark Button with Count */}
+            {/* Updated Save/Bookmark Button */}
             <Button 
               variant="secondary" 
               size="md"
               onClick={handleBookmarkToggle}
               disabled={loading.bookmark}
-              className={`flex items-center gap-2 ${isBookmarked ? 'text-yellow-600 dark:text-yellow-400' : ''}`}
+              className={`flex items-center gap-2 bg-inherit ${isBookmarked ? 'text-yellow-600 dark:text-yellow-400' : ''}`}
             >
               {loading.bookmark ? (
                 <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
@@ -576,6 +509,16 @@ useEffect(() => {
         videoId={video.id}
         videoTitle={video.title}
         type="videos"
+      />
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        videoTitle={video.title}
+        videoId={video.id}
+        onShareComplete={handleShareComplete}
+        contentType="video"
       />
     </>
   );
