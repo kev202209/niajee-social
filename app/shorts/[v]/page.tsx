@@ -387,6 +387,7 @@ const ShortVideoPage = () => {
                 <VideoPlayer
                   videoRef={currentVideoRef}
                   videoSrc={getBestVideoUrl(currentVideo)}
+                  videoId={currentVideo.id}
                   isMuted={isMuted}
                   isPaused={isPaused}
                   volume={volume}
@@ -427,6 +428,7 @@ const ShortVideoPage = () => {
                 <VideoPlayer
                   videoRef={null}
                   videoSrc={getBestVideoUrl(nextVideo)}
+                  videoId={nextVideo.id}
                   isMuted={true}
                   isPaused={true}
                   volume={volume}
