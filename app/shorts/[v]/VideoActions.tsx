@@ -93,7 +93,7 @@ const VideoActions = ({
     setCurrentShareCount(video.shareCount);
   }, [video]); // The only dependency needed is the video object itself.
 
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLElement>;
 
   useOutsideClick(menuRef, () => setShowMenu(false));
 
@@ -325,14 +325,15 @@ const VideoActions = ({
 
         {/* Like Button with Animation */}
         <div className="flex flex-col items-center">
-          <div className="p-3 rounded-full hover:bg-black/20 transition-all">
+          <div className="p-3 rounded-full transition-all hover:bg-black/20">
             <LikeButton 
               isLiked={liked}
               onLike={handleLikeToggle}
               size={26}
+              className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             />
           </div>
-          <span className="text-xs mt-1 font-medium text-white">
+          <span className="text-xs mt-1 font-medium text-gray-900 dark:text-white">
             {formatCount(currentLikeCount)}
           </span>
         </div>
@@ -341,11 +342,14 @@ const VideoActions = ({
         <div className="flex flex-col items-center">
           <button 
             onClick={onToggleComments}
-            className="p-3 rounded-full hover:bg-black/20 transition-all"
+            className="p-3 rounded-full transition-all hover:bg-black/20"
           >
-            <MessageCircle size={26} className="text-white" />
+            <MessageCircle 
+              size={26} 
+              className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" 
+            />
           </button>
-          <span className="text-xs mt-1 font-medium text-white">
+          <span className="text-xs mt-1 font-medium text-gray-900 dark:text-white">
             {formatCount(commentCount)}
           </span>
         </div>
@@ -355,26 +359,22 @@ const VideoActions = ({
           <button 
             onClick={handleBookmarkToggle}
             disabled={loading.bookmark}
-            className={`p-3 rounded-full backdrop-blur-sm transition-all ${
-              bookmarked 
-                ? 'bg-yellow-500/20' 
-                : 'hover:bg-black/20'
-            }`}
+            className="p-3 rounded-full backdrop-blur-sm transition-all hover:bg-black/20"
           >
             {loading.bookmark ? (
               <div className="w-6 h-6 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
             ) : (
               <Bookmark 
                 size={26} 
-                className={`${
+                className={`transition-colors ${
                   bookmarked 
-                    ? 'text-yellow-500 fill-yellow-500' 
-                    : 'text-white hover:text-yellow-400'
-                } transition-colors`} 
+                    ? 'text-yellow-500 fill-yellow-500'
+                    : 'text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400'
+                }`} 
               />
             )}
           </button>
-          <span className="text-xs mt-1 font-medium text-white">
+          <span className="text-xs mt-1 font-medium text-gray-900 dark:text-white">
             {formatCount(currentSaveCount)}
           </span>
         </div>
@@ -383,11 +383,14 @@ const VideoActions = ({
         <div className="flex flex-col items-center">
           <button 
             onClick={handleShare}
-            className="p-3 rounded-full hover:bg-white/10 backdrop-blur-sm transition-all"
+            className="p-3 rounded-full backdrop-blur-sm transition-all hover:bg-black/20"
           >
-            <Share2 size={26} className="text-white" />
+            <Share2 
+              size={26} 
+              className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" 
+            />
           </button>
-          <span className="text-xs mt-1 font-medium text-white">
+          <span className="text-xs mt-1 font-medium text-gray-900 dark:text-white">
             {formatCount(currentShareCount)}
           </span>
         </div>
@@ -396,9 +399,12 @@ const VideoActions = ({
         <div className="relative flex flex-col items-center">
           <button 
             onClick={() => setShowMenu(!showMenu)} 
-            className="p-3 rounded-full hover:bg-black/20 transition-all"
+            className="p-3 rounded-full transition-all hover:bg-black/20"
           >
-            <MoreHorizontal size={26} className="text-white" />
+            <MoreHorizontal 
+              size={26} 
+              className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" 
+            />
           </button>
           
           {showMenu && (

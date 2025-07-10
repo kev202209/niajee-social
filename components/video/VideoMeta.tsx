@@ -375,67 +375,71 @@ useEffect(() => {
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-1">
-            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full px-4 py-2">
+            <div className="flex items-center bg-inherit rounded-full px-4 py-2">
               <LikeButton
                 isLiked={isLiked}
                 onLike={handleLikeToggle}
                 size={18}
-                className="mr-2"
+                className="mr-2 text-gray-700 dark:text-gray-300"
               />
               <span className="text-sm font-medium pl-2">{formatCount(likeCount)}</span>
             </div>
-            
-            {/* Share Button - Direct like blog */}
-            <Button 
-              variant="secondary" 
+
+            {/* Share Button */}
+            <Button
+              variant="secondary"
               size="md"
               onClick={handleShare}
-              className="flex items-center gap-2 bg-inherit"
+              className="flex items-center gap-2 bg-inherit group"
             >
-              <Share2 className="w-4 h-4" />
+              <span className="transition-colors text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                <Share2 className="w-4 h-4" />
+              </span>
               <span className="hidden xs:inline">Share</span>
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-black dark:text-white">
                 {formatCount(shareCount)}
               </span>
             </Button>
-            
-            {/* Updated Download Button */}
-            <Button 
-              variant="secondary" 
+
+            {/* Download Button */}
+            <Button
+              variant="secondary"
               size="md"
               onClick={handleDownload}
               disabled={loading.download}
-              className="bg-inherit"
+              className="bg-inherit group"
             >
               {loading.download ? (
                 <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
               ) : (
-                <Download className="w-4 h-4" />
+                <span className="transition-colors text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                  <Download className="w-4 h-4" />
+                </span>
               )}
               <span className="hidden xs:inline">
                 {loading.download ? 'Downloading...' : 'Download'}
               </span>
             </Button>
             
-            {/* Updated Save/Bookmark Button */}
-            <Button 
-              variant="secondary" 
+            {/* Save/Bookmark Button */}
+            <Button
+              variant="secondary"
               size="md"
               onClick={handleBookmarkToggle}
               disabled={loading.bookmark}
-              className={`flex items-center gap-2 bg-inherit ${isBookmarked ? 'text-yellow-600 dark:text-yellow-400' : ''}`}
+              className="flex items-center gap-2 bg-inherit group"
             >
               {loading.bookmark ? (
                 <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
               ) : (
-                <Bookmark 
-                  className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} 
-                />
+                <span className={`transition-colors ${isBookmarked ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'}`}>
+                  <Bookmark className="w-4 h-4" />
+                </span>
               )}
               <span className="hidden xs:inline">
                 {loading.bookmark ? 'Saving...' : (isBookmarked ? 'Saved' : 'Save')}
               </span>
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-black dark:text-white">
                 {formatCount(saveCount)}
               </span>
             </Button>
