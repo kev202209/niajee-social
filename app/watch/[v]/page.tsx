@@ -150,7 +150,9 @@ const ErrorState = ({ error, onRetry }: { error: string; onRetry: () => void }) 
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 pt-16">
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4">
         <div className="text-center max-w-md mx-auto">
-          {getErrorIcon()}
+          <div className="flex justify-center items-center mb-2">
+            {getErrorIcon()}
+          </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-6 mb-2">
             {getErrorTitle()}
           </h2>
