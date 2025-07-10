@@ -37,7 +37,8 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
     videoRef: videoRef as React.RefObject<HTMLVideoElement>,
     src: streamUrl,
     videoUrls: video.videoUrl,
-    autoplay: true
+    autoplay: true,
+    videoId: video.id, // Pass the videoId to the hook
   }) as ReturnType<typeof useVideoPlayer> & { setHlsInstance?: (hls: Hls) => void };
 
   // Use buffering from controls

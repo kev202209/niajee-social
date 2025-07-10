@@ -1,6 +1,7 @@
 // hooks/useVideoPlayer.ts
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
+import ViewTrackingService from '@/app/utils/ViewTrackingService';
 
 export interface VideoPlayerControls {
   buffering: boolean;
@@ -50,12 +51,14 @@ export function useVideoPlayer({
   videoRef,
   src, 
   videoUrls, 
-  autoplay = true 
+  autoplay = true,
+  videoId,
 }: { 
   videoRef: React.RefObject<HTMLVideoElement>;
   src: string; 
   videoUrls: { [key: string]: string };
   autoplay?: boolean; 
+  videoId: string;
 }): VideoPlayerControls {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -65,7 +68,7 @@ export function useVideoPlayer({
   const [buffering, setBuffering] = useState(false);
 
   // Playback state
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(autoplay);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [playPauseAnim, setPlayPauseAnim] = useState<'play' | 'pause' | null>(null);
@@ -87,10 +90,14 @@ export function useVideoPlayer({
 
   // Seek
   const [seekIndicator, setSeekIndicator] = useState<'forward' | 'rewind' | null>(null);
+  const [isSeeking, setIsSeeking] = useState(false); // ✅ Add this state
 
   // Controls visibility
   const [controlsVisible, setControlsVisible] = useState(true);
   const [mouseIdle, setMouseIdle] = useState(false);
+
+  // View Tracking
+  const [viewRecorded, setViewRecorded] = useState(false); // ✅ Add this state
 
   // Video quality
   const [videoQuality, setVideoQuality] = useState<'1080p' | '720p' | '480p' | '360p' | 'auto'>('auto');
@@ -322,6 +329,47 @@ export function useVideoPlayer({
     }
     return () => { if (c) c.removeEventListener('mousemove', onMove); };
   }, [isPlaying]);
+
+  // This useEffect handles the view tracking logic
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => {
+      if (!video || isSeeking) return;
+      setCurrentTime(video.currentTime);
+
+      // --- View Tracking Logic ---
+      if (!viewRecorded && video.duration > 0) {
+        const duration = video.duration;
+        // Record view at 50% of duration or 30s, whichever is less
+        const timeThreshold = Math.min(duration * 0.5, 30);
+
+        if (video.currentTime >= timeThreshold) {
+          setViewRecorded(true); // Mark as attempted to prevent re-sending
+          ViewTrackingService.recordView(videoId, 'video').then(result => {
+            if (result.viewRecorded) {
+              console.log(`View recorded for video ${videoId}. New count: ${result.newViewCount}`);
+              // You could optionally update a state here to reflect the new view count in the UI
+            }
+          });
+        }
+      }
+    };
+
+    const handleLoadedMetadata = () => {
+      if (!video) return;
+      setDuration(video.duration);
+      setViewRecorded(false); // Reset view tracking when a new video is loaded
+    };
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, [src, videoId, isSeeking]); // isSeeking is now a valid dependency
 
   return {
     buffering,

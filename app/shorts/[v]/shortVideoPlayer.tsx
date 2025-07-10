@@ -2,6 +2,7 @@ import { FC, useEffect, useRef, useState } from 'react';
 import { FaVolumeMute, FaVolumeDown, FaVolumeUp, FaPause, FaPlay } from 'react-icons/fa';
 import Hls from 'hls.js';
 import ShortsProgressBar from './ShortsProgressBar';
+import ViewTrackingService from '@/app/utils/ViewTrackingService';
 
 interface Channel {
   name: string;
@@ -9,6 +10,7 @@ interface Channel {
 }
 
 interface VideoPlayerProps {
+  videoId: string; // Add videoId to props
   videoRef: React.RefObject<HTMLVideoElement> | null;
   videoSrc: string;
   isMuted: boolean;
@@ -30,6 +32,7 @@ const BufferingSpinner = () => (
 );
 
 const VideoPlayer: FC<VideoPlayerProps> = ({
+  videoId,
   videoRef,
   videoSrc,
   isMuted,
@@ -45,6 +48,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
   const hlsRef = useRef<Hls | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [viewRecorded, setViewRecorded] = useState(false); // Track if view was sent
   // Add buffering state
   const [isBuffering, setIsBuffering] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -60,6 +64,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
     setIsBuffering(true);
     setHasError(false);
     setErrorMessage('');
+    setViewRecorded(false); // Reset view tracking for new video
 
     // Clean up previous HLS instance
     if (hlsRef.current) {
@@ -96,7 +101,19 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
     };
 
     const handleTimeUpdate = () => {
+      if (!video) return;
       setCurrentTime(video.currentTime);
+
+      // --- View Tracking Logic ---
+      const VIEW_THRESHOLD = 5; // 5 seconds for a short
+      if (!viewRecorded && video.currentTime >= VIEW_THRESHOLD) {
+        setViewRecorded(true); // Mark as attempted
+        ViewTrackingService.recordView(videoId, 'short').then(result => {
+          if (result.viewRecorded) {
+            console.log(`View recorded for short ${videoId}. New count: ${result.newViewCount}`);
+          }
+        });
+      }
     };
 
     const handleLoadedMetadata = () => {
