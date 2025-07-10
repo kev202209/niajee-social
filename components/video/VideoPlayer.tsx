@@ -38,7 +38,7 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
     src: streamUrl,
     videoUrls: video.videoUrl,
     autoplay: true,
-    videoId: video.id, // Pass the videoId to the hook
+    videoId: video.id,
   }) as ReturnType<typeof useVideoPlayer> & { setHlsInstance?: (hls: Hls) => void };
 
   // Use buffering from controls
