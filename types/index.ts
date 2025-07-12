@@ -10,7 +10,8 @@ export interface User {
   job: string | null;
   website: string | null;
   profilePic: string | null;
-  cover: string | null;
+  bannerPic: string | null;
+  role: string;
   createdAt: Date;
   updatedAt: Date;
   posts: Post[];
