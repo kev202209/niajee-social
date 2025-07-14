@@ -93,9 +93,37 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
       }
 
       const data = await response.json();
-      setReports(data.data.reports);
-      setTotalPages(data.data.totalPages);
-      setTotalReports(data.data.totalReports);
+      const mappedReports = data.data.reports.map((r: any) => ({
+        id: r.id,
+        type: r.contentType === 'short' ? 'short' : 'video', // or use r.contentType directly if you support more types
+        contentId: r.contentId,
+        contentTitle: r.contentTitle,
+        contentThumbnail: '', // If you have a thumbnail URL, map it here, else leave as empty string or placeholder
+        reporter: {
+          id: '', // Not provided in API, leave blank or fetch if needed
+          name: r.reporterUsername,
+          username: r.reporterUsername,
+          avatar: '', // Not provided in API, use placeholder
+        },
+        contentAuthor: {
+          id: '', // Not provided in API, leave blank or fetch if needed
+          name: r.contentChannelName,
+          username: r.contentChannelName,
+          avatar: '', // Not provided in API, use placeholder
+        },
+        reason: r.reason.replace(/_/g, ' '), // Optional: make reason more readable
+        description: r.description,
+        status: r.status,
+        createdAt: r.createdAt,
+        reviewedAt: r.reviewedAt,
+        reviewedBy: r.reviewedByUsername
+          ? { id: '', name: r.reviewedByUsername }
+          : undefined,
+        adminNotes: r.adminNotes,
+      }));
+      setReports(mappedReports);
+      setTotalPages(data.data.pagination.totalPages ?? 1);
+      setTotalReports(data.data.pagination.total ?? mappedReports.length);
     } catch (error) {
       console.error('Error fetching reports:', error);
       toast.error('Failed to load reports');
