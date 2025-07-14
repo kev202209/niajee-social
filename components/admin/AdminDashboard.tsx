@@ -12,27 +12,126 @@ import {
   FiAlertTriangle,
   FiCheckCircle,
   FiClock,
-  FiBook
+  FiBook,
+  FiEye,
+  FiHeart,
+  FiShare2,
+  FiMonitor,
+  FiShield,
+  FiActivity,
+  FiTrendingDown
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
 
-interface DashboardStats {
-  totalUsers: number;
-  totalVideos: number;
-  totalShorts: number;
-  totalPosts: number;
-  totalBlogs: number;
-  pendingReports: number;
-  unprocessedContacts: number;
-  recentActivity: Array<{
-    type: string;
-    message: string;
+interface DashboardApiResponse {
+  overview: {
+    totalUsers: number;
+    totalContent: number;
+    totalVideos: number;
+    totalShorts: number;
+    totalPosts: number;
+    totalBlogs: number;
+    totalChannels: number;
+    totalCommunities: number;
+    totalContacts: number;
+  };
+  engagement: {
+    totalViews: string;
+    totalVideoViews: string;
+    totalShortViews: string;
+    totalBlogViews: string;
+    totalLikes: string;
+    totalShares: string;
+    totalComments: number;
+    avgEngagementRate: number;
+  };
+  users: {
+    total: number;
+    active: number;
+    verified: number;
+    suspended: number;
+    banned: number;
+    private: number;
+    newToday: number;
+    newThisWeek: number;
+    newThisMonth: number;
+    growthWeekPercent: number;
+    growthMonthPercent: number;
+    activityRate: number;
+  };
+  content: {
+    totalActive: number;
+    createdToday: number;
+    createdThisWeek: number;
+    createdThisMonth: number;
+    flagged: number;
+    featured: number;
+    growthWeekPercent: number;
+  };
+  channels: {
+    total: number;
+    verified: number;
+    monetized: number;
+    verificationRate: number;
+    monetizationRate: number;
+  };
+  moderation: {
+    pendingReports: number;
+    pendingVideoReports: number;
+    pendingShortReports: number;
+    pendingPostReports: number;
+    pendingBlogReports: number;
+    resolvedToday: number;
+    flaggedContent: number;
+    hiddenComments: number;
+    inactiveContent: number;
+  };
+  system: {
+    unprocessedContacts: number;
+    serverUptime: number;
+    memoryUsage: {
+      rss: number;
+      heapTotal: number;
+      heapUsed: number;
+      external: number;
+      arrayBuffers: number;
+    };
     timestamp: string;
-  }>;
+  };
+  topPerformers: {
+    videos: Array<{
+      id: string;
+      title: string;
+      viewCount: number;
+      channelName: string;
+      ownerUsername: string;
+    }>;
+    shorts: Array<{
+      id: string;
+      title: string;
+      viewCount: number;
+      channelName: string;
+      ownerUsername: string;
+    }>;
+    posts: Array<any>;
+    blogs: Array<{
+      id: string;
+      title: string;
+      viewCount: number;
+      authorUsername: string;
+    }>;
+    users: Array<any>;
+  };
+  alerts: {
+    criticalIssues: Array<any>;
+    pendingReports: number;
+    unprocessedContacts: number;
+    flaggedContent: number;
+  };
 }
 
 interface AdminDashboardProps {
-  stats: DashboardStats | null;
+  stats: DashboardApiResponse | null;
   loading: boolean;
 }
 
@@ -52,57 +151,157 @@ export default function AdminDashboard({ stats, loading }: AdminDashboardProps) 
     );
   }
 
-  const statCards = [
+  if (!stats) {
+    return (
+      <div className="text-center py-12">
+        <FiActivity className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-500 dark:text-gray-400">No dashboard data available</p>
+      </div>
+    );
+  }
+
+  const overviewCards = [
     {
       title: 'Total Users',
-      value: stats?.totalUsers || 0,
+      value: stats.overview.totalUsers,
       icon: FiUsers,
       color: 'blue',
-      trend: '+12%'
+      trend: stats.users.growthMonthPercent > 0 ? `+${stats.users.growthMonthPercent}%` : null,
+      subtitle: `${stats.users.newThisMonth} new this month`
     },
     {
-      title: 'Total Videos',
-      value: stats?.totalVideos || 0,
-      icon: FiVideo,
+      title: 'Total Content',
+      value: stats.overview.totalContent,
+      icon: FiFileText,
       color: 'green',
-      trend: '+8%'
+      trend: stats.content.growthWeekPercent > 0 ? `+${stats.content.growthWeekPercent}%` : null,
+      subtitle: `${stats.content.createdThisWeek} created this week`
     },
     {
-      title: 'Total Shorts',
-      value: stats?.totalShorts || 0,
-      icon: FiVideo,
+      title: 'Total Views',
+      value: parseInt(stats.engagement.totalViews),
+      icon: FiEye,
       color: 'purple',
-      trend: '+15%'
+      subtitle: `${stats.engagement.avgEngagementRate}% engagement rate`
     },
     {
-      title: 'Total Posts',
-      value: stats?.totalPosts || 0,
+      title: 'Total Engagement',
+      value: parseInt(stats.engagement.totalLikes) + parseInt(stats.engagement.totalShares) + stats.engagement.totalComments,
+      icon: FiHeart,
+      color: 'pink',
+      subtitle: 'Likes, shares & comments'
+    }
+  ];
+
+  const contentCards = [
+    {
+      title: 'Videos',
+      value: stats.overview.totalVideos,
+      icon: FiVideo,
+      color: 'red',
+      views: stats.engagement.totalVideoViews
+    },
+    {
+      title: 'Shorts',
+      value: stats.overview.totalShorts,
+      icon: FiVideo,
+      color: 'orange',
+      views: stats.engagement.totalShortViews
+    },
+    {
+      title: 'Posts',
+      value: stats.overview.totalPosts,
       icon: FiMessageSquare,
       color: 'indigo',
-      trend: '+5%'
+      views: '0'
     },
     {
-      title: 'Total Blogs',
-      value: stats?.totalBlogs || 0,
+      title: 'Blogs',
+      value: stats.overview.totalBlogs,
       icon: FiBook,
-      color: 'orange',
-      trend: '+3%'
-    },
+      color: 'teal',
+      views: stats.engagement.totalBlogViews
+    }
+  ];
+
+  const alertCards = [
     {
       title: 'Pending Reports',
-      value: stats?.pendingReports || 0,
+      value: stats.moderation.pendingReports,
       icon: FiFlag,
       color: 'red',
-      urgent: (stats?.pendingReports || 0) > 0
+      urgent: stats.moderation.pendingReports > 0,
+      subtitle: `${stats.moderation.resolvedToday} resolved today`
     },
     {
       title: 'Unprocessed Contacts',
-      value: stats?.unprocessedContacts || 0,
+      value: stats.system.unprocessedContacts,
       icon: FiMail,
       color: 'yellow',
-      urgent: (stats?.unprocessedContacts || 0) > 0
+      urgent: stats.system.unprocessedContacts > 0,
+      subtitle: 'Customer inquiries'
+    },
+    {
+      title: 'Flagged Content',
+      value: stats.moderation.flaggedContent,
+      icon: FiShield,
+      color: 'orange',
+      urgent: stats.moderation.flaggedContent > 0,
+      subtitle: 'Requires review'
     }
   ];
+
+  {/* Channels Section */}
+  <div>
+    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Channels</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Channels</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {formatCount(stats.channels.total)}
+            </p>
+          </div>
+          <div className="p-3 rounded-full text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20">
+            <FiUsers className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Verified Channels</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {formatCount(stats.channels.verified)}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {stats.channels.verificationRate}% verified
+            </p>
+          </div>
+          <div className="p-3 rounded-full text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/20">
+            <FiCheckCircle className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Monetized Channels</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              {formatCount(stats.channels.monetized)}
+            </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {stats.channels.monetizationRate}% monetized
+            </p>
+          </div>
+          <div className="p-3 rounded-full text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/20">
+            <FiTrendingUp className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   const getColorClasses = (color: string) => {
     const colors = {
@@ -112,112 +311,219 @@ export default function AdminDashboard({ stats, loading }: AdminDashboardProps) 
       red: 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/20',
       yellow: 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/20',
       indigo: 'text-indigo-600 bg-indigo-100 dark:text-indigo-400 dark:bg-indigo-900/20',
-      orange: 'text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/20'
+      orange: 'text-orange-600 bg-orange-100 dark:text-orange-400 dark:bg-orange-900/20',
+      pink: 'text-pink-600 bg-pink-100 dark:text-pink-400 dark:bg-pink-900/20',
+      teal: 'text-teal-600 bg-teal-100 dark:text-teal-400 dark:bg-teal-900/20'
     };
     return colors[color as keyof typeof colors] || colors.blue;
   };
 
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((card, index) => (
-          <div
-            key={index}
-            className={`bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 ${
-              card.urgent ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  {card.title}
-                </p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {formatCount(card.value)}
-                </p>
-                {card.trend && (
-                  <p className="text-sm text-green-600 dark:text-green-400 flex items-center mt-1">
-                    <FiTrendingUp className="w-3 h-3 mr-1" />
-                    {card.trend}
+      {/* Overview Stats */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Overview</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {overviewCards.map((card, index) => (
+            <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {card.title}
                   </p>
-                )}
-                {card.urgent && (
-                  <p className="text-sm text-red-600 dark:text-red-400 flex items-center mt-1">
-                    <FiAlertTriangle className="w-3 h-3 mr-1" />
-                    Needs attention
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {formatCount(card.value)}
                   </p>
-                )}
+                  {card.trend && (
+                    <p className="text-sm text-green-600 dark:text-green-400 flex items-center mt-1">
+                      <FiTrendingUp className="w-3 h-3 mr-1" />
+                      {card.trend}
+                    </p>
+                  )}
+                  {card.subtitle && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {card.subtitle}
+                    </p>
+                  )}
+                </div>
+                <div className={`p-3 rounded-full ${getColorClasses(card.color)}`}>
+                  <card.icon className="w-6 h-6" />
+                </div>
               </div>
-              <div className={`p-3 rounded-full ${getColorClasses(card.color)}`}>
-                <card.icon className="w-6 h-6" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Content Breakdown */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Content Breakdown</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {contentCards.map((card, index) => (
+            <div key={index} className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {card.title}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {formatCount(card.value)}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {formatCount(parseInt(card.views))} views
+                  </p>
+                </div>
+                <div className={`p-3 rounded-full ${getColorClasses(card.color)}`}>
+                  <card.icon className="w-6 h-6" />
+                </div>
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Alerts & Moderation */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Alerts & Moderation</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {alertCards.map((card, index) => (
+            <div
+              key={index}
+              className={`bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border-l-4 ${
+                card.urgent ? 'border-red-500' : 'border-gray-200 dark:border-gray-700'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    {card.title}
+                  </p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {formatCount(card.value)}
+                  </p>
+                  {card.urgent && (
+                    <p className="text-sm text-red-600 dark:text-red-400 flex items-center mt-1">
+                      <FiAlertTriangle className="w-3 h-3 mr-1" />
+                      Needs attention
+                    </p>
+                  )}
+                  {card.subtitle && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {card.subtitle}
+                    </p>
+                  )}
+                </div>
+                <div className={`p-3 rounded-full ${getColorClasses(card.color)}`}>
+                  <card.icon className="w-6 h-6" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Top Performers */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Performers</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h4 className="text-md font-medium text-gray-900 dark:text-white">Top Videos</h4>
+            </div>
+            <div className="p-6">
+              {stats.topPerformers.videos.length > 0 ? (
+                <div className="space-y-4">
+                  {stats.topPerformers.videos.map((video, index) => (
+                    <div key={video.id} className="flex items-center justify-between">
+                      <div className="flex-1 truncate">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                          {video.title}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          by {video.ownerUsername}
+                        </p>
+                      </div>
+                      <div className="text-right ml-4">
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {formatCount(video.viewCount)} views
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">No videos yet</p>
+              )}
             </div>
           </div>
-        ))}
-      </div>
 
-      {/* Recent Activity */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Recent Activity
-          </h3>
-        </div>
-        <div className="p-6">
-          {stats?.recentActivity && stats.recentActivity.length > 0 ? (
-            <div className="space-y-4">
-              {stats.recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-start gap-3">
-                  <div className="p-2 bg-gray-100 dark:bg-gray-700 rounded-full">
-                    <FiClock className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900 dark:text-white">
-                      {activity.message}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {new Date(activity.timestamp).toLocaleString()}
-                    </p>
-                  </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+              <h4 className="text-md font-medium text-gray-900 dark:text-white">Top Shorts</h4>
+            </div>
+            <div className="p-6">
+              {stats.topPerformers.shorts.length > 0 ? (
+                <div className="space-y-4">
+                  {stats.topPerformers.shorts.map((short, index) => (
+                    <div key={short.id} className="flex items-center justify-between">
+                      <div className="flex-1 truncate">
+                        <p className="font-medium text-gray-900 dark:text-white truncate">
+                          {short.title}
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          by {short.ownerUsername}
+                        </p>
+                      </div>
+                      <div className="text-right ml-4">
+                        <p className="font-semibold text-gray-900 dark:text-white">
+                          {formatCount(short.viewCount)} views
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">No shorts yet</p>
+              )}
             </div>
-          ) : (
-            <div className="text-center py-8">
-              <FiCheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400">No recent activity</p>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* System Stats */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-            Quick Actions
-          </h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">System Status</h3>
         </div>
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="p-4 text-left bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
-              <FiUsers className="w-6 h-6 text-blue-600 dark:text-blue-400 mb-2" />
-              <h4 className="font-medium text-gray-900 dark:text-white">Manage Users</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">View and manage user accounts</p>
-            </button>
-            
-            <button className="p-4 text-left bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-              <FiFlag className="w-6 h-6 text-red-600 dark:text-red-400 mb-2" />
-              <h4 className="font-medium text-gray-900 dark:text-white">Review Reports</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Handle pending reports</p>
-            </button>
-            
-            <button className="p-4 text-left bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
-              <FiMail className="w-6 h-6 text-green-600 dark:text-green-400 mb-2" />
-              <h4 className="font-medium text-gray-900 dark:text-white">Process Contacts</h4>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Respond to user inquiries</p>
-            </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full w-fit mx-auto mb-3">
+                <FiMonitor className="w-6 h-6 text-green-600 dark:text-green-400" />
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Server Uptime</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                {Math.floor(stats.system.serverUptime / 60)} minutes
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full w-fit mx-auto mb-3">
+                <FiActivity className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Memory Usage</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                {Math.round(stats.system.memoryUsage.heapUsed / 1024 / 1024)} MB
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full w-fit mx-auto mb-3">
+                <FiUsers className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Active Users</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+                {stats.users.active}
+              </p>
+            </div>
           </div>
         </div>
       </div>

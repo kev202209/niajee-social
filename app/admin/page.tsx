@@ -31,42 +31,128 @@ import BlogsManagement from '@/components/admin/BlogsManagement';
 import Analytics from '@/components/admin/Analytics';
 
 interface DashboardStats {
-  totalUsers: number;
-  totalVideos: number;
-  totalShorts: number;
-  totalPosts: number;
-  totalBlogs: number;
-  pendingReports: number;
-  unprocessedContacts: number;
-  recentActivity: Array<{
-    type: string;
-    message: string;
+  overview: {
+    totalUsers: number;
+    totalContent: number;
+    totalVideos: number;
+    totalShorts: number;
+    totalPosts: number;
+    totalBlogs: number;
+    totalChannels: number;
+    totalCommunities: number;
+    totalContacts: number;
+  };
+  engagement: {
+    totalViews: string;
+    totalVideoViews: string;
+    totalShortViews: string;
+    totalBlogViews: string;
+    totalLikes: string;
+    totalShares: string;
+    totalComments: number;
+    avgEngagementRate: number;
+  };
+  users: {
+    total: number;
+    active: number;
+    verified: number;
+    suspended: number;
+    banned: number;
+    private: number;
+    newToday: number;
+    newThisWeek: number;
+    newThisMonth: number;
+    growthWeekPercent: number;
+    growthMonthPercent: number;
+    activityRate: number;
+  };
+  content: {
+    totalActive: number;
+    createdToday: number;
+    createdThisWeek: number;
+    createdThisMonth: number;
+    flagged: number;
+    featured: number;
+    growthWeekPercent: number;
+  };
+  moderation: {
+    pendingReports: number;
+    pendingVideoReports: number;
+    pendingShortReports: number;
+    pendingPostReports: number;
+    pendingBlogReports: number;
+    resolvedToday: number;
+    flaggedContent: number;
+    hiddenComments: number;
+    inactiveContent: number;
+  };
+  system: {
+    unprocessedContacts: number;
+    serverUptime: number;
+    memoryUsage: {
+      rss: number;
+      heapTotal: number;
+      heapUsed: number;
+      external: number;
+      arrayBuffers: number;
+    };
     timestamp: string;
-  }>;
+  };
+  topPerformers: {
+    videos: Array<{
+      id: string;
+      title: string;
+      viewCount: number;
+      channelName: string;
+      ownerUsername: string;
+    }>;
+    shorts: Array<{
+      id: string;
+      title: string;
+      viewCount: number;
+      channelName: string;
+      ownerUsername: string;
+    }>;
+    posts: Array<any>;
+    blogs: Array<{
+      id: string;
+      title: string;
+      viewCount: number;
+      authorUsername: string;
+    }>;
+    users: Array<any>;
+  };
+  alerts: {
+    criticalIssues: Array<any>;
+    pendingReports: number;
+    unprocessedContacts: number;
+    flaggedContent: number;
+  };
 }
 
 export default function AdminPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) {
-      router.push('/signin');
-      return;
-    }
+useEffect(() => {
+  if (authLoading) return; // Wait for auth to finish loading
 
-    // Check if user has admin privileges
-    if (!['MODERATOR', 'ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
-      toast.error('Access denied. Admin privileges required.');
-      router.push('/');
-      return;
-    }
+  if (!user) {
+    router.push('/auth/register');
+    return;
+  }
 
-    fetchDashboardStats();
-  }, [user, router]);
+  if (!['moderator', 'admin', 'super_admin'].includes(user.role)) {
+    toast.error('Access denied. Admin privileges required.');
+    router.push('/');
+    return;
+  }
+
+  fetchDashboardStats();
+}, [user, router, authLoading]);
 
   const fetchDashboardStats = async () => {
     try {
@@ -115,7 +201,7 @@ export default function AdminPage() {
     }
   };
 
-  if (!user || !['MODERATOR', 'ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
+  if (!user || !['moderator', 'admin', 'super_admin'].includes(user.role)) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
