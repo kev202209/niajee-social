@@ -23,7 +23,7 @@ interface User {
   email: string;
   name: string;
   avatar?: string;
-  role: 'USER' | 'MODERATOR' | 'ADMIN' | 'SUPER_ADMIN';
+  role: 'user' | 'moderator' | 'admin' | 'superadmin';
   verified: boolean;
   suspended: boolean;
   banned: boolean;
@@ -82,9 +82,24 @@ export default function UserManagement({ userRole }: UserManagementProps) {
       }
 
       const data = await response.json();
-      setUsers(data.data.users);
-      setTotalPages(data.data.totalPages);
-      setTotalUsers(data.data.totalUsers);
+      const users = data.data.users.map((user: any) => ({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        name: user.displayName, // map displayName to name
+        avatar: user.avatar || undefined,
+        role: user.role ? user.role.toUpperCase() : 'USER', // normalize role
+        verified: user.verified,
+        suspended: user.accountstatus === 'suspended',
+        banned: user.accountstatus === 'banned',
+        followerCount: user.followerCount ?? 0,
+        videoCount: user.videoCount ?? 0, // fallback to 0 if not present
+        createdAt: user.createdAt,
+        lastActive: user.lastLoginAt || '', // fallback to empty string if not present
+      }));
+      setUsers(users);
+      setTotalPages(data.data.pagination.totalPages ?? 1);
+      setTotalUsers(data.data.pagination.total ?? users.length);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to load users');
@@ -94,7 +109,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
   };
 
   const handleVerifyUser = async (userId: string) => {
-    if (!['ADMIN', 'SUPER_ADMIN'].includes(userRole)) {
+    if (!['admin', 'super_admin'].includes(userRole)) {
       toast.error('Insufficient permissions');
       return;
     }
@@ -126,7 +141,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
   };
 
   const handleSuspendUser = async (userId: string, reason: string) => {
-    if (!['ADMIN', 'SUPER_ADMIN'].includes(userRole)) {
+    if (!['admin', 'super_admin'].includes(userRole)) {
       toast.error('Insufficient permissions');
       return;
     }
@@ -162,7 +177,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
   };
 
   const handleBanUser = async (userId: string) => {
-    if (userRole !== 'SUPER_ADMIN') {
+    if (userRole !== 'super_admin') {
       toast.error('Insufficient permissions');
       return;
     }
@@ -194,7 +209,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
   };
 
   const handleUpdateRole = async (userId: string, newRole: string) => {
-    if (userRole !== 'SUPER_ADMIN') {
+    if (userRole !== 'super_admin') {
       toast.error('Insufficient permissions');
       return;
     }
@@ -231,9 +246,9 @@ export default function UserManagement({ userRole }: UserManagementProps) {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'SUPER_ADMIN': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
-      case 'ADMIN': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
-      case 'MODERATOR': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
+      case 'super_admin': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400';
+      case 'admin': return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400';
+      case 'moderator': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
@@ -250,6 +265,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
     return 'Active';
   };
 
+  console.log('here are the total users', totalUsers)
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -297,10 +313,10 @@ export default function UserManagement({ userRole }: UserManagementProps) {
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">All Roles</option>
-              <option value="USER">User</option>
-              <option value="MODERATOR">Moderator</option>
-              <option value="ADMIN">Admin</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
+              <option value="user">User</option>
+              <option value="moderator">Moderator</option>
+              <option value="admin">Admin</option>
+              <option value="super_admin">Super Admin</option>
             </select>
 
             <select
@@ -429,7 +445,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
                           <FiEye className="w-4 h-4" />
                         </button>
                         
-                        {!user.verified && ['ADMIN', 'SUPER_ADMIN'].includes(userRole) && (
+                        {!user.verified && ['admin', 'super_admin'].includes(userRole) && (
                           <button
                             onClick={() => handleVerifyUser(user.id)}
                             disabled={actionLoading === user.id}
@@ -439,7 +455,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
                           </button>
                         )}
                         
-                        {!user.suspended && ['ADMIN', 'SUPER_ADMIN'].includes(userRole) && (
+                        {!user.suspended && ['admin', 'super_admin'].includes(userRole) && (
                           <button
                             onClick={() => {
                               const reason = prompt('Enter suspension reason:');
@@ -452,7 +468,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
                           </button>
                         )}
                         
-                        {!user.banned && userRole === 'SUPER_ADMIN' && (
+                        {!user.banned && userRole === 'super_admin' && (
                           <button
                             onClick={() => {
                               if (confirm('Are you sure you want to ban this user?')) {

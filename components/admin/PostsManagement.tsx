@@ -103,8 +103,8 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
 
       const data = await response.json();
       setPosts(data.data.posts);
-      setTotalPages(data.data.totalPages);
-      setTotalPosts(data.data.totalPosts);
+      setTotalPages(data.data.pagination.totalPages);
+      setTotalPosts(data.data.pagination.total);
     } catch (error) {
       console.error('Error fetching posts:', error);
       toast.error('Failed to load posts');

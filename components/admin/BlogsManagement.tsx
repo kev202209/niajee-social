@@ -128,9 +128,39 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       }
 
       const data = await response.json();
-      setBlogs(data.data.blogs);
-      setTotalPages(data.data.totalPages);
-      setTotalItems(data.data.totalBlogs);
+      const mappedBlogs = data.data.blogs.map((b: any) => ({
+        id: b.id,
+        title: b.title,
+        content: b.content ?? '',
+        excerpt: b.excerpt ?? '',
+        featuredImage: b.featuredImage ?? '',
+        author: {
+          id: b.authorId ?? '',
+          name: b.authorUsername ?? '',
+          username: b.authorUsername ?? '',
+          avatar: b.authorAvatar ?? '',
+        },
+        category: {
+          id: b.categoryId ?? '',
+          name: b.categoryName ?? '',
+          slug: b.categorySlug ?? '',
+        },
+        tags: b.tags ?? [],
+        likes: b.likeCount ?? 0,
+        comments: b.commentCount ?? 0,
+        shares: b.shareCount ?? 0,
+        views: b.viewCount ?? 0,
+        readTime: b.readTime ?? 0,
+        status: b.status ?? 'draft',
+        featured: b.isFeatured ?? false,
+        sensitive: b.isSensitive ?? false,
+        createdAt: b.createdAt,
+        updatedAt: b.updatedAt ?? '',
+        publishedAt: b.publishedAt ?? '',
+      }));
+      setBlogs(mappedBlogs);
+      setTotalPages(data.data.pagination.totalPages ?? 1);
+      setTotalItems(data.data.pagination.total ?? mappedBlogs.length);
     } catch (error) {
       console.error('Error fetching blogs:', error);
       toast.error('Failed to load blogs');
@@ -162,8 +192,8 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
 
       const data = await response.json();
       setReports(data.data.reports);
-      setTotalPages(data.data.totalPages);
-      setTotalItems(data.data.totalReports);
+      setTotalPages(data.data.pagination.totalPages);
+      setTotalItems(data.data.pagination.total);
     } catch (error) {
       console.error('Error fetching blog reports:', error);
       toast.error('Failed to load blog reports');

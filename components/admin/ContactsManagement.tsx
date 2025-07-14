@@ -66,7 +66,7 @@ export default function ContactsManagement({ userRole }: ContactsManagementProps
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
-        page: currentPage.toString(),
+        page: (currentPage ?? 1).toString(),
         limit: '20',
         ...(searchTerm && { search: searchTerm }),
         ...(filters.processed && { processed: filters.processed }),
@@ -86,8 +86,8 @@ export default function ContactsManagement({ userRole }: ContactsManagementProps
 
       const data = await response.json();
       setContacts(data.data.contacts);
-      setTotalPages(data.data.totalPages);
-      setTotalContacts(data.data.totalContacts);
+      setTotalPages(data.data.pagination.totalPages);
+      setTotalContacts(data.data.pagination.total);
     } catch (error) {
       console.error('Error fetching contacts:', error);
       toast.error('Failed to load contacts');
