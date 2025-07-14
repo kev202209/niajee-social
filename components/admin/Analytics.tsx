@@ -88,7 +88,7 @@ export default function Analytics({ userRole }: AnalyticsProps) {
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
 
   useEffect(() => {
-    if (userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') {
+    if (userRole === 'admin' || userRole === 'super_admin') {
       fetchAnalytics();
     }
   }, [period, userRole]);
@@ -118,7 +118,7 @@ export default function Analytics({ userRole }: AnalyticsProps) {
     }
   };
 
-  if (userRole !== 'ADMIN' && userRole !== 'SUPER_ADMIN') {
+  if (userRole !== 'admin' && userRole !== 'super_admin') {
     return (
       <div className="text-center py-12">
         <FiBarChart2 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
