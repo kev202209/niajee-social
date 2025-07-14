@@ -27,14 +27,14 @@ export default function AdminSidebar({ activeTab, setActiveTab, userRole, stats 
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: FiHome, roles: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] },
-    { id: 'users', label: 'Users', icon: FiUsers, roles: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] },
-    { id: 'content', label: 'Videos & Shorts', icon: FiVideo, roles: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] },
-    { id: 'posts', label: 'Posts', icon: FiMessageSquare, roles: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] },
-    { id: 'blogs', label: 'Blogs', icon: FiBook, roles: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] },
-    { id: 'reports', label: 'Reports', icon: FiFlag, roles: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] },
-    { id: 'contacts', label: 'Contacts', icon: FiMail, roles: ['MODERATOR', 'ADMIN', 'SUPER_ADMIN'] },
-    { id: 'analytics', label: 'Analytics', icon: FiBarChart, roles: ['ADMIN', 'SUPER_ADMIN'] },
+    { id: 'dashboard', label: 'Dashboard', icon: FiHome, roles: ['moderator', 'admin', 'super_admin'] },
+    { id: 'users', label: 'Users', icon: FiUsers, roles: ['moderator', 'admin', 'super_admin'] },
+    { id: 'content', label: 'Videos & Shorts', icon: FiVideo, roles: ['moderator', 'admin', 'super_admin'] },
+    { id: 'posts', label: 'Posts', icon: FiMessageSquare, roles: ['moderator', 'admin', 'super_admin'] },
+    { id: 'blogs', label: 'Blogs', icon: FiBook, roles: ['moderator', 'admin', 'super_admin'] },
+    { id: 'reports', label: 'Reports', icon: FiFlag, roles: ['moderator', 'admin', 'super_admin'] },
+    { id: 'contacts', label: 'Contacts', icon: FiMail, roles: ['moderator', 'admin', 'super_admin'] },
+    { id: 'analytics', label: 'Analytics', icon: FiBarChart, roles: ['admin', 'super_admin'] },
   ];
 
   const getBadgeCount = (itemId: string) => {
