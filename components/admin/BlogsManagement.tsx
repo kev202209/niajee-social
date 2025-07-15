@@ -2,23 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import Image from 'next/image';
 import { 
   FiSearch, 
-  FiFilter, 
-  FiUser, 
-  FiCalendar,
+  FiFilter,
   FiEye,
   FiFlag,
   FiTrash2,
   FiEdit3,
   FiClock,
-  FiBookOpen,
   FiHeart,
-  FiMessageSquare,
-  FiShare2,
-  FiX
+  FiX,
+  FiStar,
+  FiUser
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
+
+const BLOG_IMAGES_BASE_URL = 'http://localhost:5000/uploads/blogs/';
+const PROFILE_IMAGES_BASE_URL = 'http://localhost:5000/uploads/profiles/';
 
 interface Blog {
   id: string;
@@ -133,16 +134,16 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
         title: b.title,
         content: b.content ?? '',
         excerpt: b.excerpt ?? '',
-        featuredImage: b.featuredImage ?? '',
+        featuredImage: b.featuredImage ? `${BLOG_IMAGES_BASE_URL}${b.featuredImage}` : null,
         author: {
           id: b.authorId ?? '',
           name: b.authorUsername ?? '',
           username: b.authorUsername ?? '',
-          avatar: b.authorAvatar ?? '',
+          avatar: b.authorAvatar ? `${PROFILE_IMAGES_BASE_URL}${b.authorAvatar}` : null,
         },
         category: {
           id: b.categoryId ?? '',
-          name: b.categoryName ?? '',
+          name: b.categoryName ?? 'Uncategorized',
           slug: b.categorySlug ?? '',
         },
         tags: b.tags ?? [],
@@ -191,9 +192,52 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       }
 
       const data = await response.json();
-      setReports(data.data.reports);
-      setTotalPages(data.data.pagination.totalPages);
-      setTotalItems(data.data.pagination.total);
+      
+      // Map the backend response to your frontend structure
+      const mappedReports = data.data.reports.map((r: any) => ({
+        id: r.id,
+        blog: {
+          id: r.blogId,
+          title: r.blogTitle,
+          content: '', // Not provided by backend
+          excerpt: '', // Not provided by backend
+          featuredImage: null, // Not provided by backend
+          author: {
+            id: '',
+            name: r.blogAuthorName || 'Unknown Author', // Add if available
+            username: r.blogAuthorUsername || 'unknown',
+            avatar: null,
+          },
+          category: { id: '', name: 'Uncategorized', slug: '' },
+          tags: [],
+          likes: 0,
+          comments: 0,
+          shares: 0,
+          views: 0,
+          readTime: 0,
+          status: 'published' as const,
+          featured: false,
+          sensitive: false,
+          createdAt: r.createdAt,
+          updatedAt: '',
+          publishedAt: '',
+        },
+        reporter: {
+          id: '',
+          name: r.reporterUsername,
+          username: r.reporterUsername,
+        },
+        reason: r.reason,
+        description: r.description,
+        status: r.status,
+        reviewNotes: r.reviewNotes,
+        createdAt: r.createdAt,
+        reviewedAt: r.reviewedAt,
+      }));
+      
+      setReports(mappedReports);
+      setTotalPages(data.data.pagination.totalPages ?? 1);
+      setTotalItems(data.data.pagination.total ?? mappedReports.length);
     } catch (error) {
       console.error('Error fetching blog reports:', error);
       toast.error('Failed to load blog reports');
@@ -202,7 +246,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
     }
   };
 
-  const handleUpdateReportStatus = async (reportId: string, status: string, reviewNotes?: string) => {
+  const handleUpdateReportStatus = async (reportId: string, status: string, reviewNotes?: string, action?: string, actionDetails?: string) => {
     try {
       setActionLoading(reportId);
       const response = await fetch(
@@ -214,7 +258,12 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
             'Content-Type': 'application/json',
             'Accept': 'application/json' 
           },
-          body: JSON.stringify({ status, reviewNotes })
+          body: JSON.stringify({ 
+            status, 
+            reviewNotes,
+            action,
+            actionDetails
+          })
         }
       );
 
@@ -231,6 +280,117 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       toast.error('Failed to update report status');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleFlagBlog = async (blogId: string, reason: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/blogs/${blogId}/flag`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json' 
+          },
+          body: JSON.stringify({ reason })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to flag blog');
+      }
+
+      const data = await response.json();
+      toast.success(data.message);
+      fetchBlogs();
+    } catch (error) {
+      console.error('Error flagging blog:', error);
+      toast.error('Failed to flag blog');
+    }
+  };
+
+  const handleRemoveBlog = async (blogId: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/blogs/${blogId}/remove`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json' 
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to remove blog');
+      }
+
+      const data = await response.json();
+      toast.success(data.message);
+      fetchBlogs();
+    } catch (error) {
+      console.error('Error removing blog:', error);
+      toast.error('Failed to remove blog');
+    }
+  };
+
+  const handleFeatureBlog = async (blogId: string, featured: boolean) => {
+    try {
+      const url = featured 
+        ? `${process.env.NEXT_PUBLIC_API_URL}/api/admin/blogs/${blogId}/feature`
+        : `${process.env.NEXT_PUBLIC_API_URL}/api/admin/blogs/${blogId}/feature`;
+      
+      const response = await fetch(url, {
+        method: featured ? 'POST' : 'DELETE',
+        credentials: 'include',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json' 
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to ${featured ? 'feature' : 'unfeature'} blog`);
+      }
+
+      const data = await response.json();
+      toast.success(data.message);
+      fetchBlogs();
+    } catch (error) {
+      console.error(`Error ${featured ? 'featuring' : 'unfeaturing'} blog:`, error);
+      toast.error(`Failed to ${featured ? 'feature' : 'unfeature'} blog`);
+    }
+  };
+
+  const handleUpdateBlogStatus = async (blogId: string, status: 'draft' | 'published' | 'archived') => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/blogs/${blogId}/status`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Accept': 'application/json' 
+          },
+          body: JSON.stringify({ status })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update blog status');
+      }
+
+      const data = await response.json();
+      toast.success(data.message);
+      fetchBlogs();
+    } catch (error) {
+      console.error('Error updating blog status:', error);
+      toast.error('Failed to update blog status');
     }
   };
 
@@ -255,34 +415,60 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
         </div>
         <div className="p-6 space-y-6">
           {blog.featuredImage && (
-            <img
-              src={blog.featuredImage}
-              alt={blog.title}
-              className="w-full h-64 object-cover rounded-lg"
-            />
+            <div className="relative w-full h-64">
+              <Image
+                src={blog.featuredImage}
+                alt={blog.title}
+                fill
+                className="object-cover rounded-lg"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 60vw"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder-blog.png';
+                }}
+              />
+            </div>
           )}
           
           <div>
             <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
               {blog.title}
             </h4>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">
-              {blog.excerpt}
-            </p>
-            <div className="prose dark:prose-invert max-w-none">
-              <div dangerouslySetInnerHTML={{ __html: blog.content }} />
-            </div>
+            {blog.excerpt && (
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                {blog.excerpt}
+              </p>
+            )}
+            {blog.content && (
+              <div className="prose dark:prose-invert max-w-none">
+                <div dangerouslySetInnerHTML={{ __html: blog.content }} />
+              </div>
+            )}
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h5 className="font-medium text-gray-900 dark:text-white mb-3">Author</h5>
               <div className="flex items-center gap-3">
-                <img
-                  src={blog.author.avatar || '/placeholder.png'}
-                  alt={blog.author.name}
-                  className="w-10 h-10 rounded-full"
-                />
+                <div className="relative w-10 h-10">
+                  {blog.author.avatar ? (
+                    <Image
+                      src={blog.author.avatar}
+                      alt={blog.author.name}
+                      width={40}
+                      height={40}
+                      className="rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder-avatar.png';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                      <FiUser className="w-5 h-5 text-gray-500" />
+                    </div>
+                  )}
+                </div>
                 <div>
                   <div className="font-medium text-gray-900 dark:text-white">
                     {blog.author.name}
@@ -318,127 +504,221 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                   <span className="text-gray-600 dark:text-gray-400">Comments:</span>
                   <span className="text-gray-900 dark:text-white">{formatCount(blog.comments)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Read Time:</span>
-                  <span className="text-gray-900 dark:text-white">{blog.readTime} min</span>
-                </div>
+                {blog.readTime > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600 dark:text-gray-400">Read Time:</span>
+                    <span className="text-gray-900 dark:text-white">{blog.readTime} min</span>
+                  </div>
+                )}
               </div>
             </div>
             
             <div>
               <h5 className="font-medium text-gray-900 dark:text-white mb-3">Tags</h5>
               <div className="flex flex-wrap gap-2">
-                {blog.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full"
-                  >
-                    {tag}
-                  </span>
-                ))}
+                {blog.tags.length > 0 ? (
+                  blog.tags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-full"
+                    >
+                      {tag}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">No tags</span>
+                )}
               </div>
             </div>
           </div>
+          
+          {/* Admin Actions */}
+          {(userRole === 'admin' || userRole === 'super_admin') && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h5 className="font-medium text-gray-900 dark:text-white mb-3">Admin Actions</h5>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    const reason = prompt('Enter reason for flagging:');
+                    if (reason) handleFlagBlog(blog.id, reason);
+                  }}
+                  className="flex items-center gap-2 px-3 py-1 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                >
+                  <FiFlag className="w-4 h-4" />
+                  Flag Blog
+                </button>
+                
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to remove this blog?')) {
+                      handleRemoveBlog(blog.id);
+                    }
+                  }}
+                  className="flex items-center gap-2 px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <FiTrash2 className="w-4 h-4" />
+                  Remove Blog
+                </button>
+                
+                <button
+                  onClick={() => handleFeatureBlog(blog.id, !blog.featured)}
+                  className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <FiStar className="w-4 h-4" />
+                  {blog.featured ? 'Unfeature' : 'Feature'} Blog
+                </button>
+                
+                <button
+                  onClick={() => handleUpdateBlogStatus(blog.id, blog.status === 'published' ? 'archived' : 'published')}
+                  className="flex items-center gap-2 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <FiEdit3 className="w-4 h-4" />
+                  {blog.status === 'published' ? 'Archive' : 'Publish'} Blog
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 
-  const ReportModal = ({ report, onClose }: { report: BlogReport; onClose: () => void }) => (
-     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Report Details</h3>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><FiX /></button>
-        </div>
-        <div className="p-6 space-y-6">
-          <div>
-            <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-              Reported Blog
-            </h4>
-            <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <h5 className="font-medium text-gray-900 dark:text-white">
-                {report.blog.title}
-              </h5>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                by {report.blog.author.name}
-              </p>
-            </div>
+  const ReportModal = ({ report, onClose }: { report: BlogReport; onClose: () => void }) => {
+    const [action, setAction] = useState('');
+    const [actionDetails, setActionDetails] = useState('');
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Report Details</h3>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><FiX /></button>
           </div>
-          
-          <div>
-            <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-              Report Details
-            </h4>
+          <div className="p-6 space-y-6">
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                Reported Blog
+              </h4>
+              <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h5 className="font-medium text-gray-900 dark:text-white">
+                  {report.blog.title}
+                </h5>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  by {report.blog.author.name}
+                </p>
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                Report Details
+              </h4>
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Reason:
+                  </label>
+                  <p className="text-gray-900 dark:text-white">{report.reason}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Description:
+                  </label>
+                  <p className="text-gray-900 dark:text-white">{report.description}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Reporter:
+                  </label>
+                  <p className="text-gray-900 dark:text-white">
+                    {report.reporter.name} (@{report.reporter.username})
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Reported On:
+                  </label>
+                  <p className="text-gray-900 dark:text-white">
+                    {new Date(report.createdAt).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {report.reviewNotes && (
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                  Review Notes
+                </h4>
+                <p className="text-gray-600 dark:text-gray-400 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  {report.reviewNotes}
+                </p>
+              </div>
+            )}
+            
+            {/* Action selection */}
             <div className="space-y-3">
               <div>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Reason:
+                  Action (optional):
                 </label>
-                <p className="text-gray-900 dark:text-white">{report.reason}</p>
+                <select
+                  value={action}
+                  onChange={(e) => setAction(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Select action</option>
+                  <option value="no_action">No action required</option>
+                  <option value="warning">Warning issued</option>
+                  <option value="content_removed">Content removed</option>
+                  <option value="user_suspended">User suspended</option>
+                  <option value="escalated">Escalated to admin</option>
+                </select>
               </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Description:
-                </label>
-                <p className="text-gray-900 dark:text-white">{report.description}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Reporter:
-                </label>
-                <p className="text-gray-900 dark:text-white">
-                  {report.reporter.name} (@{report.reporter.username})
-                </p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Reported On:
-                </label>
-                <p className="text-gray-900 dark:text-white">
-                  {new Date(report.createdAt).toLocaleString()}
-                </p>
-              </div>
+              
+              {action && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Action Details:
+                  </label>
+                  <textarea
+                    value={actionDetails}
+                    onChange={(e) => setActionDetails(e.target.value)}
+                    placeholder="Enter details about the action taken..."
+                    className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    rows={3}
+                  />
+                </div>
+              )}
             </div>
-          </div>
-          
-          {report.reviewNotes && (
-            <div>
-              <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                Review Notes
-              </h4>
-              <p className="text-gray-600 dark:text-gray-400 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                {report.reviewNotes}
-              </p>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  const notes = prompt('Enter review notes (optional):');
+                  handleUpdateReportStatus(report.id, 'reviewed', notes || undefined, action, actionDetails);
+                }}
+                disabled={actionLoading === report.id}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Mark as Reviewed
+              </button>
+              <button
+                onClick={() => {
+                  const notes = prompt('Enter resolution notes (optional):');
+                  handleUpdateReportStatus(report.id, 'resolved', notes || undefined, action, actionDetails);
+                }}
+                disabled={actionLoading === report.id}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+              >
+                Mark as Resolved
+              </button>
             </div>
-          )}
-          
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                const notes = prompt('Enter review notes (optional):');
-                handleUpdateReportStatus(report.id, 'reviewed', notes || undefined);
-              }}
-              disabled={actionLoading === report.id}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              Mark as Reviewed
-            </button>
-            <button
-              onClick={() => {
-                const notes = prompt('Enter resolution notes (optional):');
-                handleUpdateReportStatus(report.id, 'resolved', notes || undefined);
-              }}
-              disabled={actionLoading === report.id}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-            >
-              Mark as Resolved
-            </button>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -570,11 +850,19 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
             blogs.map((blog) => (
               <div key={blog.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
                 {blog.featuredImage && (
-                  <img
-                    src={blog.featuredImage}
-                    alt={blog.title}
-                    className="w-full h-48 object-cover"
-                  />
+                  <div className="relative w-full h-48">
+                    <Image
+                      src={blog.featuredImage}
+                      alt={blog.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder-blog.png';
+                      }}
+                    />
+                  </div>
                 )}
                 
                 <div className="p-6">
@@ -587,16 +875,32 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                     </span>
                   </div>
                   
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
-                    {blog.excerpt}
-                  </p>
+                  {blog.excerpt && (
+                    <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
+                      {blog.excerpt}
+                    </p>
+                  )}
                   
                   <div className="flex items-center gap-2 mb-4">
-                    <img
-                      src={blog.author.avatar || '/placeholder.png'}
-                      alt={blog.author.name}
-                      className="w-8 h-8 rounded-full"
-                    />
+                    <div className="relative w-8 h-8">
+                      {blog.author.avatar ? (
+                        <Image
+                          src={blog.author.avatar}
+                          alt={blog.author.name}
+                          width={32}
+                          height={32}
+                          className="rounded-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder-avatar.png';
+                          }}
+                        />
+                      ) : (
+                        <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
+                          <FiUser className="w-4 h-4 text-gray-500" />
+                        </div>
+                      )}
+                    </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
                         {blog.author.name}
@@ -617,10 +921,12 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                         <FiHeart className="w-4 h-4" />
                         {formatCount(blog.likes)}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <FiClock className="w-4 h-4" />
-                        {blog.readTime}m
-                      </div>
+                      {blog.readTime > 0 && (
+                        <div className="flex items-center gap-1">
+                          <FiClock className="w-4 h-4" />
+                          {blog.readTime}m
+                        </div>
+                      )}
                     </div>
                     <div className="text-xs">
                       {new Date(blog.createdAt).toLocaleDateString()}
