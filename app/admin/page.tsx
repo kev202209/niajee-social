@@ -128,6 +128,13 @@ interface DashboardStats {
     unprocessedContacts: number;
     flaggedContent: number;
   };
+  channels: {
+    total: number;
+    verified: number;
+    monetized: number;
+    verificationRate: number;
+    monetizationRate: number;
+  };
 }
 
 export default function AdminPage() {
