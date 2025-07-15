@@ -137,7 +137,7 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
   };
 
   const handleRemoveContent = async (contentId: string, contentType: 'video' | 'short') => {
-    if (!['ADMIN', 'SUPER_ADMIN'].includes(userRole)) {
+    if (!['admin', 'super_admin'].includes(userRole)) {
       toast.error('Insufficient permissions');
       return;
     }
@@ -390,7 +390,7 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
                         </button>
                       )}
                       
-                      {['ADMIN', 'SUPER_ADMIN'].includes(userRole) && (
+                      {['admin', 'super_admin'].includes(userRole) && (
                         <button
                           onClick={() => handleRemoveContent(item.id, item.type)}
                           disabled={actionLoading === item.id}
