@@ -251,58 +251,6 @@ export default function AdminDashboard({ stats, loading }: AdminDashboardProps) 
     }
   ];
 
-  {/* Channels Section */}
-  <div>
-    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Channels</h3>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Channels</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {formatCount(stats.channels.total)}
-            </p>
-          </div>
-          <div className="p-3 rounded-full text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20">
-            <FiUsers className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Verified Channels</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {formatCount(stats.channels.verified)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {stats.channels.verificationRate}% verified
-            </p>
-          </div>
-          <div className="p-3 rounded-full text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/20">
-            <FiCheckCircle className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Monetized Channels</p>
-            <p className="text-2xl font-bold text-gray-900 dark:text-white">
-              {formatCount(stats.channels.monetized)}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              {stats.channels.monetizationRate}% monetized
-            </p>
-          </div>
-          <div className="p-3 rounded-full text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/20">
-            <FiTrendingUp className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   const getColorClasses = (color: string) => {
     const colors = {
       blue: 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20',
@@ -379,6 +327,58 @@ export default function AdminDashboard({ stats, loading }: AdminDashboardProps) 
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Channels Section */}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Channels</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Channels</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCount(stats.channels.total)}
+                </p>
+              </div>
+              <div className="p-3 rounded-full text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20">
+                <FiUsers className="w-6 h-6" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Verified Channels</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCount(stats.channels.verified)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {stats.channels.verificationRate}% verified
+                </p>
+              </div>
+              <div className="p-3 rounded-full text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/20">
+                <FiCheckCircle className="w-6 h-6" />
+              </div>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Monetized Channels</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {formatCount(stats.channels.monetized)}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  {stats.channels.monetizationRate}% monetized
+                </p>
+              </div>
+              <div className="p-3 rounded-full text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/20">
+                <FiTrendingUp className="w-6 h-6" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
