@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import useOutsideClick from '@/hooks/useOutsideClick';
 import { formatCount } from '@/app/utils/formatCount';
 import ShareService from '@/app/utils/ShareService';
+import Image from 'next/image';
 
 interface VideoMetaProps {
   video: Video;
@@ -339,10 +340,15 @@ useEffect(() => {
         {/* Channel Info and Subscribe Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img 
-              src={video.channel.avatar} 
+            <Image
+              src={video.channel.avatar || '/placeholder.png'}
               alt={video.channel.name}
+              width={48}
+              height={48}
               className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/placeholder.png';
+              }}
             />
             <div className="flex flex-col">
               <p className="font-semibold text-base sm:text-lg">{video.channel.name}</p>

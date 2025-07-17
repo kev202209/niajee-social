@@ -5,6 +5,7 @@ import { FiThumbsUp, FiThumbsDown, FiMoreHorizontal, FiHeart, FiMessageCircle, F
 import { Comment, CreateCommentDto } from '../../../types';
 import { useAuth } from '@/contexts/AuthContext';
 import TextAreaWithLimit from '@/components/ui/TextAreaWithLimit';
+import Image from 'next/image';
 
 interface CommentsSectionProps {
   videoId: string;
@@ -397,12 +398,15 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
     
     return (
       <div className={`flex gap-3 ${isReply ? 'ml-12' : ''} relative`}>
-        <img
+        <Image
           src={comment.user.profilePic || '/placeholder.png'}
           alt={comment.user.username}
+          width={40}
+          height={40}
           className="w-10 h-10 rounded-full flex-shrink-0"
           onError={(e) => {
-            (e.target as HTMLImageElement).src = '/placeholder.png';
+            const target = e.target as HTMLImageElement;
+            target.src = '/placeholder.png';
           }}
         />
         <div className="flex-1 space-y-2">
@@ -529,9 +533,11 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
           {replyingTo === comment.id && (
             <div className="mt-3">
               <div className="flex gap-3">
-                <img
+                <Image
                   src={user?.profilePic || '/placeholder.png'}
                   alt="You"
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full flex-shrink-0"
                 />
                 <div className="flex-1">
@@ -630,9 +636,11 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       {isAuthenticated ? (
         <form onSubmit={handleSubmitComment} className="space-y-4">
           <div className="flex gap-3">
-            <img
+            <Image
               src={user?.profilePic || '/placeholder.png'}
               alt="You"
+              width={40}
+              height={40}
               className="w-10 h-10 rounded-full flex-shrink-0"
             />
             <div className="flex-1">

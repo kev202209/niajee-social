@@ -4,6 +4,7 @@ import React, { useState, useEffect, FC } from 'react';
 import { useParams } from 'next/navigation';
 import { Channel } from '@/types';
 import { FiSave, FiTrash2, FiUpload, FiLoader } from 'react-icons/fi';
+import Image from 'next/image';
 
 const ChannelSettingsPage: FC = () => {
   const params = useParams();
@@ -181,7 +182,17 @@ const ChannelSettingsPage: FC = () => {
           <div className="relative">
             <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
               {avatarPreview ? (
-                <img src={avatarPreview} alt="Channel avatar" className="w-full h-full object-cover" />
+                <Image
+                  src={avatarPreview}
+                  alt="Channel avatar"
+                  fill
+                  className="object-cover"
+                  sizes="96px"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder-avatar.png';
+                  }}
+                />
               ) : (
                 <FiUpload className="w-8 h-8 text-white" />
               )}

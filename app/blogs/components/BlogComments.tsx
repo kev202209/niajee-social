@@ -154,11 +154,16 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
     const isOwn = user && c.user?.id === user.id;
     return (
       <div className={`flex gap-3 ${isReply ? "ml-12" : ""} relative`}>
-        <img
+        <Image
           src={c.user?.profilePic || "/default-avatar.png"}
           alt={c.user?.displayName || c.user?.username || "User"}
+          width={40}
+          height={40}
           className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-          onError={e => ((e.target as HTMLImageElement).src = "/default-avatar.png")}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/default-avatar.png";
+          }}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">

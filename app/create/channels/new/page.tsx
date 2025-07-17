@@ -3,6 +3,7 @@
 import React, { useState, FC } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiUpload, FiCheck, FiX, FiLoader } from 'react-icons/fi';
+import Image from 'next/image';
 
 interface CreateChannelForm {
   name: string;
@@ -195,7 +196,17 @@ const CreateChannelPage: FC = () => {
           <div className="relative">
             <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
               {avatarPreview ? (
-                <img src={avatarPreview} alt="Channel avatar" className="w-full h-full object-cover" />
+                <Image
+                  src={avatarPreview}
+                  alt="Channel avatar"
+                  fill
+                  className="object-cover"
+                  sizes="96px"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder-avatar.png';
+                  }}
+                />
               ) : (
                 <FiUpload className="w-8 h-8 text-white" />
               )}

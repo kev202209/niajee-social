@@ -4,6 +4,7 @@ import React, { useEffect, useState, FC } from 'react';
 import { Channel } from '@/types';
 import { FiSettings, FiUsers, FiVideo, FiEye, FiPlus, FiTrendingUp, FiUpload, FiPlayCircle } from 'react-icons/fi';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface DashboardStats {
   totalViews: number;
@@ -188,9 +189,19 @@ const CreateDashboard: FC = () => {
               >
                 <div className="p-4">
                   <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <div className="relative w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
                       {channel.avatar ? (
-                        <img src={channel.avatar} alt={channel.name} className="w-full h-full rounded-full object-cover" />
+                        <Image 
+                          src={channel.avatar} 
+                          alt={channel.name} 
+                          width={48}
+                          height={48}
+                          className="w-full h-full rounded-full object-cover" 
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = '/placeholder-avatar.png';
+                          }}
+                        />
                       ) : (
                         <FiVideo className="w-6 h-6 text-white" />
                       )}

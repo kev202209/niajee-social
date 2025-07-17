@@ -1,5 +1,6 @@
 import React from 'react';
 import { FiImage, FiX } from 'react-icons/fi';
+import Image from 'next/image';
 
 interface ThumbnailUploaderProps {
   thumbnailPreview: string;
@@ -42,9 +43,11 @@ export default function ThumbnailUploader({
         </div>
       ) : (
         <div className="relative">
-          <img
+          <Image
             src={thumbnailPreview}
             alt="Thumbnail preview"
+            width={400}
+            height={128}
             className="w-full h-32 object-cover rounded-lg"
           />
           {!uploading && (

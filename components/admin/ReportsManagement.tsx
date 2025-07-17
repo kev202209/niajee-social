@@ -15,6 +15,7 @@ import {
   FiMessageSquare
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
+import Image from 'next/image';
 
 interface Report {
   id: string;
@@ -289,10 +290,12 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-12 w-16">
-                          <img
+                          <Image
                             className="h-12 w-16 rounded object-cover"
-                            src={report.contentThumbnail}
+                            src={report.contentThumbnail || '/placeholder-video.png'}
                             alt={report.contentTitle}
+                            width={64}
+                            height={48}
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = '/placeholder-video.png';
                             }}
@@ -311,10 +314,12 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8">
-                          <img
+                          <Image
                             className="h-8 w-8 rounded-full object-cover"
                             src={report.reporter.avatar || '/placeholder.png'}
                             alt={report.reporter.name}
+                            width={32}
+                            height={32}
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = '/placeholder.png';
                             }}

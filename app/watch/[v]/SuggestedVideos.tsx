@@ -5,6 +5,7 @@ import { FiChevronLeft, FiChevronRight, FiClock, FiPlusCircle, FiAlertCircle, Fi
 import { SuggestedVideo } from "../../../types";
 import Link from "next/link";
 import timeAgo from "@/app/utils/timeAgo";
+import Image from "next/image";
 
 interface SuggestedVideosProps {
   videoId: string;
@@ -247,15 +248,16 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
       >
         <div className="relative w-40 h-24 flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
           {video.thumbnailUrl && !imageError ? (
-            <img
+            <Image
               src={video.thumbnailUrl}
               alt={video.title}
-              className="object-cover w-full h-full"
+              fill
+              className="object-cover"
+              sizes="160px"
               onError={() => setImageError(true)}
-              loading="lazy"
+              priority={false}
             />
           ) : (
-            // Fallback when no thumbnail or image fails to load
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700">
               <div className="text-center">
                 <div className="w-8 h-8 mx-auto mb-1 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center">

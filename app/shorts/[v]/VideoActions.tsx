@@ -19,6 +19,7 @@ import useOutsideClick from "@/hooks/useOutsideClick";
 import { formatCount } from '@/app/utils/formatCount';
 import ShareModal from '@/components/video/ShareModal';
 import ShareService from '@/app/utils/ShareService';
+import Image from 'next/image';
 
 // Define the video data structure here or import it from a shared types file
 interface ShortData {
@@ -298,12 +299,15 @@ const VideoActions = ({
         {/* Channel Avatar with Follow Button */}
         <div className="relative flex flex-col items-center">
           <div className="relative">
-            <img
+            <Image
               src={channel.avatar || "/placeholder.png"}
               alt={channel.name}
+              width={48}
+              height={48}
               className="w-12 h-12 rounded-full border-2 border-white object-cover"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = '/placeholder.png';
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder.png';
               }}
             />
             {/* Follow/Unfollow Button */}

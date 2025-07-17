@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, FC } from 'react';
+import Image from 'next/image';
 import { DetailedChannel as Channel } from '@/types';
 import { FiSettings, FiUsers, FiVideo, FiEye, FiPlus, FiRefreshCw } from 'react-icons/fi';
 
@@ -8,6 +9,7 @@ const ChannelsPage: FC = () => {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
   const fetchChannels = async (signal?: AbortSignal) => {
     try {
       setLoading(true);
@@ -64,6 +66,7 @@ const ChannelsPage: FC = () => {
   const handleCreateChannel = () => {
     window.location.href = '/create/channels/new';
   };
+  
   const handleRetry = () => {
     fetchChannels();
   };
@@ -162,21 +165,38 @@ const ChannelsPage: FC = () => {
                 {/* Channel Banner */}
                 <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 relative">
                   {channel.banner && (
-                    <img
-                      src={channel.banner}
-                      alt={`${channel.name} banner`}
-                      className="w-full h-full object-cover"
-                    />
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={channel.banner}
+                        alt={`${channel.name} banner`}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    </div>
                   )}
+                  
                   {/* Channel Avatar */}
                   <div className="absolute -bottom-6 left-4">
                     <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden">
                       {channel.avatar ? (
-                        <img
-                          src={channel.avatar}
-                          alt={channel.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={channel.avatar}
+                            alt={channel.name}
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        </div>
                       ) : (
                         <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                           <FiVideo className="w-6 h-6 text-gray-400" />

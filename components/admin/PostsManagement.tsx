@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import Image from 'next/image';
 import { 
   FiSearch, 
   FiFilter, 
@@ -272,10 +273,12 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
               <h5 className="font-medium text-gray-900 dark:text-white mb-2">Images</h5>
               <div className="grid grid-cols-2 gap-2">
                 {post.images.map((image, index) => (
-                  <img
+                  <Image
                     key={index}
                     src={image}
                     alt={`Post image ${index + 1}`}
+                    width={400}
+                    height={200}
                     className="w-full h-32 object-cover rounded-lg"
                   />
                 ))}
@@ -287,9 +290,11 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
             <div>
               <h5 className="font-medium text-gray-900 dark:text-white mb-2">Author</h5>
               <div className="flex items-center gap-2">
-                <img
+                <Image
                   src={post.author.avatar || '/placeholder.png'}
                   alt={post.author.name}
+                  width={32}
+                  height={32}
                   className="w-8 h-8 rounded-full"
                 />
                 <div>
@@ -467,9 +472,11 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
           posts.map((post) => (
             <div key={post.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
               {post.images && post.images.length > 0 && (
-                <img
+                <Image
                   src={post.images[0]}
                   alt={post.title}
+                  width={600}
+                  height={192}
                   className="w-full h-48 object-cover"
                 />
               )}
@@ -497,9 +504,11 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
                 </p>
                 
                 <div className="flex items-center gap-2 mb-4">
-                  <img
+                  <Image
                     src={post.author.avatar || '/placeholder.png'}
                     alt={post.author.name}
+                    width={32}
+                    height={32}
                     className="w-8 h-8 rounded-full"
                   />
                   <div>

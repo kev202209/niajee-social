@@ -115,11 +115,18 @@ const BlockRenderer = ({ block }: { block: BlockData }) => {
       return (
         <div className="mb-6">
           <div className="relative rounded-lg overflow-hidden">
-            <img
+            <Image
               src={data.file?.url || data.url}
-              alt={data.caption || ''}
+              alt={data.caption || 'Blog image'}
+              width={800}
+              height={600}
               className="w-full h-auto"
-              loading="lazy"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+              priority={false}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder-image.png';
+              }}
             />
           </div>
           {data.caption && (
@@ -134,11 +141,18 @@ const BlockRenderer = ({ block }: { block: BlockData }) => {
       return (
         <div className="mb-6">
           <div className="relative rounded-lg overflow-hidden">
-            <img
+            <Image
               src={data.url}
-              alt={data.caption || ''}
+              alt={data.caption || 'Blog image'}
+              width={800}
+              height={600}
               className="w-full h-auto"
-              loading="lazy"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+              priority={false}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder-image.png';
+              }}
             />
           </div>
           {data.caption && (
@@ -160,11 +174,18 @@ const BlockRenderer = ({ block }: { block: BlockData }) => {
           >
             <div className="flex items-start space-x-4">
               {data.meta?.image?.url && (
-                <div className="flex-shrink-0">
-                  <img
+                <div className="flex-shrink-0 relative">
+                  <Image
                     src={data.meta.image.url}
                     alt=""
+                    width={64}
+                    height={64}
                     className="w-16 h-16 rounded-lg object-cover"
+                    sizes="64px"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder-link.png';
+                    }}
                   />
                 </div>
               )}

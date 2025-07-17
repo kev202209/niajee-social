@@ -4,6 +4,7 @@ import React, { useState, useEffect, FC } from 'react';
 import { useParams } from 'next/navigation';
 import { Channel } from '@/types';
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiCalendar, FiLoader } from 'react-icons/fi';
+import Image from 'next/image';
 
 interface AnalyticsData {
   totalViews: number;
@@ -215,11 +216,19 @@ const ChannelAnalyticsPage: FC = () => {
                   <span className="text-sm font-medium text-gray-500 dark:text-gray-400 w-6">
                     {index + 1}
                   </span>
-                  <img 
-                    src={video.thumbnail} 
-                    alt={video.title}
-                    className="w-16 h-12 object-cover rounded"
-                  />
+                  <div className="relative w-16 h-12">
+                    <Image
+                      src={video.thumbnail}
+                      alt={video.title}
+                      fill
+                      className="object-cover rounded"
+                      sizes="64px"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder-video.png';
+                      }}
+                    />
+                  </div>
                   <div className="flex-1">
                     <h4 className="font-medium text-gray-900 dark:text-white">{video.title}</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -232,4 +241,4 @@ const ChannelAnalyticsPage: FC = () => {
             )}
         </div>
     </div>
-</div>);}  
+</div>);}

@@ -16,6 +16,7 @@ import {
   FiEye
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
+import Image from 'next/image';
 
 interface User {
   id: string;
@@ -390,10 +391,12 @@ export default function UserManagement({ userRole }: UserManagementProps) {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-12 w-12">
-                          <img
+                          <Image
                             className="h-12 w-12 rounded-full object-cover"
                             src={user.avatar || '/placeholder.png'}
                             alt={user.name}
+                            width={48}
+                            height={48}
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = '/placeholder.png';
                             }}

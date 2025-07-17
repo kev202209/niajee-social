@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import Image from 'next/image';
 import { 
   FiSearch, 
   FiFilter, 
@@ -288,13 +289,15 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
               {content.map((item) => (
                 <div key={item.id} className="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden">
                   <div className="relative aspect-video">
-                    <img
+                    <Image
                       src={item.thumbnail}
                       alt={item.title}
+                      fill
                       className="w-full h-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/placeholder-video.png';
                       }}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-40 transition-opacity flex items-center justify-center">
                       <FiPlayCircle className="w-12 h-12 text-white opacity-0 hover:opacity-100 transition-opacity" />
@@ -324,9 +327,11 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
                     </h3>
                     
                     <div className="flex items-center gap-2 mb-3">
-                      <img
+                      <Image
                         src={item.author.avatar || '/placeholder.png'}
                         alt={item.author.name}
+                        width={24}
+                        height={24}
                         className="w-6 h-6 rounded-full"
                         onError={(e) => {
                           (e.target as HTMLImageElement).src = '/placeholder.png';

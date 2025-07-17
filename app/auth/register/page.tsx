@@ -12,6 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getDeviceInfo } from '../../utils/deviceInfo';
 
 import { DatePicker } from "@/components/ui/DatePicker";
+import Image from 'next/image';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -219,11 +220,15 @@ export default function RegisterPage() {
               <div className="flex flex-col items-center mb-3">
                 {formData.profilePicture ? (
                   <div className="relative">
-                    <img
-                      src={URL.createObjectURL(formData.profilePicture)}
-                      alt="Profile Preview"
-                      className="w-32 h-32 rounded-full object-cover mb-2"
-                    />
+                    <div className="relative w-32 h-32 rounded-full overflow-hidden mb-2">
+                      <Image
+                        src={URL.createObjectURL(formData.profilePicture)}
+                        alt="Profile Preview"
+                        fill
+                        className="object-cover"
+                        sizes="128px"
+                      />
+                    </div>
                     <button
                       onClick={handleRemoveImage}
                       className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700 transition-colors"
@@ -233,18 +238,23 @@ export default function RegisterPage() {
                         <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
                     </button>
-                </div>
+                  </div>
                 ) : (
-                  <img
-                    src="/placeholder.png"
-                    alt="Placeholder Avatar"
-                    className="w-32 h-32 rounded-full object-cover mb-2"
-                  />
+                  <div className="relative w-32 h-32 rounded-full overflow-hidden mb-2">
+                    <Image
+                      src="/placeholder.png"
+                      alt="Placeholder Avatar"
+                      fill
+                      className="object-cover"
+                      sizes="128px"
+                    />
+                  </div>
                 )}
                 <input
                   type="file"
                   name="profilePicture"
                   onChange={handleFileChange}
+                  accept="image/*"
                   className="w-full p-2 border rounded mb-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-600 dark:file:text-gray-300"
                 />
                 <p className="text-sm text-gray-500">This is optional</p>

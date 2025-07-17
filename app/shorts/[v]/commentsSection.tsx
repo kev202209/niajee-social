@@ -11,6 +11,7 @@ import {
   FiEdit3,
 } from 'react-icons/fi';
 import { useAuth } from "@/contexts/AuthContext";
+import Image from 'next/image';
 
 interface Comment {
   id: string;
@@ -318,10 +319,16 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
     
     return (
       <div className="flex space-x-3 relative">
-        <img
+        <Image
           src={comment.user.profilePic || "/default-avatar.png"}
           alt={comment.user.username}
+          width={32}
+          height={32}
           className="w-8 h-8 rounded-full flex-shrink-0"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/default-avatar.png";
+          }}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2">
@@ -523,9 +530,11 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
           <form onSubmit={handleSubmitComment} className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             <div className="p-2">
               <div className="flex items-center space-x-2">
-                <img
+                <Image
                   src={user?.profilePic || "/default-avatar.png"}
                   alt="User"
+                  width={24}
+                  height={24}
                   className="w-6 h-6 rounded-full flex-shrink-0"
                 />
                 <div className="flex-1">
@@ -654,9 +663,11 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
           <form onSubmit={handleSubmitComment} className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
             <div className="p-3">
               <div className="flex items-center space-x-2">
-                <img
+                <Image
                   src={user?.profilePic || "/default-avatar.png"}
                   alt="User"
+                  width={24}
+                  height={24}
                   className="w-6 h-6 rounded-full flex-shrink-0"
                 />
                 <div className="flex-1">
