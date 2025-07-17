@@ -6,6 +6,7 @@ import { Comment, CreateCommentDto } from '../../../types';
 import { useAuth } from '@/contexts/AuthContext';
 import TextAreaWithLimit from '@/components/ui/TextAreaWithLimit';
 import Image from 'next/image';
+import timeAgo from '@/app/utils/timeAgo';
 
 interface CommentsSectionProps {
   videoId: string;
@@ -375,22 +376,6 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
     });
   };
 
-  // Format time ago
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffMinutes = Math.floor(diffTime / (1000 * 60));
-    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffMinutes < 1) return 'Just now';
-    if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 30) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
-    if (diffDays < 365) return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
-    return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) > 1 ? 's' : ''} ago`;
-  };
 
   // Comment component
   const CommentItem = ({ comment, isReply = false }: { comment: Comment; isReply?: boolean }) => {
@@ -415,7 +400,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
               {comment.user.displayName || comment.user.username}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {formatTimeAgo(comment.createdAt)}
+              {timeAgo(comment.createdAt)}
             </span>
             {isOwn && (
               <span className="text-xs text-blue-500 font-semibold">(You)</span>
