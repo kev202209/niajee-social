@@ -199,7 +199,7 @@ const CreateDashboard: FC = () => {
                           className="w-full h-full rounded-full object-cover" 
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder-avatar.png';
+                            target.src = '/placeholder.png';
                           }}
                         />
                       ) : (

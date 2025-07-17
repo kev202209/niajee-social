@@ -460,7 +460,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                       className="rounded-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder-avatar.png';
+                        target.src = '/placeholder.png';
                       }}
                     />
                   ) : (
@@ -892,7 +892,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                           className="rounded-full object-cover"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder-avatar.png';
+                            target.src = '/placeholder.png';
                           }}
                         />
                       ) : (

@@ -204,7 +204,7 @@ const CreateChannelPage: FC = () => {
                   sizes="96px"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder-avatar.png';
+                    target.src = '/placeholder.png';
                   }}
                 />
               ) : (
