@@ -4,6 +4,7 @@ import { FiSend, FiMessageCircle, FiChevronDown, FiChevronUp, FiHeart } from "re
 import Image from "next/image";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
+import timeAgo from '@/app/utils/timeAgo';
 
 interface BlogCommentsProps {
   blogId: string;
@@ -12,15 +13,6 @@ interface BlogCommentsProps {
   onCommentAdded?: () => void;
 }
 
-function formatTimeAgo(dateString: string) {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
-  if (diff < 60) return "Just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  return `${Math.floor(diff / 86400)}d ago`;
-}
 
 export default function BlogComments({ blogId, comments, loading, onCommentAdded }: BlogCommentsProps) {
   const [comment, setComment] = useState("");
@@ -170,7 +162,7 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
             <span className="font-semibold text-sm text-gray-900 dark:text-white">
               {c.user?.displayName || c.user?.username || "User"}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">{formatTimeAgo(c.createdAt)}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo(c.createdAt)}</span>
             {isOwn && (
               <span className="ml-2 text-xs text-blue-500 font-semibold">(You)</span>
             )}

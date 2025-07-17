@@ -7,6 +7,7 @@ import { DetailedChannel as Channel } from '@/types'
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiClock, FiPlay, FiCalendar, FiSmartphone } from 'react-icons/fi'
 import ChannelOverviewSkeleton from './ChannelOverviewSkeleton'
 import Image from 'next/image'
+import timeAgo from '@/app/utils/timeAgo';
 
 interface ChannelStats {
   totalViews: number | null;
@@ -217,22 +218,6 @@ export default function ChannelOverview() {
     }
   }
 
-  const formatTimeAgo = (timestamp: string): string => {
-    const now = new Date()
-    const time = new Date(timestamp)
-    const diffMs = now.getTime() - time.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
-
-    if (diffMins < 60) {
-      return `${diffMins} minutes ago`
-    } else if (diffHours < 24) {
-      return `${diffHours} hours ago`
-    } else {
-      return `${diffDays} days ago`
-    }
-  }
 
   const navigateToPage = (path: string) => {
     router.push(`/create/channels/${channelId}${path}`)
@@ -403,7 +388,7 @@ export default function ChannelOverview() {
                         {activity.title}
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {activity.description} • {formatTimeAgo(activity.timestamp)}
+                        {activity.description} • {timeAgo(activity.timestamp)}
                       </p>
                     </div>
                     {getActivityIcon(activity.type)}

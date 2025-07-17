@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fi';
 import { useAuth } from "@/contexts/AuthContext";
 import Image from 'next/image';
+import timeAgo from '@/app/utils/timeAgo';
 
 interface Comment {
   id: string;
@@ -290,22 +291,6 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
     }
   };
 
-  // Format time ago
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffMinutes = Math.floor(diffTime / (1000 * 60));
-    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffMinutes < 1) return 'Just now';
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 30) return `${diffDays}d ago`;
-    return `${Math.floor(diffDays / 30)}mo ago`;
-  };
-
   const handleClose = () => {
     setIsVisible(false);
     setTimeout(() => {
@@ -336,7 +321,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
               {comment.user.displayName || comment.user.username}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {formatTimeAgo(comment.createdAt)}
+              {timeAgo(comment.createdAt)}
             </span>
             {isOwn && (
               <span className="text-xs text-blue-500 font-semibold">(You)</span>
