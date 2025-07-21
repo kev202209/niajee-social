@@ -3,7 +3,7 @@
 import React, { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import { FaGoogle } from "react-icons/fa";
+import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
@@ -26,13 +26,15 @@ export default function RegisterPage() {
     lastName: '',
     email: '',
     birthday: '',
-    profilePicture: null as File | null,
+    profilePic: null as File | null,
     username: '',
     password: '',
     confirmPassword: '',
   });
   const [isEmailLoading, setIsEmailLoading] = useState(false);
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -42,11 +44,11 @@ export default function RegisterPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    setFormData(prev => ({ ...prev, profilePicture: files[0] }));
+    setFormData(prev => ({ ...prev, profilePic: files[0] }));
   };
 
   const handleRemoveImage = () => {
-    setFormData(prev => ({ ...prev, profilePicture: null }));
+    setFormData(prev => ({ ...prev, profilePic: null }));
   };
 
   const handleEmailCheck = async () => {
@@ -75,35 +77,40 @@ export default function RegisterPage() {
 
     setIsRegisterLoading(true);
     try {
-      // Get device information
       const deviceInfo = await getDeviceInfo();
 
-      // Register user with device info
-      await register(
-        formData.email,
-        formData.password,
-        formData.username,
-        formData.firstName,
-        formData.lastName,
-        formData.birthday,
-        deviceInfo // Add this parameter to your register function
-      );
+      // Create FormData for multipart upload
+      const uploadFormData = new FormData();
+      
+      // Create the nested registerDto structure
+      const registerDto = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        username: formData.username,
+        password: formData.password,
+        birthday: formData.birthday,
+      };
 
-      // Handle profile picture upload if exists
-      if (formData.profilePicture) {
-        const uploadFormData = new FormData();
-        uploadFormData.append('file', formData.profilePicture);
-        uploadFormData.append('email', formData.email);
-        uploadFormData.append('deviceInfo', JSON.stringify(deviceInfo));
+      // Append data as JSON strings (backend will parse them)
+      uploadFormData.append('registerDto', JSON.stringify(registerDto));
+      uploadFormData.append('deviceInfo', JSON.stringify(deviceInfo));
+      
+      // Append profile picture if exists
+      if (formData.profilePic) {
+        uploadFormData.append('profilePic', formData.profilePic);
+      }
 
-        const uploadResponse = await fetch(`${api_link}/auth/profile-picture`, {
-          method: 'POST',
-          body: uploadFormData,
-        });
+      // Send as multipart/form-data
+      const response = await fetch(`${api_link}/auth/register`, {
+        method: 'POST',
+        body: uploadFormData, // Don't set Content-Type header for FormData
+      });
 
-        if (!uploadResponse.ok) {
-          console.error('Failed to upload profile picture');
-        }
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Registration failed');
       }
 
       setStep(4);
@@ -218,11 +225,11 @@ export default function RegisterPage() {
                 Upload Profile Picture (optional)
               </label>
               <div className="flex flex-col items-center mb-3">
-                {formData.profilePicture ? (
+                {formData.profilePic ? (
                   <div className="relative">
                     <div className="relative w-32 h-32 rounded-full overflow-hidden mb-2">
                       <Image
-                        src={URL.createObjectURL(formData.profilePicture)}
+                        src={URL.createObjectURL(formData.profilePic)}
                         alt="Profile Preview"
                         fill
                         className="object-cover"
@@ -300,25 +307,43 @@ export default function RegisterPage() {
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
                 Password
               </label>
-              <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-                className="w-full p-2 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full p-2 pr-10 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                </button>
+              </div>
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
                 Confirm Password
               </label>
-              <input
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="w-full p-2 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  placeholder="Confirm Password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full p-2 pr-10 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  {showConfirmPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+                </button>
+              </div>
 
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
                 By creating an account, you confirm that you have read and accept our{" "}
