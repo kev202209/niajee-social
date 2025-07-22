@@ -25,7 +25,7 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
     { icon: Home, label: "Home", href: "/" },
     { icon: PlusCircle, label: "Create", href: "/create" },
     { icon: Newspaper, label: "Blogs", href: "/blogs" },
-    { icon: UsersRound, label: "Community", href: `${process.env.NEXT_PUBLIC_SECOND_FRONTEND_URL}` },
+    { icon: UsersRound, label: "Community", href: `${process.env.NEXT_PUBLIC_FRONTEND_B_URL}` },
     { icon: TrendingUp, label: "Trending", href: "/trending" },
     { icon: Component, label: "Shorts", href: "/shorts" },
     { icon: LaptopMinimalCheck, label: "Subscriptions", href: "/subscriptions" },

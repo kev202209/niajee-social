@@ -160,7 +160,7 @@ const TweetFeed: FC = () => {
                         {tweet.createdAt && timeAgo(tweet.createdAt)}
                       </span>
                     </div>
-                    <a href={`${process.env.NEXT_PUBLIC_SECOND_FRONTEND_URL}/${tweet.username}/status/${tweet.id}`}>
+                    <a href={`${process.env.NEXT_PUBLIC_FRONTEND_B_URL}/${tweet.username}/status/${tweet.id}`}>
                     <p className="text-gray-900 dark:text-gray-100 text-xs mt-1 line-clamp-2">
                       {tweet.content}
                     </p>
