@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
@@ -16,6 +16,7 @@ import Image from 'next/image';
 
 export default function RegisterPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register, checkEmailAvailability } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const api_link = process.env.NEXT_PUBLIC_API_URL;
@@ -35,6 +36,30 @@ export default function RegisterPage() {
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Get redirect URL from query params
+  const redirectUrl = searchParams.get('redirect');
+
+  // Security function to validate redirect URLs
+  const isValidRedirectUrl = (url: string): boolean => {
+    try {
+      const parsedUrl = new URL(url);
+      // Add your allowed domains here
+      const allowedDomains = [
+        process.env.NEXT_PUBLIC_FRONTEND_A_URL,
+        process.env.NEXT_PUBLIC_FRONTEND_B_URL,
+        process.env.NEXT_PUBLIC_MAIN_URL,
+        'localhost:3000',
+        'localhost:3001'
+      ].filter(Boolean);
+      
+      return allowedDomains.some(domain => 
+        parsedUrl.origin.includes(domain as string)
+      );
+    } catch {
+      return false;
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -115,11 +140,24 @@ export default function RegisterPage() {
 
       setStep(4);
       toast.success("Registration successful! Please check your email for verification.");
+      
+      // Store redirect URL for after email verification
+      if (redirectUrl && isValidRedirectUrl(redirectUrl)) {
+        sessionStorage.setItem('postVerificationRedirect', redirectUrl);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Registration failed");
     } finally {
       setIsRegisterLoading(false);
     }
+  };
+
+  // Also update the Google OAuth button to include redirect parameter
+  const handleGoogleSignup = () => {
+    const googleUrl = redirectUrl 
+      ? `${api_link}/auth/google?redirect=${encodeURIComponent(redirectUrl)}`
+      : `${api_link}/auth/google`;
+    window.location.href = googleUrl;
   };
 
   return (
@@ -146,7 +184,10 @@ export default function RegisterPage() {
               <h1 className="text-2xl font-bold mb-4 text-blue-500 dark:text-white">
                 Welcome to Mosaic
               </h1>
-              <Link href="/auth/login" className="block text-blue-600 dark:text-white mt-2 pb-2">
+              <Link 
+                href={`/auth/login${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`} 
+                className="block text-blue-600 dark:text-white mt-2 pb-2"
+              >
                 Already have an account? <span className="font-bold">Login</span>
               </Link>
               <div className="flex flex-row">
@@ -198,7 +239,7 @@ export default function RegisterPage() {
               </div>
               <div className="mt-4 flex flex-col gap-2">
                 <button
-                  onClick={() => window.location.href = `${api_link}/auth/google`}
+                  onClick={handleGoogleSignup}
                   className="w-full p-2 dark:bg-sky-500/10 bg-sky-600 hover:bg-sky-500/80 text-white dark:hover:bg-sky-500/80 dark:text-white rounded-xl flex items-center justify-center gap-2"
                 >
                   <FaGoogle /> Sign up with Google

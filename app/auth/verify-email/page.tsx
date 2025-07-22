@@ -26,7 +26,7 @@ export default function VerifyEmailPage() {
     }
 
     const verifyEmail = async () => {
-      hasVerified.current = true; // Mark as attempted
+      hasVerified.current = true;
       
       try {
         setIsLoading(true);
@@ -35,9 +35,18 @@ export default function VerifyEmailPage() {
         
         if (res.ok) {
           setMessage('Email verified successfully! You can now log in.');
-          setError(''); // Clear any previous errors
-          // Optionally, redirect after a delay:
-          setTimeout(() => router.push('/auth/login'), 5000);
+          setError('');
+          
+          // Check for stored redirect URL
+          const storedRedirect = sessionStorage.getItem('postVerificationRedirect');
+          if (storedRedirect) {
+            sessionStorage.removeItem('postVerificationRedirect');
+            setTimeout(() => {
+              window.location.href = `${storedRedirect}?verified=true`;
+            }, 2000);
+          } else {
+            setTimeout(() => router.push('/auth/login'), 5000);
+          }
         } else {
           setError(data.message || 'Verification failed.');
           setMessage(''); // Clear any previous messages

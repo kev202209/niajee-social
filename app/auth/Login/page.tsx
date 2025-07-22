@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
@@ -13,10 +13,14 @@ import { getDeviceInfo } from "../../utils/deviceInfo";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const api_link = process.env.NEXT_PUBLIC_API_URL;
+
+  // Get redirect URL from query params
+  const redirectUrl = searchParams.get('redirect');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -30,7 +34,18 @@ export default function LoginPage() {
       const deviceInfo = await getDeviceInfo();
       await login(identifier, password, deviceInfo);
       toast.success("Login successful!");
-      router.push('/');
+      
+      // Redirect to specified URL or default home
+      if (redirectUrl) {
+        // Validate the redirect URL for security
+        if (isValidRedirectUrl(redirectUrl)) {
+          window.location.href = redirectUrl;
+        } else {
+          router.push('/');
+        }
+      } else {
+        router.push('/');
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
     } finally {
@@ -39,7 +54,31 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${api_link}/auth/google`;
+    // Include redirect URL in Google OAuth flow
+    const googleUrl = redirectUrl 
+      ? `${api_link}/auth/google?redirect=${encodeURIComponent(redirectUrl)}`
+      : `${api_link}/auth/google`;
+    window.location.href = googleUrl;
+  };
+
+  // Security function to validate redirect URLs
+  const isValidRedirectUrl = (url: string): boolean => {
+    try {
+      const parsedUrl = new URL(url);
+      // Add your allowed domains here
+      const allowedDomains = [
+        process.env.NEXT_PUBLIC_FRONTEND_A_URL,
+        process.env.NEXT_PUBLIC_FRONTEND_B_URL,
+        'localhost:3000',
+        'localhost:3001'
+      ].filter(Boolean);
+      
+      return allowedDomains.some(domain => 
+        parsedUrl.origin.includes(domain as string)
+      );
+    } catch {
+      return false;
+    }
   };
 
   return (
@@ -59,7 +98,10 @@ export default function LoginPage() {
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
         <form onSubmit={handleSubmit} className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#ffffff,theme(colors.slate.200)_50%,#ffffff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.300/.48)_80%,theme(colors.blue.500)_86%,theme(colors.blue.300)_90%,theme(colors.blue.500)_94%,theme(colors.slate.300/.48))_border-box] dark:[background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,theme(colors.indigo.500)_86%,theme(colors.indigo.300)_90%,theme(colors.indigo.500)_94%,theme(colors.slate.600/.48))_border-box] rounded-2xl border border-1.5 border-transparent animate-border">
           <h1 className="text-2xl font-bold mb-4 text-blue-600 dark:text-white">Login</h1>
-          <Link href="/auth/register" className="block text-blue-600 dark:text-white mt-2 pb-2">
+          <Link 
+            href={`/auth/register${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`} 
+            className="block text-blue-600 dark:text-white mt-2 pb-2"
+          >
             Don't have an account? <span className="font-bold">Sign Up</span>
           </Link>
 
