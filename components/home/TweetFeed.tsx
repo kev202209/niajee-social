@@ -140,7 +140,7 @@ const TweetFeed: FC = () => {
               <li key={tweet.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 hover:shadow-md transition-shadow">
                 <div className="flex">
                   <Image
-                    src={tweet.profilePic}
+                    src={`http://localhost:5000/uploads/profiles/${tweet.profilePic}`}
                     alt={tweet.username}
                     width={32}
                     height={32}
