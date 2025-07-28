@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { DetailedChannel as Channel } from '@/types'
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiClock, FiPlay, FiCalendar, FiSmartphone } from 'react-icons/fi'
 import ChannelOverviewSkeleton from './ChannelOverviewSkeleton'
-import Image from 'next/image'
+import AuthenticatedImage from "@/components/Image"; // Add this import at the top
 import timeAgo from '@/app/utils/timeAgo';
 
 interface ChannelStats {
@@ -284,12 +284,13 @@ export default function ChannelOverview() {
           {/* Channel Avatar */}
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
             {channel.avatar ? (
-              <Image
+              <AuthenticatedImage
+                mediaKey={channel.avatar}
+                alt={channel.name}
                 width={64}
-                height={64} 
-                src={`${channel.avatar}`} 
-                alt={channel.name} 
-                className="w-full h-full rounded-full object-cover" 
+                height={64}
+                className="w-full h-full rounded-full object-cover"
+                fallbackSrc="/placeholder.png"
               />
             ) : (
               <FiVideo className="w-8 h-8 text-white" />

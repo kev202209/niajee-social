@@ -3,7 +3,7 @@ import { FC, useEffect, useRef, useState } from "react";
 import { FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiVolume, FiVolumeX, FiXCircle, FiUser } from "react-icons/fi";
 import DropdownMenuPortal from "./DropDownMenu";
 import Link from "next/link";
-import Image from "next/image";
+import AuthenticatedImage from "@/components/Image";
 import Hls from 'hls.js';
 
 const ShortCard: FC<{ short: Short }> = ({ short }) => {
@@ -16,6 +16,14 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [videoReady, setVideoReady] = useState<boolean>(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Helper to get video source URL from key
+  const getVideoSource = () => {
+    if (short.videoUrl && !short.videoUrl.startsWith("http")) {
+      return `${process.env.NEXT_PUBLIC_API_URL}/media/${short.videoUrl}`;
+    }
+    return short.videoUrl;
+  };
 
   // Setup HLS and video source
   useEffect(() => {
@@ -170,18 +178,25 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
     <Link href={`/shorts/${short.id}`}>
       <div className="bg-inherit rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer relative w-40 flex-shrink-0">
         {/* Short Video Container with 9:16 Aspect Ratio */}
-        <div
-          className="relative group rounded-t-xl overflow-hidden aspect-[9/16]"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
+        <div className="relative group rounded-t-xl overflow-hidden aspect-[9/16]">
+          {/* Thumbnail */}
+          <AuthenticatedImage
+            mediaKey={short.thumbnailUrl}
+            alt={short.title}
+            fill
+            className="absolute inset-0 object-cover w-full h-full"
+            sizes="(max-width: 640px) 100vw, 320px"
+            fallbackSrc="/placeholder-video.png"
+          />
+          {/* Video Preview */}
           <video
             ref={videoRef}
-            poster={short.thumbnailUrl}
+            poster="" // Remove poster, since thumbnail is handled above
+            src={getVideoSource()}
             muted={isMuted}
             loop
             playsInline
-            className="absolute inset-0 object-cover w-full h-full"
+            className="absolute inset-0 object-cover w-full h-full opacity-0 group-hover:opacity-100 transition-opacity"
           />
           
           {/* Volume Button & Slider */}
@@ -211,12 +226,13 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
             {/* Channel Avatar */}
             <div className="flex-shrink-0">
               {short.channel.avatar ? (
-                <Image
-                  src={short.channel.avatar}
+                <AuthenticatedImage
+                  mediaKey={short.channel.avatar}
                   alt={short.channel.name}
                   width={24}
                   height={24}
                   className="rounded-full w-6 h-6 object-cover"
+                  fallbackSrc="/placeholder.png"
                 />
               ) : (
                 <div className="w-6 h-6 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">

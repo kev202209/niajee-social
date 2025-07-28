@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, FC } from 'react';
-import Image from 'next/image';
+import AuthenticatedImage from "@/components/Image";
 import { DetailedChannel as Channel } from '@/types';
 import { FiSettings, FiUsers, FiVideo, FiEye, FiPlus, FiRefreshCw } from 'react-icons/fi';
 
@@ -164,37 +164,31 @@ const ChannelsPage: FC = () => {
               >
                 {/* Channel Banner */}
                 <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 relative">
-                  {channel.banner && (
+                  {channel.banner ? (
                     <div className="relative w-full h-full">
-                      <Image
-                        src={channel.banner}
+                      <AuthenticatedImage
+                        mediaKey={channel.banner}
                         alt={`${channel.name} banner`}
                         fill
                         className="object-cover"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                        }}
+                        fallbackSrc="/placeholder-banner.png"
                       />
                     </div>
-                  )}
+                  ) : null}
                   
                   {/* Channel Avatar */}
                   <div className="absolute -bottom-6 left-4">
                     <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden">
                       {channel.avatar ? (
                         <div className="relative w-full h-full">
-                          <Image
-                            src={channel.avatar}
+                          <AuthenticatedImage
+                            mediaKey={channel.avatar}
                             alt={channel.name}
                             fill
                             className="object-cover"
                             sizes="48px"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
+                            fallbackSrc="/placeholder.png"
                           />
                         </div>
                       ) : (

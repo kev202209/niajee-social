@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image' // Add this import
 import { usePathname, useParams } from 'next/navigation'
 import { DetailedChannel as Channel } from '@/types'
 import CreateHeader from '@/components/create/Header'
@@ -16,6 +15,7 @@ import {
   Home,
   ArrowLeft
 } from 'lucide-react'
+import AuthenticatedImage from "@/components/Image";
 
 const channelSidebarItems = [
   { label: 'Overview', icon: Home, href: '' },
@@ -106,16 +106,13 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
               {channel?.avatar ? (
-                <Image 
-                  src={channel.avatar} 
-                  alt={channel.name} 
+                <AuthenticatedImage
+                  mediaKey={channel.avatar}
+                  alt={channel.name}
                   width={40}
                   height={40}
-                  className="w-full h-full rounded-full object-cover" 
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                  }}
+                  className="w-full h-full rounded-full object-cover"
+                  fallbackSrc="/placeholder.png"
                 />
               ) : (
                 <Video className="w-5 h-5 text-white" />

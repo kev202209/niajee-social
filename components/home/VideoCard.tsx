@@ -5,6 +5,7 @@ import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle,
 import Link from "next/link";
 import timeAgo from "../../app/utils/timeAgo";
 import Hls from 'hls.js';
+import AuthenticatedImage from "@/components/Image";
 
 function useOutsideClick(
   ref: React.RefObject<HTMLElement | null>,
@@ -34,16 +35,24 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
   
   useOutsideClick(optionsRef, () => setShowOptions(false));
 
-  // Get the best available quality
+  // Helper to get video source URL from key
   const getVideoSource = () => {
     const qualities = ['1080p', '720p', '360p'];
     for (const quality of qualities) {
       if (video.videoUrl[quality]) {
+        // If the value is just a key, build the URL
+        if (!video.videoUrl[quality].startsWith("http")) {
+          return `${process.env.NEXT_PUBLIC_API_URL}/media/${video.videoUrl[quality]}`;
+        }
         return video.videoUrl[quality];
       }
     }
     // Fallback to first available quality
-    return Object.values(video.videoUrl)[0] || '';
+    const first = Object.values(video.videoUrl)[0] || '';
+    if (first && !first.startsWith("http")) {
+      return `${process.env.NEXT_PUBLIC_API_URL}/media/${first}`;
+    }
+    return first;
   };
 
   // Setup HLS and video source
@@ -183,19 +192,25 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
     <Link href={`/watch/${video.videoId}`}>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer relative">
         {/* Video Thumbnail Container with 16:9 Aspect Ratio */}
-        <div
-          className="relative group rounded-t-lg overflow-hidden aspect-video"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
+        <div className="relative group rounded-t-lg overflow-hidden aspect-video">
+          {/* Thumbnail */}
+          <AuthenticatedImage
+            mediaKey={video.thumbnail}
+            alt={video.title}
+            fill
+            className="absolute inset-0 object-cover w-full h-full"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            fallbackSrc="/placeholder-video.png"
+          />
           {/* Video Preview */}
           <video
             ref={videoRef}
-            poster={video.thumbnail} // Updated to match data structure
+            poster="" // Remove poster, since thumbnail is handled above
+            src={getVideoSource()}
             muted={isMuted}
             loop
             playsInline
-            className="absolute inset-0 object-cover w-full h-full"
+            className="absolute inset-0 object-cover w-full h-full opacity-0 group-hover:opacity-100 transition-opacity"
           />
           
           {/* Duration Badge */}
@@ -230,12 +245,13 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
             {/* Channel Avatar */}
             <div className="flex-shrink-0">
               {video.channel.avatar ? (
-                <Image
-                  src={video.channel.avatar}
+                <AuthenticatedImage
+                  mediaKey={video.channel.avatar}
                   alt={video.channel.name}
                   width={36}
                   height={36}
                   className="rounded-full w-9 h-9 object-cover"
+                  fallbackSrc="/placeholder.png"
                 />
               ) : (
                 <div className="w-9 h-9 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">

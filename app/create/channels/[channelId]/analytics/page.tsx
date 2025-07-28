@@ -4,7 +4,7 @@ import React, { useState, useEffect, FC } from 'react';
 import { useParams } from 'next/navigation';
 import { Channel } from '@/types';
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiCalendar, FiLoader } from 'react-icons/fi';
-import Image from 'next/image';
+import AuthenticatedImage from "@/components/Image";
 
 interface AnalyticsData {
   totalViews: number;
@@ -217,16 +217,13 @@ const ChannelAnalyticsPage: FC = () => {
                     {index + 1}
                   </span>
                   <div className="relative w-16 h-12">
-                    <Image
-                      src={video.thumbnail}
+                    <AuthenticatedImage
+                      mediaKey={video.thumbnail}
                       alt={video.title}
                       fill
                       className="object-cover rounded"
                       sizes="64px"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder-video.png';
-                      }}
+                      fallbackSrc="/placeholder-video.png"
                     />
                   </div>
                   <div className="flex-1">

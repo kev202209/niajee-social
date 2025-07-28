@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Channel } from '@/types';
 import { FiSave, FiTrash2, FiUpload, FiLoader } from 'react-icons/fi';
 import Image from 'next/image';
+import AuthenticatedImage from "@/components/Image";
 
 const ChannelSettingsPage: FC = () => {
   const params = useParams();
@@ -182,17 +183,26 @@ const ChannelSettingsPage: FC = () => {
           <div className="relative">
             <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
               {avatarPreview ? (
-                <Image
-                  src={avatarPreview}
-                  alt="Channel avatar"
-                  fill
-                  className="object-cover"
-                  sizes="96px"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder.png';
-                  }}
-                />
+                avatarPreview.startsWith("data:") ? (
+                  // Local preview for newly selected file
+                  <Image
+                    src={avatarPreview}
+                    alt="Channel avatar"
+                    fill
+                    className="object-cover"
+                    sizes="96px"
+                  />
+                ) : (
+                  // Existing avatar from backend
+                  <AuthenticatedImage
+                    mediaKey={channel?.avatar || ""}
+                    alt="Channel avatar"
+                    fill
+                    className="object-cover"
+                    sizes="96px"
+                    fallbackSrc="/placeholder.png"
+                  />
+                )
               ) : (
                 <FiUpload className="w-8 h-8 text-white" />
               )}

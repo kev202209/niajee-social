@@ -14,6 +14,7 @@ import { Blog, BlogComment } from '@/types';
 import { FiClock, FiEye, FiCalendar, FiUser, FiTag, FiArrowLeft, FiShare2, FiExternalLink, FiCheck } from 'react-icons/fi';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import AuthenticatedImage from "@/components/Image";
 
 // Block content renderer component
 interface BlockData {
@@ -115,18 +116,14 @@ const BlockRenderer = ({ block }: { block: BlockData }) => {
       return (
         <div className="mb-6">
           <div className="relative rounded-lg overflow-hidden">
-            <Image
-              src={data.file?.url || data.url}
+            <AuthenticatedImage
+              mediaKey={data.file?.url || data.url}
               alt={data.caption || 'Blog image'}
               width={800}
               height={600}
               className="w-full h-auto"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
-              priority={false}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = '/placeholder-image.png';
-              }}
+              fallbackSrc="/placeholder.png"
             />
           </div>
           {data.caption && (
@@ -604,12 +601,13 @@ export default function BlogDetailPage() {
               <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400 mb-6">
                 <div className="flex items-center space-x-2">
                   <div className="relative">
-                    <Image
-                      src={blog.author.profilePic || '/default-avatar.png'}
+                    <AuthenticatedImage
+                      mediaKey={blog.author.profilePic || ""}
                       alt={blog.author.displayName}
                       width={32}
                       height={32}
-                      className="rounded-full object-cover w-8 h-8" // Ensures circular and not oval
+                      className="rounded-full object-cover w-8 h-8"
+                      fallbackSrc="/placeholder.png"
                     />
                     {blog.author.verified && (
                       <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
@@ -661,11 +659,12 @@ export default function BlogDetailPage() {
             {blog.featuredImage && !imageError && (
               <div className="px-6 mb-6">
                 <div className="relative aspect-video rounded-lg overflow-hidden">
-                  <Image
-                    src={blog.featuredImage}
+                  <AuthenticatedImage
+                    mediaKey={blog.featuredImage}
                     alt={blog.title}
                     fill
                     className="object-cover"
+                    fallbackSrc="/placeholder.png"
                     onError={() => setImageError(true)}
                   />
                 </div>

@@ -2,7 +2,7 @@
 
 import { FC, useRef, useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import AuthenticatedImage from "@/components/Image" // <-- Use your custom component
 import DarkModeToggle from "../DarkModeToggle"
 import useOutsideClick from "@/hooks/useOutsideClick"
 import {
@@ -96,12 +96,13 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
               onClick={() => setShowProfileMenu(!showProfileMenu)}
               className="focus:outline-none"
             >
-              <Image
-                src={typeof user?.profilePic === "string" && user.profilePic ? user.profilePic : "/placeholder.png"}
+              <AuthenticatedImage
+                mediaKey={typeof user?.profilePic === "string" && user.profilePic ? user.profilePic : ""}
                 alt="Profile"
                 width={36}
                 height={36}
                 className="rounded-full h-9 w-9"
+                fallbackSrc="/placeholder.png"
               />
             </button>
             {showProfileMenu && (

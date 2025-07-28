@@ -1,7 +1,6 @@
 "use client";
 import { FC, useRef, useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import DarkModeToggle from "../DarkModeToggle";
 import useOutsideClick from "@/hooks/useOutsideClick";
 import {
@@ -12,6 +11,7 @@ import {
   FiPlus,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
+import AuthenticatedImage from "@/components/Image";
 
 const Header: FC = () => {
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
@@ -67,12 +67,13 @@ const Header: FC = () => {
               onClick={() => setShowProfileMenu(!showProfileMenu)}
               className="focus:outline-none ring-2 ring-transparent hover:ring-gray-300 dark:hover:ring-gray-600 rounded-full transition-all duration-200"
             >
-              <Image
-                src={user && user.profilePic ? user.profilePic : "/placeholder.png"}
+              <AuthenticatedImage
+                mediaKey={user?.profilePic || ""}
                 alt="Profile"
                 width={36}
                 height={36}
                 className="rounded-full"
+                fallbackSrc="/placeholder.png"
               />
             </button>
             {showProfileMenu && (
