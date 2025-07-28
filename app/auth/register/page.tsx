@@ -94,6 +94,7 @@ export default function RegisterPage() {
     }
   };
 
+  // ✅ Updated to use AuthContext register function
   const handleRegister = async () => {
     if (formData.password !== formData.confirmPassword) {
       toast.error('Passwords do not match');
@@ -104,39 +105,19 @@ export default function RegisterPage() {
     try {
       const deviceInfo = await getDeviceInfo();
 
-      // Create FormData for multipart upload
-      const uploadFormData = new FormData();
-      
-      // Create the nested registerDto structure
-      const registerDto = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        username: formData.username,
-        password: formData.password,
-        birthday: formData.birthday,
-      };
-
-      // Append data as JSON strings (backend will parse them)
-      uploadFormData.append('registerDto', JSON.stringify(registerDto));
-      uploadFormData.append('deviceInfo', JSON.stringify(deviceInfo));
-      
-      // Append profile picture if exists
-      if (formData.profilePic) {
-        uploadFormData.append('profilePic', formData.profilePic);
-      }
-
-      // Send as multipart/form-data
-      const response = await fetch(`${api_link}/auth/register`, {
-        method: 'POST',
-        body: uploadFormData, // Don't set Content-Type header for FormData
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
+      // ✅ Use AuthContext register function with the same data structure
+      await register(
+        {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          username: formData.username,
+          password: formData.password,
+          birthday: formData.birthday,
+          profilePic: formData.profilePic,
+        },
+        deviceInfo
+      );
 
       setStep(4);
       toast.success("Registration successful! Please check your email for verification.");

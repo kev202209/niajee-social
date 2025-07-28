@@ -8,12 +8,15 @@ interface AuthContextType {
   error: string | null;
   login: (identifier: string, password: string, deviceInfo: any) => Promise<void>;
   register: (
-    email: string,
-    password: string,
-    username: string,
-    firstName: string,
-    lastName: string,
-    birthday: string | undefined,
+    formData: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      username: string;
+      password: string;
+      birthday: string;
+      profilePic?: File | null;
+    },
     deviceInfo: any
   ) => Promise<void>;
   logout: () => Promise<void>;
@@ -48,30 +51,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, []);
 
-  // Add this helper function at the top of your AuthProvider component
-  const updateUserProfilePicture = (user: User): User => {
-    if (user.profilePic && !user.profilePic.startsWith('http')) {
-      // Only add the base URL if it's not already a full URL
-      return {
-        ...user,
-        profilePic: `${process.env.NEXT_PUBLIC_API_URL}/uploads/profiles/${user.profilePic}`
-      };
-    }
-    return user;
-  };
-
   const checkAuth = async () => {
     try {
       const response = await fetch(`${api_link}/auth/verify`, {
         method: 'GET',
-        credentials: 'include', // Ensures the HttpOnly cookie is sent automatically
+        credentials: 'include',
       });
 
       if (response.ok) {
         const userData: User = await response.json();
-        // ✅ Update profile picture URL before setting user
-        const updatedUser = updateUserProfilePicture(userData);
-        setUser(updatedUser);
+        setUser(userData);
       } else {
         setUser(null);
       }
@@ -107,9 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data.message || 'Login failed. Please check your internet connection.'
         );
       }
-      // ✅ Update profile picture URL before setting user
-      const updatedUser = updateUserProfilePicture(data.user);
-      setUser(updatedUser);
+      setUser(data.user);
     } catch (err) {
       const errorMessage = handleFetchError(err, 'Login failed');
       setError(errorMessage);
@@ -119,41 +106,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // ✅ Updated register function to match your page logic exactly
   const register = async (
-    email: string,
-    password: string,
-    username: string,
-    firstName: string,
-    lastName: string,
-    birthday: string | undefined,
+    formData: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      username: string;
+      password: string;
+      birthday: string;
+      profilePic?: File | null;
+    },
     deviceInfo: any
   ) => {
     try {
       setLoading(true);
       setError(null);
 
+      // Create FormData for multipart upload (exactly like your page)
+      const uploadFormData = new FormData();
+      
+      // Create the nested registerDto structure
+      const registerDto = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        username: formData.username,
+        password: formData.password,
+        birthday: formData.birthday,
+      };
+
+      // Append data as JSON strings (backend will parse them)
+      uploadFormData.append('registerDto', JSON.stringify(registerDto));
+      uploadFormData.append('deviceInfo', JSON.stringify(deviceInfo));
+      
+      // Append profile picture if exists
+      if (formData.profilePic) {
+        uploadFormData.append('profilePic', formData.profilePic);
+      }
+
+      // Send as multipart/form-data (exactly like your page)
       const response = await fetch(`${api_link}/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          username,
-          firstName,
-          lastName,
-          birthday,
-          deviceInfo
-        }),
+        body: uploadFormData, // Don't set Content-Type header for FormData
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          data.message || 'Registration failed. Please check your internet connection.'
-        );
+        throw new Error(data.message || 'Registration failed');
       }
 
       return data;
@@ -253,7 +254,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(handleFetchError(err, 'Email availability check failed'));
     }
   };
-
 
   const logout = async () => {
     try {
