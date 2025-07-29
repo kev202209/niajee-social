@@ -5,6 +5,7 @@ import DropdownMenuPortal from "./DropDownMenu";
 import Link from "next/link";
 import AuthenticatedImage from "@/components/Image";
 import Hls from 'hls.js';
+import { getFullUrl } from "@/app/utils/videourl";
 
 const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -18,12 +19,12 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   // Helper to get video source URL from key
-  const getVideoSource = () => {
-    if (short.videoUrl && !short.videoUrl.startsWith("http")) {
-      return `${process.env.NEXT_PUBLIC_API_URL}/media/${short.videoUrl}`;
-    }
-    return short.videoUrl;
-  };
+const getVideoSource = () => {
+  if (short.videoUrl) {
+    return getFullUrl(short.videoUrl);
+  }
+  return "";
+};
 
   // Setup HLS and video source
   useEffect(() => {

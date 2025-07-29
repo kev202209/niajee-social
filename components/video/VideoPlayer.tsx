@@ -10,6 +10,7 @@ import ControlBar from './ControlBar';
 import VideoMeta from './VideoMeta';
 import Hls from 'hls.js';
 import BufferingSpinner from './BufferingSpinner';
+import { getFullUrl } from '@/app/utils/videourl';
 
 interface VideoProps {
   video: mVideo;
@@ -26,11 +27,16 @@ const getBestQualityUrl = (videoUrl: Record<string, string>) => {
   return keys.length > 0 ? videoUrl[keys[0]] : null;
 };
 
+
 export default function VideoPlayer({ video }: { video: mVideo }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Use master playlist if available, otherwise use best quality
-  const streamUrl = video.masterPlaylist || getBestQualityUrl(video.videoUrl) || '';
+  const streamUrl = getFullUrl(
+    video.masterPlaylist ||
+    getBestQualityUrl(video.videoUrl) ||
+    video.videoSrc
+  );
 
   // Use the controls object from the hook
   const controls = useVideoPlayer({

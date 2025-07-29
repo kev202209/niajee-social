@@ -6,6 +6,7 @@ import Link from "next/link";
 import timeAgo from "../../app/utils/timeAgo";
 import Hls from 'hls.js';
 import AuthenticatedImage from "@/components/Image";
+import { getFullUrl } from "@/app/utils/videourl";
 
 function useOutsideClick(
   ref: React.RefObject<HTMLElement | null>,
@@ -40,19 +41,11 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
     const qualities = ['1080p', '720p', '360p'];
     for (const quality of qualities) {
       if (video.videoUrl[quality]) {
-        // If the value is just a key, build the URL
-        if (!video.videoUrl[quality].startsWith("http")) {
-          return `${process.env.NEXT_PUBLIC_API_URL}/media/${video.videoUrl[quality]}`;
-        }
-        return video.videoUrl[quality];
+        return getFullUrl(video.videoUrl[quality]);
       }
     }
-    // Fallback to first available quality
     const first = Object.values(video.videoUrl)[0] || '';
-    if (first && !first.startsWith("http")) {
-      return `${process.env.NEXT_PUBLIC_API_URL}/media/${first}`;
-    }
-    return first;
+    return getFullUrl(first);
   };
 
   // Setup HLS and video source

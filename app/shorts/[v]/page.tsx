@@ -10,6 +10,7 @@ import VideoActions from "./VideoActions";
 import ReportModal from "./ReportModal"; 
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import CommentsSection from "./CommentsSection";
+import { getFullUrl } from "@/app/utils/videourl";
 import { Comment } from "@/types";
 
 // Updated backend data structure for shorts
@@ -89,40 +90,32 @@ const ShortVideoPage = () => {
   const getBestVideoUrl = (video: ShortData): string => {
     // If videoSrc is provided, use it
     if (video.videoSrc) {
-      return video.videoSrc;
+      return getFullUrl(video.videoSrc);
     }
 
     // If masterPlaylist is provided, use it for HLS
     if (video.masterPlaylist) {
-      return video.masterPlaylist;
+      return getFullUrl(video.masterPlaylist);
     }
 
     // If videoUrl is a string, return it
     if (typeof video.videoUrl === 'string') {
-      return video.videoUrl;
+      return getFullUrl(video.videoUrl);
     }
 
     // If videoUrl is an object, pick the best quality
     if (typeof video.videoUrl === 'object') {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
       const qualities = video.qualities || Object.keys(video.videoUrl);
-      
-      // Prefer higher quality first
       const preferredQualities = ['1080p', '720p', '480p', '360p', '240p'];
-      
       for (const quality of preferredQualities) {
         if (video.videoUrl[quality]) {
-          return video.videoUrl[quality].startsWith('http') 
-            ? video.videoUrl[quality]
-            : `${backendUrl}/${video.videoUrl[quality]}`;
+          return getFullUrl(video.videoUrl[quality]);
         }
       }
-      
       // Fallback to first available quality
       const firstQuality = Object.keys(video.videoUrl)[0];
       if (firstQuality) {
-        const url = video.videoUrl[firstQuality];
-        return url.startsWith('http') ? url : `${backendUrl}/${url}`;
+        return getFullUrl(video.videoUrl[firstQuality]);
       }
     }
 
