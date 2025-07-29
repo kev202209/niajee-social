@@ -42,7 +42,6 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
   const api_url = process.env.NEXT_PUBLIC_API_URL;
-  console.log('here is the api url', api_url)
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -90,9 +89,6 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       try {
         setIsLoading(true);
         setHasError(false);
-
-        console.log('Fetching authenticated image for mediaKey:', mediaKey);
-        console.log('Using API URL:', `${api_url}/media/${mediaKey}`);
 
         // HTTP-only cookie sent automatically with credentials: 'include'
         const response = await fetch(`${api_url}/media/${mediaKey}`, {
