@@ -1,7 +1,7 @@
 "use client";
 import { FC, useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import AuthenticatedImage from "@/components/Image";
 import DarkModeToggle from "../DarkModeToggle";
 import useOutsideClick from "@/hooks/useOutsideClick";
 import {
@@ -11,7 +11,7 @@ import {
   FiLogOut,
   FiPlus,
 } from "react-icons/fi";
-import { ChevronRight, ChevronLeft } from "lucide-react"; // ✅ Import both icons
+import { ChevronRight, ChevronLeft } from "lucide-react";
 import Sidebar from "./Sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -125,12 +125,13 @@ const Header: FC = () => {
                 }}
                 className="focus:outline-none"
               >
-                <Image
-                  src={user && user.profilePic ? user.profilePic : "/placeholder.png"}
+                <AuthenticatedImage
+                  mediaKey={user && user.profilePic ? user.profilePic : ""}
                   alt="Profile"
                   width={40}
                   height={40}
                   className="rounded-full h-7 w-7"
+                  fallbackSrc="/placeholder.png"
                 />
               </button>
               {showProfileMenu && (
