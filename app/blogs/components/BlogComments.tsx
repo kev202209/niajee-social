@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { BlogComment } from "@/types";
 import { FiSend, FiMessageCircle, FiChevronDown, FiChevronUp, FiHeart } from "react-icons/fi";
-import Image from "next/image";
+import AuthenticatedImage from "@/components/Image"; 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import timeAgo from '@/app/utils/timeAgo';
@@ -146,17 +146,14 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
     const isOwn = user && c.user?.id === user.id;
     return (
       <div className={`flex gap-3 ${isReply ? "ml-12" : ""} relative`}>
-        <Image
-          src={c.user?.profilePic || "/default-avatar.png"}
-          alt={c.user?.displayName || c.user?.username || "User"}
-          width={40}
-          height={40}
-          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = "/default-avatar.png";
-          }}
-        />
+      <AuthenticatedImage
+        mediaKey={c.user?.profilePic || ""}
+        alt={c.user?.displayName || c.user?.username || "User"}
+        width={40}
+        height={40}
+        className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+        fallbackSrc="/placeholder.png"
+      />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-semibold text-sm text-gray-900 dark:text-white">
@@ -291,13 +288,14 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
       {/* Add comment form or login prompt */}
       {user ? (
         <form onSubmit={handleSubmit} className="mb-6 flex gap-3 items-start">
-          <Image
-            src={user?.profilePic || "/placeholder.png"}
-            width={40}
-            height={40}
-            alt="You"
-            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-          />
+        <AuthenticatedImage
+          mediaKey={user?.profilePic || ""}
+          width={40}
+          height={40}
+          alt="You"
+          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+          fallbackSrc="/placeholder.png"
+        />
           <input
             className="flex-1 border border-gray-300 dark:border-gray-700 rounded-full px-4 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
             placeholder="Add a comment..."

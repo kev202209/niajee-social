@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 import { FiChevronLeft, FiChevronRight, FiClock, FiPlusCircle, FiAlertCircle, FiRefreshCw } from "react-icons/fi";
 import { SuggestedVideo } from "../../../types";
+import AuthenticatedImage from "@/components/Image";
 import Link from "next/link";
 import timeAgo from "@/app/utils/timeAgo";
 import Image from "next/image";
@@ -247,15 +248,14 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
         onMouseLeave={() => setHover(false)}
       >
         <div className="relative w-40 h-24 flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
-          {video.thumbnailUrl && !imageError ? (
-            <Image
-              src={video.thumbnailUrl}
+          {video.thumbnailUrl ? (
+            <AuthenticatedImage
+              mediaKey={video.thumbnailUrl}
               alt={video.title}
               fill
               className="object-cover"
               sizes="160px"
-              onError={() => setImageError(true)}
-              priority={false}
+              fallbackSrc="/placeholder-video.png"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700">

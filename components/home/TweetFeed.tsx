@@ -1,6 +1,6 @@
 import { Tweet } from "@/types";
 import { FC, useEffect, useState } from "react";
-import Image from "next/image";
+import AuthenticatedImage from "@/components/Image";
 import TweetFeedSkeleton from "./TweetFeedSkeleton";
 import { FiMessageCircle, FiRepeat, FiHeart, FiBookmark, FiShare, FiRefreshCw } from "react-icons/fi";
 import timeAgo from "@/app/utils/timeAgo";
@@ -139,12 +139,13 @@ const TweetFeed: FC = () => {
             {tweets.map((tweet) => (
               <li key={tweet.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 hover:shadow-md transition-shadow">
                 <div className="flex">
-                  <Image
-                    src={`http://localhost:5000/uploads/profiles/${tweet.profilePic}`}
+                  <AuthenticatedImage
+                    mediaKey={tweet.profilePic || ""}
                     alt={tweet.username}
                     width={32}
                     height={32}
                     className="rounded-full h-8 w-8 flex-shrink-0"
+                    fallbackSrc="/placeholder.png"
                   />
                   <div className="ml-2 flex-1 min-w-0">
                     <div className="flex items-center justify-between">
@@ -161,9 +162,9 @@ const TweetFeed: FC = () => {
                       </span>
                     </div>
                     <a href={`${process.env.NEXT_PUBLIC_FRONTEND_B_URL}/${tweet.username}/status/${tweet.id}`}>
-                    <p className="text-gray-900 dark:text-gray-100 text-xs mt-1 line-clamp-2">
-                      {tweet.content}
-                    </p>
+                      <p className="text-gray-900 dark:text-gray-100 text-xs mt-1 line-clamp-2">
+                        {tweet.content}
+                      </p>
                     </a>
                     <div className="flex items-center justify-between mt-2 gap-1">
                       <button 
