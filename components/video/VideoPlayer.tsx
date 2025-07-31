@@ -74,6 +74,9 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
         maxLoadingDelay: 4,
         maxBufferLength: 30,
         maxBufferSize: 60 * 1000 * 1000,
+        xhrSetup: function(xhr) {
+        xhr.withCredentials = true;
+        }
       });
 
       hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
