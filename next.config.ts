@@ -8,12 +8,12 @@ const nextConfig: NextConfig = {
         protocol: "http",
         hostname: "localhost",
         port: "5000",
-        pathname: "/uploads/**",
+        pathname: "/media/**",
       },
       {
         protocol: "https",
-        hostname: "your-production-domain.com", // Update this for production
-        pathname: "/uploads/**",
+        hostname: process.env.NEXT_PUBLIC_IMAGE_DOMAIN_PROD || "",
+        pathname: "/media/**",
       }
     ],
   },
