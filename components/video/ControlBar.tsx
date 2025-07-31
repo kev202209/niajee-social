@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import {
   FiRewind, FiPlay, FiPause, FiFastForward, FiVolume2, FiVolumeX, FiToggleRight,
-  FiMessageSquare, FiSettings, FiAirplay, FiMonitor, FiMaximize, FiMinimize
+   FiSettings, FiMonitor, FiMaximize, FiMinimize,
 } from 'react-icons/fi';
+import { PictureInPicture2,  Captions } from 'lucide-react';
 import { VideoPlayerControls } from '../../hooks/useVideoPlayer';
 import SettingsPopup from './SettingsPopup';
 import ProgressBar from './ProgressBar';
@@ -69,7 +70,7 @@ export default function ControlBar({ controls, videoId }: { controls: VideoPlaye
           <button onClick={controls.toggleAutoplay} title="Autoplay" className="hover:text-gray-300">
             <FiToggleRight className={controls.isAutoplay ? 'text-blue-400' : ''} />
           </button>
-          <button title="Subtitles" className="hover:text-gray-300"><FiMessageSquare /></button>
+          <button title="Subtitles" className="hover:text-gray-300">< Captions /></button>
           <div className="relative">
             <button onClick={() => setShowSettings(prev => !prev)} title="Settings" className="hover:text-gray-300"><FiSettings /></button>
             {showSettings && (
@@ -80,7 +81,7 @@ export default function ControlBar({ controls, videoId }: { controls: VideoPlaye
               />
             )}
           </div>
-          <button onClick={controls.toggleMiniplayer} title="Miniplayer" className="hover:text-gray-300"><FiAirplay /></button>
+          <button onClick={controls.toggleMiniplayer} title="Miniplayer" className="hover:text-gray-300"><PictureInPicture2 /></button>
           <button onClick={controls.toggleCinemaMode} title="Cinema Mode" className="hover:text-gray-300"><FiMonitor /></button>
           <button onClick={controls.toggleFullscreen} title={controls.isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'} className="hover:text-gray-300">
             {controls.isFullscreen ? <FiMinimize /> : <FiMaximize />}
