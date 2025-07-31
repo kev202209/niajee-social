@@ -142,16 +142,25 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
     return () => {
       if (imageSrc && imageSrc.startsWith('blob:')) {
         URL.revokeObjectURL(imageSrc);
+        // Remove from cache if it matches
+        if (imageCache.get(cacheKey) === imageSrc) {
+          imageCache.delete(cacheKey);
+        }
       }
     };
-  }, [mediaKey, user, api_url, fallbackSrc, onError]);
+  }, [mediaKey, user, api_url, fallbackSrc, onError, imageSrc]); // Add imageSrc to dependencies
 
   // Cleanup effect for component unmount
   useEffect(() => {
     return () => {
-      // Revoke any blob URLs when component unmounts
       if (imageSrc && imageSrc.startsWith('blob:')) {
         URL.revokeObjectURL(imageSrc);
+        // Remove from cache if it matches
+        for (const [key, value] of imageCache.entries()) {
+          if (value === imageSrc) {
+            imageCache.delete(key);
+          }
+        }
       }
     };
   }, [imageSrc]);
