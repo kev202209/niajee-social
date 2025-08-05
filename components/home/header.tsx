@@ -1,5 +1,5 @@
 "use client";
-import { FC, useRef, useState, useEffect } from "react";
+import { FC, useRef, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import DarkModeToggle from "../DarkModeToggle";
 import useOutsideClick from "@/hooks/useOutsideClick";
@@ -9,15 +9,40 @@ import {
   FiSettings,
   FiLogOut,
   FiPlus,
+  FiClock,
+  FiTrendingUp,
+  FiVideo,
+  FiPlay,
+  FiUsers,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthenticatedImage from "@/components/Image";
+import { useRouter } from 'next/navigation';
+
+interface SearchSuggestion {
+  id: string;
+  text: string;
+  displayText: string;
+  type: 'trending' | 'user' | 'channel' | 'search';
+  category?: string;
+  data?: any;
+  isTrending?: boolean;
+  score?: number;
+}
 
 const Header: FC = () => {
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const api_link = process.env.NEXT_PUBLIC_API_URL;
+  
   useOutsideClick(profileMenuRef, () => setShowProfileMenu(false));
+  useOutsideClick(searchRef, () => setShowSuggestions(false));
 
   const [tagline, setTagline] = useState<string>("Loading...");
 
@@ -34,6 +59,144 @@ const Header: FC = () => {
     await logout();
   };
 
+  // Fixed debounced search suggestions to match backend response
+  const debouncedGetSuggestions = useCallback(
+    debounce(async (query: string) => {
+      setLoadingSuggestions(true);
+      
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/search/suggestions?q=${encodeURIComponent(query)}`,
+          {
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' }
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Transform backend response to match frontend expectations
+          const formattedSuggestions: SearchSuggestion[] = (data.suggestions || []).map((suggestion: any, index: number) => ({
+            id: `${suggestion.type}-${index}`,
+            text: suggestion.text,
+            displayText: suggestion.displayText || suggestion.text,
+            type: suggestion.type,
+            category: suggestion.category,
+            data: suggestion.data,
+            isTrending: suggestion.isTrending || false,
+            score: suggestion.score
+          }));
+
+          setSuggestions(formattedSuggestions);
+        }
+      } catch (err) {
+        console.error('Failed to get suggestions:', err);
+        setSuggestions([]);
+      } finally {
+        setLoadingSuggestions(false);
+      }
+    }, 300),
+    []
+  );
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    
+    if (value.trim()) {
+      debouncedGetSuggestions(value);
+      setShowSuggestions(true);
+    } else {
+      // Load trending suggestions for empty query
+      loadTrendingSuggestions();
+      setShowSuggestions(true);
+    }
+  };
+
+  const loadTrendingSuggestions = async () => {
+    setLoadingSuggestions(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/search/trending`,
+        {
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' }
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const trendingSuggestions: SearchSuggestion[] = (data.trending || []).slice(0, 6).map((trend: any, index: number) => ({
+          id: `trending-${index}`,
+          text: trend.text,
+          displayText: `${trend.text} · Trending in ${trend.category}`,
+          type: 'trending' as const,
+          category: trend.category,
+          isTrending: true,
+          score: trend.score
+        }));
+        setSuggestions(trendingSuggestions);
+      }
+    } catch (err) {
+      console.error('Failed to get trending:', err);
+      setSuggestions([]);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+    setSearchQuery(suggestion.text);
+    
+    // Navigate based on suggestion type
+    switch (suggestion.type) {
+      case 'user':
+        router.push(`/profile/${suggestion.data?.username || suggestion.text.replace('@', '')}`);
+        break;
+      case 'channel':
+        router.push(`/channel/${suggestion.data?.handle || suggestion.text.replace('@', '')}`);
+        break;
+      case 'trending':
+      case 'search':
+      default:
+        router.push(`/search?q=${encodeURIComponent(suggestion.text)}`);
+        break;
+    }
+    
+    setShowSuggestions(false);
+  };
+
+  const getSuggestionIcon = (type: string) => {
+    switch (type) {
+      case 'user':
+        return <FiUser className="w-4 h-4 text-blue-500" />;
+      case 'channel':
+        return <FiUsers className="w-4 h-4 text-purple-500" />;
+      case 'trending':
+        return <FiTrendingUp className="w-4 h-4 text-orange-500" />;
+      default:
+        return <FiSearch className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  const getSuggestionTypeLabel = (type: string) => {
+    switch (type) {
+      case 'user': return 'User';
+      case 'channel': return 'Channel';
+      case 'trending': return 'Trending';
+      default: return '';
+    }
+  };
+
   return (
     <header className="w-full fixed top-0 z-50 bg-white dark:bg-gray-900/95 backdrop-blur-md shadow-md border-b border-gray-200 dark:border-gray-700">
       <div className="h-16 px-4 flex items-center justify-between">
@@ -47,15 +210,132 @@ const Header: FC = () => {
           </Link>
         </div>
 
-        {/* Center: Search Bar */}
+        {/* Center: Enhanced Search Bar with Autocomplete */}
         <div className="flex-1 mx-4 flex justify-center max-w-md">
-          <div className="relative w-full">
-            <input
-              type="text"
-              placeholder="Search videos..."
-              className="w-full px-4 py-2 pl-10 rounded-full border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
-            />
-            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <div className="relative w-full" ref={searchRef}>
+            <form onSubmit={handleSearchSubmit}>
+              <input
+                type="text"
+                placeholder="Search videos, shorts, channels, and users..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                onFocus={() => {
+                  if (!searchQuery.trim()) {
+                    loadTrendingSuggestions();
+                  }
+                  setShowSuggestions(true);
+                }}
+                className="w-full px-4 py-2 pl-10 pr-10 rounded-full border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
+              />
+              <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              {loadingSuggestions && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+            </form>
+
+            {/* Enhanced Search Suggestions with Categories */}
+            {showSuggestions && (suggestions.length > 0 || loadingSuggestions) && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+                {loadingSuggestions ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                    <span className="ml-2 text-sm text-gray-500">Loading suggestions...</span>
+                  </div>
+                ) : (
+                  <div className="py-2">
+                    {suggestions.map((suggestion) => (
+                      <button
+                        key={suggestion.id}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3 group"
+                      >
+                        {getSuggestionIcon(suggestion.type)}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-900 dark:text-white truncate">
+                              {/* Highlight matching text if it's a search query */}
+                              {suggestion.type === 'search' && searchQuery.trim() ? (
+                                <span className="font-medium">
+                                  {suggestion.displayText}
+                                </span>
+                              ) : (
+                                suggestion.displayText
+                              )}
+                            </span>
+                            {suggestion.isTrending && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                                Trending
+                              </span>
+                            )}
+                          </div>
+                          {suggestion.category && suggestion.type === 'trending' && (
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              in {suggestion.category}
+                            </span>
+                          )}
+                        </div>
+                        {suggestion.type !== 'search' && (
+                          <span className="text-xs text-gray-400 uppercase tracking-wide">
+                            {getSuggestionTypeLabel(suggestion.type)}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                    
+                    {/* Add quick search type filters */}
+                    {searchQuery.trim() && (
+                      <>
+                        <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                          <div className="px-4 py-1">
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                              Search in
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => {
+                              router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=videos`);
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                          >
+                            <FiVideo className="w-4 h-4 text-red-500" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              Videos for "{searchQuery}"
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=shorts`);
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                          >
+                            <FiPlay className="w-4 h-4 text-green-500" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              Shorts for "{searchQuery}"
+                            </span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=channels`);
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                          >
+                            <FiUsers className="w-4 h-4 text-purple-500" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              Channels for "{searchQuery}"
+                            </span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -125,3 +405,15 @@ const Header: FC = () => {
 };
 
 export default Header;
+
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+}
