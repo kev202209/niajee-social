@@ -9,13 +9,6 @@ import Sidebar from "@/components/watch/Sidebar";
 import { mVideo as Video } from "../../../types";
 import { FiAlertCircle, FiWifi, FiRefreshCw, FiVideo } from "react-icons/fi";
 
-function getVideoStreamUrl(videoId: string, quality: string) {
-  return `${process.env.NEXT_PUBLIC_API_URL}/stream/${videoId}/${quality}`;
-}
-function getHLSStreamUrl(videoId: string, quality: string) {
-  return `${process.env.NEXT_PUBLIC_API_URL}/stream/${videoId}/${quality}/playlist.m3u8`;
-}
-
 // Skeleton Components
 const VideoPlayerSkeleton = () => (
   <div className="space-y-4">
