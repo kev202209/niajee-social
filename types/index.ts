@@ -40,6 +40,7 @@ export interface Video {
     name: string;
     avatar: string;
     verified: boolean;
+    handle: string;
   };
 }
 
@@ -57,6 +58,7 @@ export interface Short {
     name: string;
     avatar: string;
     verified: boolean;
+    handle: string;
   };
   // Additional short-specific fields
   caption?: string;
@@ -144,6 +146,7 @@ export interface mVideo {
     monetized: boolean;
     followerCount: number;
     isFollowed: true,
+    handle: string;
   };
 }
 
