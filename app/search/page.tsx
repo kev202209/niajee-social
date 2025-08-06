@@ -14,7 +14,7 @@ import { formatCount } from '@/app/utils/formatCount';
 
 interface SearchResult {
   id: string;
-  type: 'user' | 'video' | 'short' | 'channel' | 'post';
+  type: 'user' | 'video' | 'short' | 'channel' | 'post' | 'blog';
   title?: string;
   description?: string;
   thumbnail?: string;
@@ -47,6 +47,7 @@ const SEARCH_TYPES = [
   { key: 'shorts', label: 'Shorts', icon: FiPlay },
   { key: 'channels', label: 'Channels', icon: FiUsers },
   { key: 'people', label: 'People', icon: FiUsers },
+  { key: 'blogs', label: 'Blogs', icon: FiHash }, // Added blogs
   { key: 'all', label: 'All', icon: FiGrid },
 ];
 
@@ -138,6 +139,20 @@ export default function SearchPage() {
     }));
   };
 
+  const formatBlogs = (blogs: any[]): SearchResult[] => {
+    return blogs.map(blog => ({
+      id: blog.id,
+      type: 'blog' as const,
+      title: blog.title,
+      description: blog.excerpt || blog.subtitle,
+      createdAt: blog.publishedAt,
+      username: blog.authorUsername,
+      displayName: blog.authorDisplayName,
+      avatar: blog.authorProfilePic,
+      verified: blog.authorVerified,
+    }));
+  };
+
   const formatSearchResults = (results: any[], resultType: string): SearchResult[] => {
     switch (resultType) {
       case 'users':
@@ -151,6 +166,8 @@ export default function SearchPage() {
         return formatShorts(results);
       case 'posts':
         return formatPosts(results);
+      case 'blogs': // Added blogs
+        return formatBlogs(results);
       default:
         return results.map(item => ({
           id: item.id,
@@ -173,9 +190,8 @@ export default function SearchPage() {
 
       setLoading(true);
       setError(null);
-      
+
       try {
-        // Updated endpoint to match backend
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}&limit=20`,
           {
@@ -189,23 +205,21 @@ export default function SearchPage() {
         }
 
         const data = await response.json();
-        
-        // Handle different response structures based on search type
+
         let searchResults: SearchResult[] = [];
 
         if (data.results) {
-          // For comprehensive search (all types) - when results is an object
+          // For comprehensive search (all types)
           if (typeof data.results === 'object' && !Array.isArray(data.results) && data.type === 'all') {
-            // Flatten all results from different types
             searchResults = [
               ...formatUsers(data.results.users || []),
               ...formatChannels(data.results.channels || []),
               ...formatVideos(data.results.videos || []),
               ...formatShorts(data.results.shorts || []),
-              ...formatPosts(data.results.posts || [])
+              ...formatPosts(data.results.posts || []),
+              ...formatBlogs(data.results.blogs || []) // Added blogs
             ];
           } else if (Array.isArray(data.results)) {
-            // For specific type searches - when results is an array
             searchResults = formatSearchResults(data.results, data.type || searchType);
           }
         }
@@ -372,7 +386,10 @@ function SearchResultItem({ result }: { result: SearchResult }) {
       case 'user':
         return `/profile/${result.username || result.id}`;
       case 'post':
-        return `/post/${result.id}`;
+        // External frontend link for posts
+        return `${process.env.NEXT_PUBLIC_FRONTEND_B_URL}/${result.username || 'user'}/status/${result.id}`;
+      case 'blog':
+        return `/blogs/${result.id}`;
       default:
         return '#';
     }
@@ -388,17 +405,158 @@ function SearchResultItem({ result }: { result: SearchResult }) {
       case 'user':
         return <FiUsers className="w-4 h-4" />;
       case 'post':
+      case 'blog':
         return <FiHash className="w-4 h-4" />;
       default:
         return <FiHash className="w-4 h-4" />;
     }
   };
 
-  return (
-    <Link href={getResultLink()}>
+  // Use <a> for posts to open in new tab, <Link> for internal links
+  const linkProps =
+    result.type === 'post'
+      ? {
+          href: getResultLink(),
+          target: '_blank',
+          rel: 'noopener noreferrer',
+        }
+      : {
+          href: getResultLink(),
+        };
+
+  return result.type === 'post' ? (
+    <a {...linkProps}>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
         <div className="flex gap-4">
-          {/* Thumbnail/Avatar */}
+          {/* Avatar and content as before */}
+          <div className="flex-shrink-0">
+            {(result.type === 'video' || result.type === 'short') ? (
+              <div className="relative w-40 h-24 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
+                {result.thumbnail ? (
+                  <AuthenticatedImage
+                    mediaKey={result.thumbnail}
+                    alt={result.title || ''}
+                    fill
+                    className="object-cover"
+                    sizes="160px"
+                    fallbackSrc="/placeholder-video.png"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    {getResultIcon()}
+                  </div>
+                )}
+                {result.duration && (
+                  <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1.5 py-0.5 rounded">
+                    {result.duration}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                {result.avatar ? (
+                  <AuthenticatedImage
+                    mediaKey={result.avatar}
+                    alt={result.displayName || result.username || ''}
+                    width={48}
+                    height={48}
+                    className="w-full h-full object-cover"
+                    fallbackSrc="/placeholder.png"
+                  />
+                ) : (
+                  getResultIcon()
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-2">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-medium text-gray-900 dark:text-white line-clamp-2 mb-1">
+                  {result.title || result.displayName || result.username}
+                </h3>
+                
+                {result.type === 'video' || result.type === 'short' ? (
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {result.channelName}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                      <span>{formatCount(result.views || 0)} views</span>
+                      <span>•</span>
+                      <span>{timeAgo(result.createdAt || '')}</span>
+                    </div>
+                  </div>
+                ) : result.type === 'post' ? (
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      by @{result.username}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {timeAgo(result.createdAt || '')}
+                    </p>
+                  </div>
+                ) : result.type === 'blog' ? (
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      by {result.displayName || result.username}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {timeAgo(result.createdAt || '')}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {result.username && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        @{result.username}
+                      </p>
+                    )}
+                    {result.followerCount !== undefined && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {formatCount(result.followerCount)} {result.type === 'channel' ? 'subscribers' : 'followers'}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 ml-4">
+                <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full capitalize">
+                  {result.type}
+                </div>
+                {result.verified && (
+                  <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                    <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {result.description && result.type !== 'post' && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                {result.description}
+              </p>
+            )}
+            
+            {result.content && result.type === 'post' && (
+              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mt-2">
+                {result.content}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </a>
+  ) : (
+    <Link {...linkProps}>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
+        <div className="flex gap-4">
+          {/* Avatar and content as before */}
           <div className="flex-shrink-0">
             {result.type === 'video' || result.type === 'short' ? (
               <div className="relative w-40 h-24 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
@@ -463,6 +621,15 @@ function SearchResultItem({ result }: { result: SearchResult }) {
                   <div className="space-y-1">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       by @{result.username}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {timeAgo(result.createdAt || '')}
+                    </p>
+                  </div>
+                ) : result.type === 'blog' ? (
+                  <div className="space-y-1">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      by {result.displayName || result.username}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {timeAgo(result.createdAt || '')}
