@@ -236,7 +236,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
         <div className="p-3 relative overflow-visible">
           <div className="flex gap-3">
             {/* Channel Avatar */}
-            <div className="flex-shrink-0">
+            <Link href={`/channels/${video.channel.handle}`}>
               {video.channel.avatar ? (
                 <AuthenticatedImage
                   mediaKey={video.channel.avatar}
@@ -251,7 +251,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
                   <FiUser className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 </div>
               )}
-            </div>
+            </Link>
             
             {/* Video Info */}
             <div className="flex-1 min-w-0">

@@ -225,7 +225,7 @@ const getVideoSource = () => {
         <div className="p-3 relative">
           <div className="flex items-start gap-2 mb-2">
             {/* Channel Avatar */}
-            <div className="flex-shrink-0">
+            <Link href={`/channels/${short.channel.handle}`}>
               {short.channel.avatar ? (
                 <AuthenticatedImage
                   mediaKey={short.channel.avatar}
@@ -240,7 +240,7 @@ const getVideoSource = () => {
                   <FiUser className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                 </div>
               )}
-            </div>
+            </Link>
             
             {/* Title and Options */}
             <div className="flex-1 min-w-0">

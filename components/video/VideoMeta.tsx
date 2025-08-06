@@ -340,14 +340,16 @@ useEffect(() => {
         {/* Channel Info and Subscribe Section */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <AuthenticatedImage
-              mediaKey={video.channel.avatar || ""}
-              alt={video.channel.name}
-              width={48}
-              height={48}
-              className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
-              fallbackSrc="/placeholder.png"
-            />
+            <Link href={`/channels/${video.channel.handle}`}>
+              <AuthenticatedImage
+                mediaKey={video.channel.avatar || ""}
+                alt={video.channel.name}
+                width={48}
+                height={48}
+                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
+                fallbackSrc="/placeholder.png"
+              />
+            </Link>
             <div className="flex flex-col">
               <p className="font-semibold text-base sm:text-lg">{video.channel.name}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">

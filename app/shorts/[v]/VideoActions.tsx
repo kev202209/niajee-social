@@ -11,8 +11,8 @@ import {
   Facebook,
   Twitter,
   Mail,
-  Link,
 } from 'lucide-react';
+import Link from 'next/link'
 import LikeButton from "@/components/LikeButton";
 import { toast } from "sonner";
 import useOutsideClick from "@/hooks/useOutsideClick";
@@ -39,6 +39,7 @@ interface ShortData {
     avatar: string;
     verified: boolean;
     isFollowed: boolean;
+    handle: string;
   };
 }
 
@@ -299,14 +300,16 @@ const VideoActions = ({
         {/* Channel Avatar with Follow Button */}
         <div className="relative flex flex-col items-center">
           <div className="relative">
-            <AuthenticatedImage
-              mediaKey={channel.avatar || ""}
-              alt={channel.name}
-              width={48}
-              height={48}
-              className="w-12 h-12 rounded-full border-2 border-white object-cover"
-              fallbackSrc="/placeholder.png"
-            />
+            <Link href={`/channels/${video.channel.handle}`}>
+              <AuthenticatedImage
+                mediaKey={channel.avatar || ""}
+                alt={channel.name}
+                width={48}
+                height={48}
+                className="w-12 h-12 rounded-full border-2 border-white object-cover"
+                fallbackSrc="/placeholder.png"
+              />
+            </Link>
             {/* Follow/Unfollow Button */}
             {!following && (
               <button
