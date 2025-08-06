@@ -15,6 +15,7 @@ import {
   FiVideo,
   FiPlay,
   FiUsers,
+  FiFileText, // Add this for blogs
 } from "react-icons/fi";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import Sidebar from "./Sidebar";
@@ -25,7 +26,7 @@ interface SearchSuggestion {
   id: string;
   text: string;
   displayText: string;
-  type: "trending" | "user" | "channel" | "search";
+  type: "trending" | "user" | "channel" | "search" | "blog"; // Add 'blog'
   category?: string;
   data?: any;
   isTrending?: boolean;
@@ -68,9 +69,7 @@ const Header: FC = () => {
 
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/search/suggestions?q=${encodeURIComponent(
-            query
-          )}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/search/suggestions?q=${encodeURIComponent(query)}`,
           {
             credentials: "include",
             headers: { Accept: "application/json" },
@@ -79,8 +78,7 @@ const Header: FC = () => {
 
         if (response.ok) {
           const data = await response.json();
-          const formattedSuggestions: SearchSuggestion[] = (data.suggestions ||
-            []).map((suggestion: any, index: number) => ({
+          const formattedSuggestions: SearchSuggestion[] = (data.suggestions || []).map((suggestion: any, index: number) => ({
             id: `${suggestion.type}-${index}`,
             text: suggestion.text,
             displayText: suggestion.displayText || suggestion.text,
@@ -163,16 +161,13 @@ const Header: FC = () => {
 
     switch (suggestion.type) {
       case "user":
-        router.push(
-          `/profile/${
-            suggestion.data?.username || suggestion.text.replace("@", "")
-          }`
-        );
+        router.push(`/profile/${suggestion.data?.username || suggestion.text.replace("@", "")}`);
         break;
       case "channel":
-        router.push(
-          `/channel/${suggestion.data?.handle || suggestion.text.replace("@", "")}`
-        );
+        router.push(`/channel/${suggestion.data?.handle || suggestion.text.replace("@", "")}`);
+        break;
+      case "blog": // Add this case
+        router.push(`/blog/${suggestion.data?.slug || suggestion.data?.id}`);
         break;
       case "trending":
       case "search":
@@ -190,6 +185,8 @@ const Header: FC = () => {
         return <FiUser className="w-4 h-4 text-blue-500" />;
       case "channel":
         return <FiUsers className="w-4 h-4 text-purple-500" />;
+      case "blog": // Add this case
+        return <FiFileText className="w-4 h-4 text-green-500" />;
       case "trending":
         return <FiTrendingUp className="w-4 h-4 text-orange-500" />;
       default:
@@ -203,6 +200,8 @@ const Header: FC = () => {
         return "User";
       case "channel":
         return "Channel";
+      case "blog":
+        return "Blog"; // Add this case
       case "trending":
         return "Trending";
       default:
@@ -270,7 +269,7 @@ const Header: FC = () => {
               <form onSubmit={handleSearchSubmit}>
                 <input
                   type="text"
-                  placeholder="Search videos, shorts, channels, and users..."
+                  placeholder="Search videos, shorts, channels, blogs, and users..." // Updated placeholder
                   value={searchQuery}
                   onChange={handleSearchChange}
                   onFocus={() => {
@@ -353,11 +352,7 @@ const Header: FC = () => {
                               </div>
                               <button
                                 onClick={() => {
-                                  router.push(
-                                    `/search?q=${encodeURIComponent(
-                                      searchQuery
-                                    )}&type=videos`
-                                  );
+                                  router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=videos`);
                                   setShowSuggestions(false);
                                 }}
                                 className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
@@ -369,11 +364,7 @@ const Header: FC = () => {
                               </button>
                               <button
                                 onClick={() => {
-                                  router.push(
-                                    `/search?q=${encodeURIComponent(
-                                      searchQuery
-                                    )}&type=shorts`
-                                  );
+                                  router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=shorts`);
                                   setShowSuggestions(false);
                                 }}
                                 className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
@@ -383,13 +374,22 @@ const Header: FC = () => {
                                   Shorts for "{searchQuery}"
                                 </span>
                               </button>
+                              {/* Add this button for blogs */}
                               <button
                                 onClick={() => {
-                                  router.push(
-                                    `/search?q=${encodeURIComponent(
-                                      searchQuery
-                                    )}&type=channels`
-                                  );
+                                  router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=blogs`);
+                                  setShowSuggestions(false);
+                                }}
+                                className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                              >
+                                <FiFileText className="w-4 h-4 text-green-600" />
+                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                  Blogs for "{searchQuery}"
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=channels`);
                                   setShowSuggestions(false);
                                 }}
                                 className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"

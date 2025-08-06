@@ -14,6 +14,7 @@ import {
   FiVideo,
   FiPlay,
   FiUsers,
+  FiFileText, // Add this for blogs
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthenticatedImage from "@/components/Image";
@@ -23,7 +24,7 @@ interface SearchSuggestion {
   id: string;
   text: string;
   displayText: string;
-  type: 'trending' | 'user' | 'channel' | 'search';
+  type: 'trending' | 'user' | 'channel' | 'search' | 'blog'; // Add 'blog'
   category?: string;
   data?: any;
   isTrending?: boolean;
@@ -165,6 +166,9 @@ const Header: FC = () => {
       case 'channel':
         router.push(`/channel/${suggestion.data?.handle || suggestion.text.replace('@', '')}`);
         break;
+      case 'blog': // Add this case
+        router.push(`/blog/${suggestion.data?.slug || suggestion.data?.id}`);
+        break;
       case 'trending':
       case 'search':
       default:
@@ -181,6 +185,8 @@ const Header: FC = () => {
         return <FiUser className="w-4 h-4 text-blue-500" />;
       case 'channel':
         return <FiUsers className="w-4 h-4 text-purple-500" />;
+      case 'blog': // Add this case
+        return <FiFileText className="w-4 h-4 text-green-500" />;
       case 'trending':
         return <FiTrendingUp className="w-4 h-4 text-orange-500" />;
       default:
@@ -192,6 +198,7 @@ const Header: FC = () => {
     switch (type) {
       case 'user': return 'User';
       case 'channel': return 'Channel';
+      case 'blog': return 'Blog'; // Add this case
       case 'trending': return 'Trending';
       default: return '';
     }
@@ -216,7 +223,7 @@ const Header: FC = () => {
             <form onSubmit={handleSearchSubmit}>
               <input
                 type="text"
-                placeholder="Search videos, shorts, channels, and users..."
+                placeholder="Search videos, shorts, channels, blogs, and users..." // Updated placeholder
                 value={searchQuery}
                 onChange={handleSearchChange}
                 onFocus={() => {
@@ -315,6 +322,19 @@ const Header: FC = () => {
                             <FiPlay className="w-4 h-4 text-green-500" />
                             <span className="text-sm text-gray-700 dark:text-gray-300">
                               Shorts for "{searchQuery}"
+                            </span>
+                          </button>
+                          {/* Add this button for blogs */}
+                          <button
+                            onClick={() => {
+                              router.push(`/search?q=${encodeURIComponent(searchQuery)}&type=blogs`);
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                          >
+                            <FiFileText className="w-4 h-4 text-green-600" />
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              Blogs for "{searchQuery}"
                             </span>
                           </button>
                           <button
