@@ -12,10 +12,8 @@ interface AuthContextType {
       firstName: string;
       lastName: string;
       email: string;
-      username: string;
       password: string;
       birthday: string;
-      profilePic?: File | null;
     },
     deviceInfo: any
   ) => Promise<void>;
@@ -106,16 +104,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // ✅ Updated register function to match your page logic exactly
   const register = async (
     formData: {
       firstName: string;
       lastName: string;
       email: string;
-      username: string;
       password: string;
       birthday: string;
-      profilePic?: File | null;
     },
     deviceInfo: any
   ) => {
@@ -123,32 +118,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
-      // Create FormData for multipart upload (exactly like your page)
-      const uploadFormData = new FormData();
-      
-      // Create the nested registerDto structure
       const registerDto = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
-        username: formData.username,
         password: formData.password,
         birthday: formData.birthday,
       };
 
-      // Append data as JSON strings (backend will parse them)
+      const uploadFormData = new FormData();
       uploadFormData.append('registerDto', JSON.stringify(registerDto));
       uploadFormData.append('deviceInfo', JSON.stringify(deviceInfo));
-      
-      // Append profile picture if exists
-      if (formData.profilePic) {
-        uploadFormData.append('profilePic', formData.profilePic);
-      }
 
-      // Send as multipart/form-data (exactly like your page)
       const response = await fetch(`${api_link}/auth/register`, {
         method: 'POST',
-        body: uploadFormData, // Don't set Content-Type header for FormData
+        body: uploadFormData,
       });
 
       const data = await response.json();

@@ -10,9 +10,8 @@ import { toast, ToastContainer } from "react-toastify";
 import { useAuth } from "@/contexts/AuthContext";
 import "react-toastify/dist/ReactToastify.css";
 import { getDeviceInfo } from '../../utils/deviceInfo';
-
 import { DatePicker } from "@/components/ui/DatePicker";
-import Image from 'next/image';
+import { differenceInYears, parseISO } from "date-fns";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -27,8 +26,6 @@ export default function RegisterPage() {
     lastName: '',
     email: '',
     birthday: '',
-    profilePic: null as File | null,
-    username: '',
     password: '',
     confirmPassword: '',
   });
@@ -36,6 +33,8 @@ export default function RegisterPage() {
   const [isRegisterLoading, setIsRegisterLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [birthdayError, setBirthdayError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // Get redirect URL from query params
   const redirectUrl = searchParams.get('redirect');
@@ -44,7 +43,6 @@ export default function RegisterPage() {
   const isValidRedirectUrl = (url: string): boolean => {
     try {
       const parsedUrl = new URL(url);
-      // Add your allowed domains here
       const allowedDomains = [
         process.env.NEXT_PUBLIC_FRONTEND_A_URL,
         process.env.NEXT_PUBLIC_FRONTEND_B_URL,
@@ -52,7 +50,6 @@ export default function RegisterPage() {
         'localhost:3000',
         'localhost:3001'
       ].filter(Boolean);
-      
       return allowedDomains.some(domain => 
         parsedUrl.origin.includes(domain as string)
       );
@@ -64,16 +61,16 @@ export default function RegisterPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setFormData(prev => ({ ...prev, profilePic: files[0] }));
-  };
-
-  const handleRemoveImage = () => {
-    setFormData(prev => ({ ...prev, profilePic: null }));
+    if (name === "confirmPassword" || name === "password") {
+      if (
+        (name === "confirmPassword" && value !== formData.password) ||
+        (name === "password" && formData.confirmPassword && value !== formData.confirmPassword)
+      ) {
+        setPasswordError("Passwords do not match");
+      } else {
+        setPasswordError(null);
+      }
+    }
   };
 
   const handleEmailCheck = async () => {
@@ -94,35 +91,31 @@ export default function RegisterPage() {
     }
   };
 
-  // ✅ Updated to use AuthContext register function
   const handleRegister = async () => {
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
+      setPasswordError("Passwords do not match");
       return;
     }
-
+    if (!isOldEnough(formData.birthday)) {
+      toast.error("You must be at least 13 years old to register.");
+      return;
+    }
     setIsRegisterLoading(true);
     try {
       const deviceInfo = await getDeviceInfo();
-
-      // ✅ Use AuthContext register function with the same data structure
       await register(
         {
           firstName: formData.firstName,
           lastName: formData.lastName,
           email: formData.email,
-          username: formData.username,
           password: formData.password,
           birthday: formData.birthday,
-          profilePic: formData.profilePic,
+          // username/profilePic will be auto-generated on backend
         },
         deviceInfo
       );
-
-      setStep(4);
+      setStep(3);
       toast.success("Registration successful! Please check your email for verification.");
-      
-      // Store redirect URL for after email verification
       if (redirectUrl && isValidRedirectUrl(redirectUrl)) {
         sessionStorage.setItem('postVerificationRedirect', redirectUrl);
       }
@@ -133,7 +126,6 @@ export default function RegisterPage() {
     }
   };
 
-  // Also update the Google OAuth button to include redirect parameter
   const handleGoogleSignup = () => {
     const googleUrl = redirectUrl 
       ? `${api_link}/auth/google?redirect=${encodeURIComponent(redirectUrl)}`
@@ -141,12 +133,18 @@ export default function RegisterPage() {
     window.location.href = googleUrl;
   };
 
+  // Helper to check age
+  const isOldEnough = (birthday: string) => {
+    if (!birthday) return false;
+    const age = differenceInYears(new Date(), parseISO(birthday));
+    return age >= 13;
+  };
+
   return (
     <div
       ref={containerRef}
       className="relative min-h-screen min-w-screen overflow-hidden bg-gradient-to-br from-white to-gray-200 dark:from-black dark:to-gray-800"
     >
-      {/* Blob animation imported from component */}
       <BlobAnimation />
       <ToastContainer
         toastClassName={() =>
@@ -232,73 +230,35 @@ export default function RegisterPage() {
           {step === 2 && (
             <div>
               <h1 className="text-2xl font-bold mb-4 text-blue-600 dark:text-white">
-                Set up Profile
+                Your Details
               </h1>
               <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
-                Birthday
+                Birthday <span className="text-red-500">*</span>
               </label>
               <DatePicker
                 value={formData.birthday}
-                onChange={(date) => setFormData(prev => ({ ...prev, birthday: date }))}
+                onChange={(date) => {
+                  setFormData(prev => ({ ...prev, birthday: date }));
+                  if (date && !isOldEnough(date)) {
+                    setBirthdayError("You must be at least 13 years old to register.");
+                  } else {
+                    setBirthdayError(null);
+                  }
+                }}
                 placeholder="Select your birthday"
                 className="mb-3"
               />
-              <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
-                Upload Profile Picture (optional)
-              </label>
-              <div className="flex flex-col items-center mb-3">
-                {formData.profilePic ? (
-                  <div className="relative">
-                    <div className="relative w-32 h-32 rounded-full overflow-hidden mb-2">
-                      <Image
-                        src={URL.createObjectURL(formData.profilePic)}
-                        alt="Profile Preview"
-                        fill
-                        className="object-cover"
-                        sizes="128px"
-                      />
-                    </div>
-                    <button
-                      onClick={handleRemoveImage}
-                      className="absolute -top-2 -right-2 bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700 transition-colors"
-                      type="button"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="relative w-32 h-32 rounded-full overflow-hidden mb-2">
-                    <Image
-                      src="/placeholder.png"
-                      alt="Placeholder Avatar"
-                      fill
-                      className="object-cover"
-                      sizes="128px"
-                    />
-                  </div>
-                )}
-                <input
-                  type="file"
-                  name="profilePicture"
-                  onChange={handleFileChange}
-                  accept="image/*"
-                  className="w-full p-2 border rounded mb-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-gray-600 dark:file:text-gray-300"
-                />
-                <p className="text-sm text-gray-500">This is optional</p>
+              {birthdayError && (
+                <p className="text-red-500 text-xs mb-2">{birthdayError}</p>
+              )}
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
+                Please enter your real birthday. If you lie, some features may not be available to you.
+              </p>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                <span>
+                  <b>Note:</b> You can personalize your username and profile picture after signing up!
+                </span>
               </div>
-              <label className="block text-sm font-medium text-blue-500 dark:text-gray-300 mb-1">
-                Username
-              </label>
-              <input
-                type="text"
-                name="username"
-                placeholder="Username"
-                value={formData.username}
-                onChange={handleChange}
-                className="w-full p-2 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-              />
               <div className="flex justify-between">
                 <button
                   onClick={() => setStep(1)}
@@ -307,11 +267,17 @@ export default function RegisterPage() {
                   Back
                 </button>
                 <button
-                  onClick={() => { setStep(3); }}
-                  disabled={!formData.username}
+                  onClick={() => setStep(3)}
+                  disabled={
+                    !formData.birthday ||
+                    !!birthdayError ||
+                    !isOldEnough(formData.birthday)
+                  }
                   className={`p-2 h-10 rounded text-white ${
-                    !formData.username 
-                      ? "bg-gray-400 cursor-not-allowed" 
+                    !formData.birthday ||
+                    !!birthdayError ||
+                    !isOldEnough(formData.birthday)
+                      ? "bg-gray-400 cursor-not-allowed"
                       : "bg-blue-600 hover:bg-blue-700 cursor-pointer"
                   }`}
                 >
@@ -356,7 +322,11 @@ export default function RegisterPage() {
                   placeholder="Confirm Password"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="w-full p-2 pr-10 border rounded mb-3 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  className={`w-full p-2 pr-10 border rounded mb-1 bg-white dark:bg-gray-700 ${
+                    passwordError
+                      ? "border-red-500 dark:border-red-400"
+                      : "border-gray-300 dark:border-gray-600"
+                  } text-black dark:text-white placeholder-gray-500 dark:placeholder-gray-400`}
                 />
                 <button
                   type="button"
@@ -366,6 +336,9 @@ export default function RegisterPage() {
                   {showConfirmPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
                 </button>
               </div>
+              {passwordError && (
+                <p className="text-red-500 text-xs mb-2">{passwordError}</p>
+              )}
 
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
                 By creating an account, you confirm that you have read and accept our{" "}
@@ -383,11 +356,16 @@ export default function RegisterPage() {
                 </button>
                 <button
                   onClick={handleRegister}
-                  disabled={!formData.password || !formData.confirmPassword || isRegisterLoading}
+                  disabled={
+                    !formData.password ||
+                    !formData.confirmPassword ||
+                    !!passwordError ||
+                    isRegisterLoading
+                  }
                   className={`p-2 h-10 rounded text-white ${
                     isRegisterLoading 
                       ? "bg-blue-600 pointer-events-none" 
-                      : (!formData.password || !formData.confirmPassword 
+                      : (!formData.password || !formData.confirmPassword || !!passwordError
                           ? "bg-gray-400 cursor-not-allowed" 
                           : "bg-blue-600 hover:bg-blue-700 cursor-pointer")
                   }`}
@@ -397,7 +375,6 @@ export default function RegisterPage() {
               </div>
             </div>
           )}
-
 
           {step === 4 && (
             <div>
