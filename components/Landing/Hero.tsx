@@ -2,8 +2,6 @@
 
 import React, { useEffect } from "react";
 import Link from "next/link";
-import { Canvas } from "@react-three/fiber";
-import { Stars } from "@react-three/drei";
 import { FiArrowRight } from "react-icons/fi";
 import { useTheme } from "next-themes";
 import {
@@ -101,53 +99,7 @@ export default function Hero() {
         <div className="absolute bottom-20 -right-10 w-32 h-32 md:w-40 md:h-40 rounded-full bg-purple-500/10 blur-xl" />
       </div>
       
-      {/* Stars Background */}
-      <div className="absolute inset-0 z-0">
-        <Canvas className='hidden dark:block'>
-          <Stars 
-            radius={50}
-            count={2500}
-            factor={4}
-            fade
-            speed={2}
-          />
-        </Canvas>
-      </div>
 
-      {/* Scroll indicator */}
-      <motion.div 
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 hidden sm:flex flex-col items-center"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.5, duration: 1 }}
-      >
-        <span className="text-sm text-gray-500 dark:text-gray-400 mb-2">Scroll to explore</span>
-        <motion.div 
-          className="w-1 h-8 rounded-full bg-gray-300 dark:bg-gray-600 overflow-hidden"
-          animate={{ 
-            boxShadow: [
-              `0 0 0 0 rgba(${theme === 'dark' ? '255, 255, 255' : '0, 0, 0'}, 0.1)`,
-              `0 0 0 8px rgba(${theme === 'dark' ? '255, 255, 255' : '0, 0, 0'}, 0)`
-            ]
-          }}
-          transition={{ 
-            duration: 1.5, 
-            repeat: Infinity,
-            repeatType: "loop" 
-          }}
-        >
-          <motion.div 
-            className="w-full bg-blue-500 h-4"
-            animate={{ y: [0, 32, 0] }}
-            transition={{ 
-              duration: 2, 
-              repeat: Infinity,
-              repeatType: "loop",
-              ease: "easeInOut" 
-            }}
-          />
-        </motion.div>
-      </motion.div>
     </motion.section>
   );
 }
