@@ -3,29 +3,26 @@
 import React from "react";
 import Header from "./Header";
 import Hero from "./Hero";
-import Features from "./Features";
-import Testimonials from "./Testimonials";
-import DownloadSection from "./DownloadSection";
-import ParallaxSection from "./ParallaxSection";
+import StackedFeatureDeck from "./cinematic/StackedFeatureDeck";
+import RoadmapTeaser from "./cinematic/RoadmapTeaser";
+import MobileComingSoon from "./MobileComingSoon";
+import EarlyAccessCTA from "./cinematic/EarlyAccessCTA";
 import Footer from "./Footer";
+import ScrollStoryboard from "./cinematic/ScrollStoryboard";
 
 export default function Landing() {
   return (
-    <div className="bg-gradient-animation dark:bg-gradient-animation-dark min-h-screen">
+    <div className="relative min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-800 dark:text-gray-200">
       <Header />
       <Hero />
-      
       <main>
-        <Features />
-        <Testimonials /> {/* Add the new testimonials section */}
-        <DownloadSection />
-        <ParallaxSection />
+        <StackedFeatureDeck />
+        <ScrollStoryboard />
+        <RoadmapTeaser />
+        <MobileComingSoon />
+        <EarlyAccessCTA />
       </main>
-      
       <Footer />
-      
-      {/*Global Animated Gradients*/}
-      {/* Add your global styles if needed */}
     </div>
   );
 }
