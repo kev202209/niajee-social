@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const authPages = ['/auth/login', '/auth/register', '/auth/forget-password', '/auth/verify-email', '/auth/reset-password'];
-const publicPages = ['/legals/privacy-policy', '/legals/terms', '/legals/contact-us', '/legals/cookie-policy', '/legals/gdpr', '/']; // Add root path
+const publicPages = ['/legals/privacy-policy', '/legals/terms', '/legals/contact-us', '/legals/cookie-policy', '/legals/gdpr','/mango', '/'];
 
 // Add public asset extensions
 const publicAssets = /\.(?:jpg|jpeg|gif|png|svg|ico|webp|mp4|webm)$/;
