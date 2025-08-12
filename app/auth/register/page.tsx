@@ -47,8 +47,6 @@ export default function RegisterPage() {
         process.env.NEXT_PUBLIC_FRONTEND_A_URL,
         process.env.NEXT_PUBLIC_FRONTEND_B_URL,
         process.env.NEXT_PUBLIC_MAIN_URL,
-        'localhost:3000',
-        'localhost:3001'
       ].filter(Boolean);
       return allowedDomains.some(domain => 
         parsedUrl.origin.includes(domain as string)

@@ -69,8 +69,6 @@ export default function LoginPage() {
       const allowedDomains = [
         process.env.NEXT_PUBLIC_FRONTEND_A_URL,
         process.env.NEXT_PUBLIC_FRONTEND_B_URL,
-        'localhost:3000',
-        'localhost:3001'
       ].filter(Boolean);
       
       return allowedDomains.some(domain => 
