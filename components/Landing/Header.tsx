@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import DarkModeToggle from "@/components/DarkModeToggle";
+import Logo from '@/components/Logo'
 
 export default function Header() {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -14,21 +15,8 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="text-5xl font-bold gradient-text">
-            <Link href="/" className="font-extrabold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient">MOSAIC</Link>
+            <Logo/>
           </div>
-          
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            <Link href="#why-join" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400">
-              Why Join
-            </Link>
-            <Link href="#download" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400">
-              Download
-            </Link>
-            <Link href="#parallax" className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400">
-              Discover
-            </Link>
-          </nav>
           
           {/* Desktop Auth & Toggle */}
           <div className="hidden md:flex items-center space-x-4">
@@ -63,29 +51,6 @@ export default function Header() {
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <nav className="flex flex-col space-y-4 mt-2">
-              <Link
-                href="#why-join"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400"
-              >
-                Why Join
-              </Link>
-              <Link
-                href="#download"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400"
-              >
-                Download
-              </Link>
-              <Link
-                href="#parallax"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400"
-              >
-                Discover
-              </Link>
-            </nav>
             <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
               <div className="flex items-center justify-between">
                 <DarkModeToggle />
