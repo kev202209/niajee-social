@@ -63,17 +63,16 @@ export default function LoginPage() {
 
   // Security function to validate redirect URLs
   const isValidRedirectUrl = (url: string): boolean => {
+    if (!url) return false;
+    // Allow same-origin relative paths
+    if (url.startsWith('/')) return true;
     try {
       const parsedUrl = new URL(url);
-      // Add your allowed domains here
       const allowedDomains = [
         process.env.NEXT_PUBLIC_FRONTEND_A_URL,
         process.env.NEXT_PUBLIC_FRONTEND_B_URL,
       ].filter(Boolean);
-      
-      return allowedDomains.some(domain => 
-        parsedUrl.origin.includes(domain as string)
-      );
+      return allowedDomains.some(domain => parsedUrl.origin.includes(domain as string));
     } catch {
       return false;
     }
