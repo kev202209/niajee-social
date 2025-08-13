@@ -143,7 +143,7 @@ export default function StackedFeatureDeck() {
                                             {layer.title}
                                         </div>
                                         <div className="mt-auto mb-2 max-w-4xl">
-                                            <h3 className="text-3xl md:text-5xl font-semibold tracking-tight text-gray-900 dark:text-gray-50">
+                                            <h3 className="text-3xl md:text-5xl font-semibold tracking-tight text-blue-500 dark:text-gray-50">
                                                 {layer.headline}
                                             </h3>
                                             <p className="mt-5 text-base md:text-lg leading-relaxed text-gray-700 dark:text-gray-300 max-w-prose">

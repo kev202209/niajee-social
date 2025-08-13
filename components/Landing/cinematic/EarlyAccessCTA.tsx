@@ -11,7 +11,7 @@ export default function EarlyAccessCTA() {
           whileInView={{ opacity:1, y:0 }}
           transition={{ duration:.8 }}
           viewport={{ once:true }}
-          className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 dark:text-gray-100"
+          className="text-4xl md:text-5xl font-bold tracking-tight text-blue-500 dark:text-gray-50"
         >
           Open Beta Is Live
         </motion.h2>

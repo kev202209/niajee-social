@@ -29,7 +29,7 @@ export default function RoadmapTeaser() {
 	return (
 		<section className="relative py-36 bg-gray-50 dark:bg-gray-950 transition-colors">
 			<div className="mx-auto max-w-6xl px-6 relative">
-				<h2 className="text-center text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-amber-400 bg-clip-text text-transparent">
+				<h2 className="text-center text-4xl md:text-5xl font-bold mb-4  bg-clip-text text-blue-500 dark:text-gray-50">
 					The Road Ahead
 				</h2>
 				<p className="text-center text-gray-700 dark:text-gray-300 max-w-2xl mx-auto mb-20">

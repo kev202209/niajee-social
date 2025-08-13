@@ -9,15 +9,17 @@ export default function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="dark:bg-gray-900/50 bg-gray-50 text-gray-300 pt-16 pb-8">
+    <footer
+      className="pt-16 pb-10 bg-indigo-100 dark:bg-indigo-950 text-gray-600 dark:text-gray-300 border-t border-gray-200/70 dark:border-white/10"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-16 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-16 mb-14">
           {/* Company Info */}
           <div>
-            <div className="text-3xl font-bold mb-4">
+            <div className="text-3xl font-bold mb-5">
               <Logo asLink />
             </div>
-            <p className="mb-4">
+            <p className="mb-5 leading-relaxed text-gray-600 dark:text-gray-400">
               Bringing communities together through innovative social media experiences.
             </p>
             {/* Socials (optional, uncomment if needed)
@@ -44,15 +46,23 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-white text-lg font-semibold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
+            <h3 className="text-sm font-semibold tracking-wide uppercase mb-4 text-blue-500 dark:text-gray-100">
+              Quick Links
+            </h3>
+            <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/blog" className="hover:text-white transition-colors">
+                <Link
+                  href="/blog"
+                  className="hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
+                >
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/legals/contact-us" className="hover:text-white transition-colors">
+                <Link
+                  href="/legals/contact-us"
+                  className="hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
+                >
                   Contact
                 </Link>
               </li>
@@ -61,25 +71,39 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="text-white text-lg font-semibold mb-4">Legal</h3>
-            <ul className="space-y-2">
+            <h3 className="text-sm font-semibold tracking-wide uppercase mb-4 text-blue-500 dark:text-gray-100">
+              Legal
+            </h3>
+            <ul className="space-y-2 text-sm">
               <li>
-                <Link href="/legals/gdpr" className="hover:text-white transition-colors">
+                <Link
+                  href="/legals/gdpr"
+                  className="hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
+                >
                   GDPR
                 </Link>
               </li>
               <li>
-                <Link href="/legals/privacy-policy" className="hover:text-white transition-colors">
+                <Link
+                  href="/legals/privacy-policy"
+                  className="hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
+                >
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link href="/legals/cookie-policy" className="hover:text-white transition-colors">
+                <Link
+                  href="/legals/cookie-policy"
+                  className="hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
+                >
                   Cookie Policy
                 </Link>
               </li>
               <li>
-                <Link href="/legals/terms" className="hover:text-white transition-colors">
+                <Link
+                  href="/legals/terms"
+                  className="hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
+                >
                   Terms
                 </Link>
               </li>
@@ -87,9 +111,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-900 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm">
+        <div className="pt-6 border-t border-gray-200 dark:border-white/10">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               © {currentYear} Mosaic. All rights reserved.
             </p>
           </div>

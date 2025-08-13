@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 export default function MobileComingSoon() {
   return (
-    <section id="mobile" className="relative py-32 bg-gray-950">
+    <section id="mobile" className="relative py-32 dark:bg-gray-950 bg-gray-50 ">
       <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
         <motion.div
           initial={{ opacity:0, x:-40 }}
@@ -14,7 +14,7 @@ export default function MobileComingSoon() {
           <span className="inline-block bg-gradient-to-r from-indigo-500 to-fuchsia-500 text-white text-xs font-semibold px-3 py-1 rounded-full tracking-wide">
             Mobile Coming Soon
           </span>
-          <h2 className="mt-5 text-3xl md:text-4xl font-bold tracking-tight text-gray-900 dark:text-gray-50">
+          <h2 className="mt-5 text-3xl md:text-4xl font-bold tracking-tight text-blue-500 dark:text-gray-50">
             Native. Fast. Creator‑first.
           </h2>
           <p className="mt-4 text-gray-600 dark:text-gray-300 leading-relaxed max-w-prose">
@@ -55,7 +55,7 @@ export default function MobileComingSoon() {
           <div className="relative w-60 h-[520px] rounded-[2.5rem] bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 shadow-2xl border border-white/40 dark:border-white/10 overflow-hidden">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.6),transparent_60%)] dark:bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)] pointer-events-none" />
             {/* Screen mock */}
-            <div className="absolute inset-[14px] rounded-[2rem] bg-gray-900/90 dark:bg-black/80 flex items-center justify-center">
+            <div className="absolute inset-[14px] rounded-[2rem] bg-gray-100/90 dark:bg-black/80 flex items-center justify-center">
               <div className="text-center px-4">
                 <div className="text-sm font-medium text-gray-400 uppercase tracking-wide mb-2">Preview</div>
                 <div className="text-xl font-semibold bg-gradient-to-r from-indigo-400 to-fuchsia-400 bg-clip-text text-transparent">
