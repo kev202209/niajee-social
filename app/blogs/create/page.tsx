@@ -7,7 +7,7 @@ import Header from '@/components/watch/Header';
 import Sidebar from '@/components/watch/Sidebar';
 import  Button  from "@/components/ui/CustomButton";
 import { toast } from "sonner";
-import BlockEditor from '../components/BlockEditor';
+import BlockEditor from '@/components/blog/BlockEditor';
 import type { OutputData } from "@editorjs/editorjs";
 import { CreateBlogDto } from '@/types';
 import { FiSave, FiEye, FiUpload, FiX, FiArrowLeft } from 'react-icons/fi';
