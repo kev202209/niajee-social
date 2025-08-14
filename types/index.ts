@@ -118,7 +118,7 @@ export interface mVideo {
   fileSize: number;
   resolution: string;
   isLiked: boolean
-  isBookmarked: boolean
+  isSaved: boolean
   viewCount: number;
   likeCount: number;
   dislikeCount: number;
@@ -344,7 +344,7 @@ export interface Blog {
   likeCount: number;
   commentCount: number;
   shareCount?: number;
-  bookmarkCount?: number;
+  saveCount?: number;
   estimatedReadTime?: number;
   averageReadTime?: number;
   allowComments?: boolean;
@@ -381,7 +381,7 @@ export interface Blog {
   channel?: any | null;
   userInteraction?: {
     liked: boolean;
-    bookmarked: boolean;
+    saved: boolean;
   };
 }
 

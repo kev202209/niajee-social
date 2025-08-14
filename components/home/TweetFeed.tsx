@@ -200,7 +200,7 @@ const TweetFeed: FC = () => {
                       </button>
                       <button 
                         className={`flex items-center gap-1 ${tweet.isSaved ? 'text-yellow-500' : 'text-gray-500 dark:text-gray-400 hover:text-yellow-500'}`}
-                        title="Bookmark"
+                        title="Save"
                       >
                         <FiBookmark className="w-3 h-3" />
                         {tweet.saveCount > 0 && (

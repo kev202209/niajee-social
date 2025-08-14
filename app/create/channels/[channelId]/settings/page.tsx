@@ -3,7 +3,7 @@
 import React, { useState, useEffect, FC } from 'react';
 import { useParams } from 'next/navigation';
 import { Channel } from '@/types';
-import { FiSave, FiTrash2, FiUpload, FiLoader } from 'react-icons/fi';
+import { FiBookmark, FiTrash2, FiUpload, FiLoader } from 'react-icons/fi';
 import Image from 'next/image';
 import AuthenticatedImage from "@/components/Image";
 
@@ -354,7 +354,7 @@ const ChannelSettingsPage: FC = () => {
             </>
           ) : (
             <>
-              <FiSave className="w-4 h-4" />
+              <FiBookmark className="w-4 h-4" />
               Save Changes
             </>
           )}

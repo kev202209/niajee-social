@@ -1,34 +1,34 @@
 'use client';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  fetchVideoBookmarks,
-  fetchShortBookmarks,
-  fetchBlogBookmarks,
-  toggleVideoBookmark,
-  toggleShortBookmark,
-  toggleBlogBookmark
-} from '@/lib/api/bookmarks';
-import { BookmarkVideo, BookmarkShort, BookmarkBlog } from './SavedCards';
+  fetchVideoSaved,
+  fetchShortSaved,
+  fetchBlogSaved,
+  toggleVideoSave,
+  toggleShortSave,
+  toggleBlogSave
+} from '@/lib/api/saves';
+import { SaveVideo, SaveShort, SaveBlog } from './SavedCards';
 import Header from '@/components/Landing/Header';
 import Footer from '@/components/Landing/Footer';
 
 type TabKey = 'all' | 'videos' | 'shorts' | 'blogs';
 
-interface BaseBookmark {
+interface BaseSave {
   type: 'video' | 'short' | 'blog';
   id: string;
   title: string;
   createdAt?: string;
-  bookmarkedAt?: string;
+  savedAt?: string;
   data: any;
 }
 
-export default function BookmarksClient() {
+export default function SavedClient() {
   const [tab, setTab] = useState<TabKey>('all');
 
-  const [videos, setVideos] = useState<BaseBookmark[]>([]);
-  const [shorts, setShorts] = useState<BaseBookmark[]>([]);
-  const [blogs, setBlogs] = useState<BaseBookmark[]>([]);
+  const [videos, setVideos] = useState<BaseSave[]>([]);
+  const [shorts, setShorts] = useState<BaseSave[]>([]);
+  const [blogs, setBlogs] = useState<BaseSave[]>([]);
 
   const [videoPage, setVideoPage] = useState(1);
   const [shortPage, setShortPage] = useState(1);
@@ -45,7 +45,7 @@ export default function BookmarksClient() {
     if (videoDone || loading) return;
     setLoading(true);
     try {
-      const res = await fetchVideoBookmarks(videoPage, 20);
+      const res = await fetchVideoSaved(videoPage, 20);
       const list = res.videos || [];
       setVideos(prev => [
         ...prev,
@@ -54,14 +54,14 @@ export default function BookmarksClient() {
           id: v.id,
           title: v.title,
           createdAt: v.createdAt,
-          bookmarkedAt: v.bookmarkedAt,
+          savedAt: v.savedAt,
           data: v
         }))
       ]);
       if (res.pagination?.page >= res.pagination?.totalPages) setVideoDone(true);
       setVideoPage(p => p + 1);
     } catch (e: any) {
-      setError(e.message || 'Failed to load video bookmarks');
+      setError(e.message || 'Failed to load video saves');
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export default function BookmarksClient() {
     if (shortDone || loading) return;
     setLoading(true);
     try {
-      const res = await fetchShortBookmarks(shortPage, 20);
+      const res = await fetchShortSaved(shortPage, 20);
       const list = res.shorts || [];
       setShorts(prev => [
         ...prev,
@@ -80,14 +80,14 @@ export default function BookmarksClient() {
             id: s.id,
             title: s.title || s.caption,
             createdAt: s.createdAt,
-            bookmarkedAt: s.bookmarkedAt,
+            savedAt: s.savedAt,
             data: s
         }))
       ]);
       if (res.pagination?.page >= res.pagination?.totalPages) setShortDone(true);
       setShortPage(p => p + 1);
     } catch (e: any) {
-      setError(e.message || 'Failed to load short bookmarks');
+      setError(e.message || 'Failed to load short saves');
     } finally {
       setLoading(false);
     }
@@ -97,8 +97,8 @@ export default function BookmarksClient() {
     if (blogDone || loading) return;
     setLoading(true);
     try {
-      const res = await fetchBlogBookmarks(blogPage, 20);
-      const list = res.bookmarks || [];
+      const res = await fetchBlogSaved(blogPage, 20);
+      const list = res.saves || [];
       setBlogs(prev => [
         ...prev,
         ...list.map((b: any) => ({
@@ -106,14 +106,14 @@ export default function BookmarksClient() {
           id: b.id,
           title: b.title,
           createdAt: b.createdAt,
-          bookmarkedAt: b.bookmarkedAt,
+          savedAt: b.savedAt,
           data: b
         }))
       ]);
       if (res.pagination?.page >= res.pagination?.totalPages) setBlogDone(true);
       setBlogPage(p => p + 1);
     } catch (e: any) {
-      setError(e.message || 'Failed to load blog bookmarks');
+      setError(e.message || 'Failed to load blog saves');
     } finally {
       setLoading(false);
     }
@@ -127,8 +127,8 @@ export default function BookmarksClient() {
   }, []);
 
   const unified = [...videos, ...shorts, ...blogs].sort((a, b) => {
-    const da = a.bookmarkedAt || a.createdAt || '';
-    const db = b.bookmarkedAt || b.createdAt || '';
+    const da = a.savedAt || a.createdAt || '';
+    const db = b.savedAt || b.createdAt || '';
     return new Date(db).getTime() - new Date(da).getTime();
   });
 
@@ -160,7 +160,7 @@ export default function BookmarksClient() {
 
   const handleToggleVideo = async (id: string) => {
     try {
-      await toggleVideoBookmark(id);
+      await toggleVideoSave(id);
       setVideos(prev => prev.filter(v => v.id !== id));
     } catch (e: any) {
       setError(e.message || 'Toggle failed');
@@ -168,7 +168,7 @@ export default function BookmarksClient() {
   };
   const handleToggleShort = async (id: string) => {
     try {
-      await toggleShortBookmark(id);
+      await toggleShortSave(id);
       setShorts(prev => prev.filter(s => s.id !== id));
     } catch (e: any) {
       setError(e.message || 'Toggle failed');
@@ -176,7 +176,7 @@ export default function BookmarksClient() {
   };
   const handleToggleBlog = async (id: string) => {
     try {
-      await toggleBlogBookmark(id);
+      await toggleBlogSave(id);
       setBlogs(prev => prev.filter(b => b.id !== id));
     } catch (e: any) {
       setError(e.message || 'Toggle failed');
@@ -188,7 +188,7 @@ export default function BookmarksClient() {
       <Header />
       <main className="flex-1 pt-24 pb-24">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <h1 className="text-3xl font-bold tracking-tight mb-6">Bookmarks</h1>
+          <h1 className="text-3xl font-bold tracking-tight mb-6">Saved</h1>
 
           <div className="flex flex-wrap gap-3 mb-8">
             {(['all', 'videos', 'shorts', 'blogs'] as TabKey[]).map(t => (
@@ -213,14 +213,14 @@ export default function BookmarksClient() {
           )}
 
           {visible.length === 0 && !loading && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No bookmarks yet.</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">No saves yet.</p>
           )}
 
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {visible.map(item => {
               if (item.type === 'video')
                 return (
-                  <BookmarkVideo
+                  <SaveVideo
                     key={`video-${item.id}`}
                     data={item.data}
                     onRemove={() => handleToggleVideo(item.id)}
@@ -228,14 +228,14 @@ export default function BookmarksClient() {
                 );
               if (item.type === 'short')
                 return (
-                  <BookmarkShort
+                  <SaveShort
                     key={`short-${item.id}`}
                     data={item.data}
                     onRemove={() => handleToggleShort(item.id)}
                   />
                 );
               return (
-                <BookmarkBlog
+                <SaveBlog
                   key={`blog-${item.id}`}
                   data={item.data}
                   onRemove={() => handleToggleBlog(item.id)}

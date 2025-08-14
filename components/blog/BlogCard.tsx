@@ -15,7 +15,7 @@ interface BlogCardProps {
 export default function BlogCard({ blog, featured = false }: BlogCardProps) {
   const [imageError, setImageError] = useState(false);
   const [isLiked, setIsLiked] = useState(blog.isLiked || false);
-  const [isBookmarked, setIsBookmarked] = useState(blog.isBookmarked || false);
+  const [isSaved, setIsSaved] = useState(blog.isSaved || false);
   const [likeCount, setLikeCount] = useState(blog.likes);
 
   const handleLike = async (e: React.MouseEvent) => {
@@ -37,21 +37,21 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
     }
   };
 
-  const handleBookmark = async (e: React.MouseEvent) => {
+  const handleSave = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${blog.id}/bookmark`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${blog.id}/save`, {
         method: 'POST',
         credentials: 'include',
       });
 
       if (response.ok) {
-        setIsBookmarked(!isBookmarked);
+        setIsSaved(!isSaved);
       }
     } catch (error) {
-      console.error('Error bookmarking blog:', error);
+      console.error('Error saveing blog:', error);
     }
   };
 
@@ -207,14 +207,14 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
               </div>
               
               <button
-                onClick={handleBookmark}
+                onClick={handleSave}
                 className={`p-1 rounded transition-colors ${
-                  isBookmarked 
+                  isSaved 
                     ? 'text-blue-500 hover:text-blue-600' 
                     : 'text-gray-400 hover:text-blue-500'
                 }`}
               >
-                <FiBookmark className={`w-4 h-4 ${isBookmarked ? 'fill-current' : ''}`} />
+                <FiBookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
               </button>
               
               <button

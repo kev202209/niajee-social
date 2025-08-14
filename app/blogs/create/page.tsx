@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import BlockEditor from '@/components/blog/BlockEditor';
 import type { OutputData } from "@editorjs/editorjs";
 import { CreateBlogDto } from '@/types';
-import { FiSave, FiEye, FiUpload, FiX, FiArrowLeft } from 'react-icons/fi';
+import { FiBookmark, FiEye, FiUpload, FiX, FiArrowLeft } from 'react-icons/fi';
 import { useAuth } from '@/contexts/AuthContext';
 
 const CATEGORIES = [
@@ -290,7 +290,7 @@ export default function CreateBlogPage() {
                 disabled={isSubmitting}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
               >
-                <FiSave className="w-4 h-4" />
+                <FiBookmark className="w-4 h-4" />
                 <span>Save Draft</span>
               </button>
               
@@ -301,12 +301,12 @@ export default function CreateBlogPage() {
               >
                 {isSubmitting ? (
                   <>
-                    <FiSave className="w-4 h-4 animate-spin" />
+                    <FiBookmark className="w-4 h-4 animate-spin" />
                     <span>Publishing...</span>
                   </>
                 ) : (
                   <>
-                    <FiSave className="w-4 h-4" />
+                    <FiBookmark className="w-4 h-4" />
                     <span>Publish</span>
                   </>
                 )}

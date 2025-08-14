@@ -9,7 +9,7 @@ interface BlogActionsProps {
 
 export default function BlogActions({ blog }: BlogActionsProps) {
   const [liked, setLiked] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [likeCount, setLikeCount] = useState(blog.likeCount || 0);
   const [isLoading, setIsLoading] = useState(false);
   const [showReport, setShowReport] = useState(false);
@@ -21,7 +21,7 @@ export default function BlogActions({ blog }: BlogActionsProps) {
   useEffect(() => {
     if (blog.userInteraction) {
       setLiked(blog.userInteraction.liked);
-      setBookmarked(blog.userInteraction.bookmarked);
+      setSaved(blog.userInteraction.saved);
     }
   }, [blog.userInteraction]);
 
@@ -72,17 +72,17 @@ export default function BlogActions({ blog }: BlogActionsProps) {
     }
   };
 
-  const handleBookmark = async () => {
+  const handleSave = async () => {
     if (isLoading) return;
     
     setIsLoading(true);
-    const previousBookmarked = bookmarked;
+    const previousSaved = saved;
     
     // Optimistic update
-    setBookmarked(!bookmarked);
+    setSaved(!saved);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${blog.id}/bookmark`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${blog.id}/save`, {
         method: 'POST',
         credentials: 'include',
         headers: {
@@ -96,21 +96,21 @@ export default function BlogActions({ blog }: BlogActionsProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to toggle bookmark');
+        throw new Error(data.message || 'Failed to toggle save');
       }
 
       // Update with server response
-      setBookmarked(data.data.bookmarked);
+      setSaved(data.data.saved);
       
       toast.success(data.message);
     } catch (error: any) {
       // Revert optimistic update on error
-      setBookmarked(previousBookmarked);
+      setSaved(previousSaved);
       
       if (error.message.includes('401') || error.message.includes('unauthorized')) {
-        toast.error('Please log in to bookmark blogs');
+        toast.error('Please log in to save blogs');
       } else {
-        toast.error(error.message || 'Failed to toggle bookmark');
+        toast.error(error.message || 'Failed to toggle save');
       }
     } finally {
       setIsLoading(false);
@@ -173,14 +173,14 @@ export default function BlogActions({ blog }: BlogActionsProps) {
       
       <button
         className={`flex items-center gap-1 transition-colors ${
-          bookmarked ? "text-yellow-500" : "text-gray-500 dark:text-gray-400 hover:text-yellow-500"
+          saved ? "text-yellow-500" : "text-gray-500 dark:text-gray-400 hover:text-yellow-500"
         } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
-        onClick={handleBookmark}
+        onClick={handleSave}
         disabled={isLoading}
-        aria-label={bookmarked ? "Remove bookmark" : "Bookmark"}
+        aria-label={saved ? "Remove save" : "Save"}
       >
-        <FiBookmark className={`w-5 h-5 ${bookmarked ? "fill-current" : ""}`} />
-        <span>{bookmarked ? "Bookmarked" : "Bookmark"}</span>
+        <FiBookmark className={`w-5 h-5 ${saved ? "fill-current" : ""}`} />
+        <span>{saved ? "Saved" : "Save"}</span>
       </button>
       
       <button

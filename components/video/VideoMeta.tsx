@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   Share2, 
   Download, 
-  Bookmark, 
+  Save, 
   MoreHorizontal,
   Copy,
   Facebook,
@@ -42,12 +42,12 @@ export default function VideoMeta({ video }: VideoMetaProps) {
   const [isLiked, setIsLiked] = useState(video.isLiked || false);
   
   // New states for additional functionality
-  const [isBookmarked, setIsBookmarked] = useState(video.isBookmarked || false);
+  const [isSaved, setIsSaved] = useState(video.isSaved || false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [loading, setLoading] = useState({
-    bookmark: false,
+    save: false,
     download: false,
     notInterested: false
   });
@@ -169,17 +169,17 @@ export default function VideoMeta({ video }: VideoMetaProps) {
     }
   };
 
-  // Handle bookmark toggle
-  const handleBookmarkToggle = async () => {
-    if (loading.bookmark) return;
+  // Handle save toggle
+  const handleSaveToggle = async () => {
+    if (loading.save) return;
     
-    setLoading(prev => ({ ...prev, bookmark: true }));
-    const optimisticBookmark = !isBookmarked;
-    setIsBookmarked(optimisticBookmark);
+    setLoading(prev => ({ ...prev, save: true }));
+    const optimisticSave = !isSaved;
+    setIsSaved(optimisticSave);
     
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/videos/${video.id}/bookmark`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/videos/${video.id}/save`,
         {
           method: 'POST',
           credentials: 'include',
@@ -192,27 +192,27 @@ export default function VideoMeta({ video }: VideoMetaProps) {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to toggle bookmark');
+        throw new Error(errorData.message || 'Failed to toggle save');
       }
 
       const data = await response.json();
-      setIsBookmarked(data.isBookmarked);
+      setIsSaved(data.isSaved);
       
-      // Update save count based on bookmark status
-      if (data.isBookmarked) {
+      // Update save count based on save status
+      if (data.isSaved) {
         setSaveCount(prev => prev + 1);
       } else {
         setSaveCount(prev => Math.max(0, prev - 1));
       }
       
-      toast.success(data.isBookmarked ? 'Video saved' : 'Video removed from saved');
+      toast.success(data.isSaved ? 'Video saved' : 'Video removed from saved');
       
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
-      toast.error('Failed to update bookmark status. Please try again.');
-      setIsBookmarked(!optimisticBookmark);
+      console.error('Error toggling save:', error);
+      toast.error('Failed to update save status. Please try again.');
+      setIsSaved(!optimisticSave);
     } finally {
-      setLoading(prev => ({ ...prev, bookmark: false }));
+      setLoading(prev => ({ ...prev, save: false }));
     }
   };
 
@@ -427,23 +427,23 @@ useEffect(() => {
               </span>
             </Button>
             
-            {/* Save/Bookmark Button */}
+            {/* Save/Save Button */}
             <Button
               variant="secondary"
               size="md"
-              onClick={handleBookmarkToggle}
-              disabled={loading.bookmark}
+              onClick={handleSaveToggle}
+              disabled={loading.save}
               className="flex items-center gap-2 bg-inherit group"
             >
-              {loading.bookmark ? (
+              {loading.save ? (
                 <div className="w-4 h-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
               ) : (
-                <span className={`transition-colors ${isBookmarked ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'}`}>
-                  <Bookmark className="w-4 h-4" />
+                <span className={`transition-colors ${isSaved ? 'text-yellow-600 dark:text-yellow-400' : 'text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400'}`}>
+                  <Save className="w-4 h-4" />
                 </span>
               )}
               <span className="hidden xs:inline">
-                {loading.bookmark ? 'Saving...' : (isBookmarked ? 'Saved' : 'Save')}
+                {loading.save ? 'Saving...' : (isSaved ? 'Saved' : 'Save')}
               </span>
               <span className="text-sm font-medium text-black dark:text-white">
                 {formatCount(saveCount)}

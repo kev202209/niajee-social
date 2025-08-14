@@ -7,10 +7,6 @@ import {
   Plus,
   Flag,
   EyeOff,
-  Copy,
-  Facebook,
-  Twitter,
-  Mail,
 } from 'lucide-react';
 import Link from 'next/link'
 import LikeButton from "@/components/LikeButton";
@@ -31,7 +27,7 @@ interface ShortData {
   shareCount: number;
   saveCount: number;
   isLiked: boolean;
-  isBookmarked: boolean;
+  isSaved: boolean;
   allowComments: boolean;
   channel: {
     id: string;
@@ -62,7 +58,7 @@ const VideoActions = ({
     saveCount, 
     shareCount, 
     isLiked, 
-    isBookmarked, 
+    isSaved, 
     channel 
   } = video;
   const { id: channelId, isFollowed } = channel;
@@ -75,12 +71,12 @@ const VideoActions = ({
   const [currentLikeCount, setCurrentLikeCount] = useState(likeCount);
   const [currentSaveCount, setCurrentSaveCount] = useState(saveCount);
   const [currentShareCount, setCurrentShareCount] = useState(shareCount);
-  const [bookmarked, setBookmarked] = useState(isBookmarked);
+  const [saved, setSaved] = useState(isSaved);
   const [following, setFollowing] = useState(isFollowed);
   
   const [loading, setLoading] = useState({
     like: false,
-    bookmark: false,
+    save: false,
     follow: false,
     notInterested: false
   });
@@ -88,7 +84,7 @@ const VideoActions = ({
   // This effect now correctly syncs all state when the video object changes.
   useEffect(() => {
     setLiked(video.isLiked);
-    setBookmarked(video.isBookmarked);
+    setSaved(video.isSaved);
     setFollowing(video.channel.isFollowed);
     setCurrentLikeCount(video.likeCount);
     setCurrentSaveCount(video.saveCount);
@@ -177,17 +173,17 @@ const VideoActions = ({
     }
   };
 
-  // Handle bookmark toggle
-  const handleBookmarkToggle = async () => {
-    if (loading.bookmark) return;
+  // Handle save toggle
+  const handleSaveToggle = async () => {
+    if (loading.save) return;
     
-    setLoading(prev => ({ ...prev, bookmark: true }));
-    const optimisticBookmark = !bookmarked;
-    setBookmarked(optimisticBookmark);
+    setLoading(prev => ({ ...prev, save: true }));
+    const optimisticSave = !saved;
+    setSaved(optimisticSave);
     
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}/bookmark`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}/save`,
         {
           method: 'POST',
           credentials: 'include',
@@ -200,27 +196,27 @@ const VideoActions = ({
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to toggle bookmark');
+        throw new Error(errorData.message || 'Failed to toggle save');
       }
 
       const data = await response.json();
-      setBookmarked(data.isBookmarked);
+      setSaved(data.isSaved);
       
       // Update save count optimistically
-      if (data.isBookmarked) {
+      if (data.isSaved) {
         setCurrentSaveCount(prev => prev + 1);
       } else {
         setCurrentSaveCount(prev => Math.max(0, prev - 1));
       }
       
-      toast.success(data.isBookmarked ? 'Video saved' : 'Video removed from saved');
+      toast.success(data.isSaved ? 'Video saved' : 'Video removed from saved');
       
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
-      toast.error('Failed to update bookmark status. Please try again.');
-      setBookmarked(!optimisticBookmark);
+      console.error('Error toggling save:', error);
+      toast.error('Failed to update save status. Please try again.');
+      setSaved(!optimisticSave);
     } finally {
-      setLoading(prev => ({ ...prev, bookmark: false }));
+      setLoading(prev => ({ ...prev, save: false }));
     }
   };
 
@@ -358,20 +354,20 @@ const VideoActions = ({
           </span>
         </div>
 
-        {/* Bookmark Button with Count */}
+        {/* Save Button with Count */}
         <div className="flex flex-col items-center">
           <button 
-            onClick={handleBookmarkToggle}
-            disabled={loading.bookmark}
+            onClick={handleSaveToggle}
+            disabled={loading.save}
             className="p-3 rounded-full backdrop-blur-sm transition-all hover:bg-black/20"
           >
-            {loading.bookmark ? (
+            {loading.save ? (
               <div className="w-6 h-6 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
             ) : (
-              <Bookmark 
+              <Bookmark
                 size={26} 
                 className={`transition-colors ${
-                  bookmarked 
+                  saved 
                     ? 'text-yellow-500 fill-yellow-500'
                     : 'text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400'
                 }`} 

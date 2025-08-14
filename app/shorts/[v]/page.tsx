@@ -33,7 +33,7 @@ interface ShortData {
   saveCount: number;
   isPublic: boolean;
   isLiked: boolean;
-  isBookmarked: boolean;
+  isSaved: boolean;
   allowComments: boolean;
   allowDuet: boolean;
   monetization: {
