@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { FiThumbsUp, FiThumbsDown, FiMoreHorizontal, FiHeart, FiMessageCircle, FiSend, FiChevronDown, FiChevronUp, FiEdit3 } from "react-icons/fi";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { FiThumbsUp, FiThumbsDown, FiMessageCircle, FiSend, FiChevronDown, FiChevronUp, FiEdit3 } from "react-icons/fi";
 import { Comment, CreateCommentDto } from '../../../types';
 import { useAuth } from '@/contexts/AuthContext';
 import TextAreaWithLimit from '@/components/ui/TextAreaWithLimit';
@@ -34,18 +34,8 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
   const { user } = useAuth();
   const isAuthenticated = !!user;
 
-  // Early return if comments are not allowed
-  if (!allowComments) {
-    return (
-      <div className="mt-8 p-6 text-center text-gray-600 dark:text-gray-400">
-        <FiMessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-        <p>Comments are not allowed for this video.</p>
-      </div>
-    );
-  }
-
-  // Fetch comments for videos
-  const fetchComments = async () => {
+  // Fetch comments for videos (memoized so effect deps stable)
+  const fetchComments = useCallback(async () => {
     if (!videoId) {
       setLoading(false);
       return;
@@ -97,24 +87,27 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
         } else {
           setCommentsCount(data.comments?.length || 0);
         }
-      } catch (countError) {
+      } catch {
+        // swallow count fetch errors and fallback to array length
         console.warn('Failed to fetch comment count, using array length');
         setCommentsCount(data.comments?.length || 0);
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load comments. Please try again later.';
       console.error('Error fetching comments:', err);
-      setError('Failed to load comments. Please try again later.');
+      setError(message);
       setComments([]);
       setCommentsCount(0);
     } finally {
       setLoading(false);
     }
-  };
+  }, [videoId]);
 
   useEffect(() => {
-    fetchComments();
-  }, [videoId]);
+    // always call effect (hooks order stable)
+    void fetchComments();
+  }, [fetchComments]);
 
   // Submit new comment
   const handleSubmitComment = async (e: React.FormEvent) => {
@@ -146,16 +139,17 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to submit comment');
+        throw new Error((errorData as { message?: string }).message || 'Failed to submit comment');
       }
 
       const data = await response.json();
       setComments(prev => [data.comment, ...prev]);
       setCommentsCount(prev => prev + 1);
       setNewComment('');
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to submit comment';
       console.error('Error submitting comment:', err);
-      setError(err.message || 'Failed to submit comment');
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -190,7 +184,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to submit reply');
+        throw new Error((errorData as { message?: string }).message || 'Failed to submit reply');
       }
 
       const data = await response.json();
@@ -210,9 +204,10 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       setReplyContent('');
       setReplyingTo(null);
       setCommentsCount(prev => prev + 1);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to submit reply';
       console.error('Error submitting reply:', err);
-      setError(err.message || 'Failed to submit reply');
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -247,10 +242,11 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to update comment');
+        throw new Error((errorData as { message?: string }).message || 'Failed to update comment');
       }
 
-      const data = await response.json();
+      // consume body even if not used
+      await response.json();
 
       // Update comment in the list
       setComments(prev => prev.map(comment => {
@@ -271,9 +267,10 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
 
       setEditingId(null);
       setEditContent('');
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to update comment';
       console.error('Error updating comment:', err);
-      setError(err.message || 'Failed to update comment');
+      setError(message);
     } finally {
       setSubmitting(false);
     }
@@ -329,7 +326,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
           })
         };
       }));
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error liking comment:', err);
     }
   };
@@ -357,9 +354,10 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       // Remove comment from list
       setComments(prev => prev.filter(comment => comment.id !== commentId));
       setCommentsCount(prev => prev - 1);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to delete comment';
       console.error('Error deleting comment:', err);
-      setError(err.message || 'Failed to delete comment');
+      setError(message);
     }
   };
 
@@ -590,6 +588,16 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
     );
   };
 
+  // Render when comments are disabled
+  if (!allowComments) {
+    return (
+      <div className="mt-8 p-6 text-center text-gray-600 dark:text-gray-400">
+        <FiMessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p>Comments are not allowed for this video.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-8 space-y-6">
       {/* Header */}
@@ -606,7 +614,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
         
         <select
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
+          onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'popular')}
           className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="newest">Newest first</option>

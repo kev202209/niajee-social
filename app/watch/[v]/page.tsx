@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import VideoPlayer from "@/components/video/VideoPlayer";
 import Header from "@/components/watch/Header";
 import SuggestedVideos from "./SuggestedVideos";
@@ -199,7 +199,7 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
   const [error, setError] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -221,17 +221,19 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
       
       setVideo(data.video);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching data:', err);
-      setError(err.message || 'Error loading video');
+      const message =
+        err instanceof Error ? err.message : typeof err === 'string' ? err : JSON.stringify(err) || 'Error loading video';
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [videoId]);
 
   useEffect(() => {
-    fetchData();
-  }, [videoId]);
+    void fetchData();
+  }, [fetchData]);
 
   // Show loading skeleton
   if (loading) {

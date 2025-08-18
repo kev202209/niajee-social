@@ -48,7 +48,7 @@ export default function BlogActions({ blog }: BlogActionsProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to toggle like');
+        throw new Error(data?.message || 'Failed to toggle like');
       }
 
       // Update with server response
@@ -56,16 +56,18 @@ export default function BlogActions({ blog }: BlogActionsProps) {
       setLikeCount(data.data.likeCount);
       
       toast.success(data.message);
-    } catch (error: any) {
+    } catch (err: unknown) {
       // Revert optimistic update on error
       setLiked(previousLiked);
       setLikeCount(previousCount);
-      
-      if (error.message.includes('401') || error.message.includes('unauthorized')) {
+
+      const message = err instanceof Error ? err.message : String(err);
+
+      if (message.includes('401') || /unauthor/i.test(message)) {
         toast.error('Please log in to like blogs');
         // Redirect to login or show login modal
       } else {
-        toast.error(error.message || 'Failed to toggle like');
+        toast.error(message || 'Failed to toggle like');
       }
     } finally {
       setIsLoading(false);
@@ -96,21 +98,23 @@ export default function BlogActions({ blog }: BlogActionsProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to toggle save');
+        throw new Error(data?.message || 'Failed to toggle save');
       }
 
       // Update with server response
       setSaved(data.data.saved);
       
       toast.success(data.message);
-    } catch (error: any) {
+    } catch (err: unknown) {
       // Revert optimistic update on error
       setSaved(previousSaved);
-      
-      if (error.message.includes('401') || error.message.includes('unauthorized')) {
+
+      const message = err instanceof Error ? err.message : String(err);
+
+      if (message.includes('401') || /unauthor/i.test(message)) {
         toast.error('Please log in to save blogs');
       } else {
-        toast.error(error.message || 'Failed to toggle save');
+        toast.error(message || 'Failed to toggle save');
       }
     } finally {
       setIsLoading(false);
@@ -138,14 +142,15 @@ export default function BlogActions({ blog }: BlogActionsProps) {
         body: JSON.stringify({ reason: reportReason, description: reportDescription }),
       });
       const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.message || "Failed to report blog");
+      if (!response.ok || !data.success) throw new Error(data?.message || "Failed to report blog");
       toast.success(data.message || "Blog reported successfully.");
       setShowReport(false);
-    } catch (error: any) {
-      if (error.message.includes('401') || error.message.includes('unauthorized')) {
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes('401') || /unauthor/i.test(message)) {
         toast.error('Please log in to report blogs');
       } else {
-        toast.error(error.message || "Failed to report blog");
+        toast.error(message || "Failed to report blog");
       }
     } finally {
       setReportSubmitting(false);

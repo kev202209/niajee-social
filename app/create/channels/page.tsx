@@ -10,7 +10,7 @@ const ChannelsPage: FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  const fetchChannels = async (signal?: AbortSignal) => {
+  const fetchChannels = async (signal?: AbortSignal): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -18,30 +18,36 @@ const ChannelsPage: FC = () => {
         `${process.env.NEXT_PUBLIC_API_URL}/api/channels/my-channels`,
         {
           method: 'GET',
-          credentials: 'include',
+            credentials: 'include',
           signal
         }
       );
-      
+
       if (signal?.aborted) {
         return;
       }
-      
+
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-      
-      const data = await res.json();
-      console.log('API Response:', data);
-      
-      if (!signal?.aborted) {
-        // Extract the channels array from the response
-        setChannels(data.channels || []);
+
+      interface MyChannelsResponse {
+        channels?: Channel[];
       }
-    } catch (err: any) {
+
+      const data = await res.json() as unknown;
+      console.log('API Response:', data);
+
+      if (!signal?.aborted) {
+        const parsed = (data && typeof data === 'object' && 'channels' in (data as Record<string, unknown>))
+          ? (data as MyChannelsResponse).channels ?? []
+          : [];
+        setChannels(parsed);
+      }
+    } catch (err: unknown) {
       if (!signal?.aborted && (err as Error).name !== 'AbortError') {
         console.error('Fetch error:', err);
-        setError(err.message || 'Failed to load channels.');
+        setError((err as Error).message || 'Failed to load channels.');
       }
     } finally {
       if (!signal?.aborted) {
@@ -157,18 +163,18 @@ const ChannelsPage: FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {channels.map((channel) => (
+            {channels.map((ch: Channel) => (
               <div
-                key={channel.id}
+                key={ch.id}
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
               >
                 {/* Channel Banner */}
                 <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 relative">
-                  {channel.banner ? (
+                  {ch.banner ? (
                     <div className="relative w-full h-full">
                       <AuthenticatedImage
-                        mediaKey={channel.banner}
-                        alt={`${channel.name} banner`}
+                        mediaKey={ch.banner}
+                        alt={`${ch.name} banner`}
                         fill
                         className="object-cover"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -180,11 +186,11 @@ const ChannelsPage: FC = () => {
                   {/* Channel Avatar */}
                   <div className="absolute -bottom-6 left-4">
                     <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden">
-                      {channel.avatar ? (
+                      {ch.avatar ? (
                         <div className="relative w-full h-full">
                           <AuthenticatedImage
-                            mediaKey={channel.avatar}
-                            alt={channel.name}
+                            mediaKey={ch.avatar}
+                            alt={ch.name}
                             fill
                             className="object-cover"
                             sizes="48px"
@@ -204,14 +210,14 @@ const ChannelsPage: FC = () => {
                 <div className="p-4 pt-8">
                   <div className="mb-3">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                      {channel.name}
+                      {ch.name}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      @{channel.handle}
+                      @{ch.handle}
                     </p>
-                    {channel.description && (
+                    {ch.description && (
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                        {channel.description}
+                        {ch.description}
                       </p>
                     )}
                   </div>
@@ -222,7 +228,7 @@ const ChannelsPage: FC = () => {
                       <div className="flex items-center justify-center gap-1">
                         <FiUsers className="w-3 h-3 text-gray-400" />
                         <span className="text-xs font-medium text-gray-900 dark:text-white">
-                          {channel.subscriberCount || 0}
+                          {ch.subscriberCount || 0}
                         </span>
                       </div>
                       <span className="text-xs text-gray-500">Subscribers</span>
@@ -231,7 +237,7 @@ const ChannelsPage: FC = () => {
                       <div className="flex items-center justify-center gap-1">
                         <FiVideo className="w-3 h-3 text-gray-400" />
                         <span className="text-xs font-medium text-gray-900 dark:text-white">
-                          {channel.videoCount || 0}
+                          {ch.videoCount || 0}
                         </span>
                       </div>
                       <span className="text-xs text-gray-500">Videos</span>
@@ -240,7 +246,7 @@ const ChannelsPage: FC = () => {
                       <div className="flex items-center justify-center gap-1">
                         <FiEye className="w-3 h-3 text-gray-400" />
                         <span className="text-xs font-medium text-gray-900 dark:text-white">
-                          {channel.viewCount || 0}
+                          {ch.viewCount || 0}
                         </span>
                       </div>
                       <span className="text-xs text-gray-500">Views</span>
@@ -250,13 +256,13 @@ const ChannelsPage: FC = () => {
                   {/* Channel Status */}
                   <div className="flex items-center gap-2 mb-4">
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      channel.isActive 
+                      ch.isActive 
                         ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
                         : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                     }`}>
-                      {channel.isActive ? 'Active' : 'Inactive'}
+                      {ch.isActive ? 'Active' : 'Inactive'}
                     </span>
-                    {channel.isVerified && (
+                    {ch.isVerified && (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                         Verified
                       </span>
@@ -265,7 +271,7 @@ const ChannelsPage: FC = () => {
 
                   {/* Action Button */}
                   <button
-                    onClick={() => handleManage(channel.id)}
+                    onClick={() => handleManage(ch.id)}
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
                   >
                     <FiSettings className="w-4 h-4" />
@@ -282,3 +288,18 @@ const ChannelsPage: FC = () => {
 };
 
 export default ChannelsPage;
+
+// If not already declared, add a minimal type for list items (adjust fields to what you actually use)
+// interface ChannelSummary {
+//   id: string;
+//   name: string;
+//   handle: string;
+//   avatar?: string | null;
+//   banner?: string | null;
+//   description?: string | null;
+//   subscriberCount?: number;
+//   videoCount?: number;
+//   viewCount?: number;
+//   isActive?: boolean;
+//   isVerified?: boolean;
+// }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { FiX, FiCheck, FiLoader, FiUpload } from 'react-icons/fi';
+import { useState} from 'react';
+import { FiX, FiCheck, FiLoader } from 'react-icons/fi';
 
 interface UploadNotificationProps {
   isVisible: boolean;

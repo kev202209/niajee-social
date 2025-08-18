@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Header from '@/components/home/header';
 import Sidebar from '@/components/home/sidebar';
@@ -8,30 +8,93 @@ import { FiSearch, FiTrendingUp, FiUsers, FiVideo, FiPlay, FiHash, FiGrid } from
 import AuthenticatedImage from '@/components/Image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { getFullUrl } from '@/app/utils/videourl';
 import timeAgo from '@/app/utils/timeAgo';
 import { formatCount } from '@/app/utils/formatCount';
+import type { User, Channel, mVideo, Short, Blog, Post } from '@/types';
 
-interface SearchResult {
+// ---- Strongly Typed Search Result Models ----
+interface UserResult {
   id: string;
-  type: 'user' | 'video' | 'short' | 'channel' | 'post' | 'blog';
-  title?: string;
-  description?: string;
-  thumbnail?: string;
-  avatar?: string;
+  type: 'user';
   username?: string;
-  displayName?: string;
-  channelName?: string;
-  views?: number;
-  duration?: string;
+  displayName?: string | null;
+  avatar?: string | null;
+  verified?: boolean;
+  followerCount?: number;
   createdAt?: string;
+}
+
+interface ChannelResult {
+  id: string;
+  type: 'channel';
+  handle?: string;
+  title?: string;
+  displayName?: string;
+  avatar?: string | null;
   verified?: boolean;
   followerCount?: number;
   videoCount?: number;
-  isFollowing?: boolean;
-  handle?: string;
-  content?: string;
+  createdAt?: string;
 }
+
+interface VideoResult {
+  id: string;
+  type: 'video';
+  title?: string;
+  description?: string;
+  thumbnail?: string;
+  views?: number;
+  duration?: string | number;
+  createdAt?: string;
+  channelName?: string;
+  verified?: boolean;
+}
+
+interface ShortResult {
+  id: string;
+  type: 'short';
+  title?: string;
+  description?: string;
+  thumbnail?: string;
+  views?: number;
+  createdAt?: string;
+  channelName?: string;
+  verified?: boolean;
+  duration?: string | number;
+}
+
+interface PostResult {
+  id: string;
+  type: 'post';
+  title?: string;
+  content?: string;
+  description?: string;
+  username?: string;
+  displayName?: string;
+  avatar?: string;
+  verified?: boolean;
+  createdAt?: string;
+}
+
+interface BlogResult {
+  id: string;
+  type: 'blog';
+  title?: string;
+  description?: string;
+  createdAt?: string;
+  username?: string;
+  displayName?: string;
+  avatar?: string;
+  verified?: boolean;
+}
+
+type SearchResult =
+  | UserResult
+  | ChannelResult
+  | VideoResult
+  | ShortResult
+  | PostResult
+  | BlogResult;
 
 interface TrendingItem {
   id: string;
@@ -40,6 +103,57 @@ interface TrendingItem {
   category?: string;
 }
 
+// Raw (partial) API shapes derived from existing global types
+type RawUser = Partial<Pick<User, 'id' | 'username' | 'displayName' | 'profilePic'>> & {
+  verified?: boolean;
+  followerCount?: number;
+  createdAt?: string;
+};
+type RawChannel = Partial<Pick<Channel, 'id' | 'name' | 'avatar' | 'verified'>> & {
+  handle?: string;
+  followerCount?: number;
+  videoCount?: number;
+  createdAt?: string;
+};
+type RawVideo = Partial<
+  Pick<mVideo, 'id' | 'title' | 'description' | 'thumbnailUrl' | 'duration' | 'createdAt'>
+> & {
+  videoId?: string;
+  thumbnail?: string;
+  views?: number;
+  viewCount?: number;
+  channelName?: string;
+  channel?: { name?: string; verified?: boolean };
+  publishedAt?: string;
+};
+type RawShort = Partial<
+  Pick<Short, 'id' | 'title' | 'thumbnailUrl' | 'duration' | 'views' | 'createdAt' | 'caption'>
+> & {
+  viewCount?: number;
+  thumbnail?: string;
+  description?: string;
+  channelName?: string;
+  channel?: { name?: string; verified?: boolean };
+  publishedAt?: string;
+};
+type RawPost = Partial<
+  Pick<Post, 'id' | 'createdAt'> & {
+    title?: string;
+    content?: string;
+    desc?: string;
+    user?: { username?: string; displayName?: string; profilePic?: string; verified?: boolean };
+    author?: { username?: string; displayName?: string; profilePic?: string; verified?: boolean };
+  }
+>;
+type RawBlog = Partial<
+  Pick<Blog, 'id' | 'title' | 'excerpt' | 'subtitle' | 'publishedAt'> & {
+    authorUsername?: string;
+    authorDisplayName?: string;
+    authorProfilePic?: string;
+    authorVerified?: boolean;
+  }
+>;
+
 const SEARCH_TYPES = [
   { key: 'top', label: 'Top', icon: FiTrendingUp },
   { key: 'latest', label: 'Latest', icon: FiSearch },
@@ -47,14 +161,14 @@ const SEARCH_TYPES = [
   { key: 'shorts', label: 'Shorts', icon: FiPlay },
   { key: 'channels', label: 'Channels', icon: FiUsers },
   { key: 'people', label: 'People', icon: FiUsers },
-  { key: 'blogs', label: 'Blogs', icon: FiHash }, // Added blogs
+  { key: 'blogs', label: 'Blogs', icon: FiHash },
   { key: 'all', label: 'All', icon: FiGrid },
 ];
 
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user } = useAuth();
+  useAuth(); // ensure auth context
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const query = searchParams.get('q') || '';
@@ -66,214 +180,219 @@ export default function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Format functions for different result types
-  const formatUsers = (users: any[]): SearchResult[] => {
-    return users.map(user => ({
-      id: user.id,
-      type: 'user' as const,
-      title: user.displayName || user.username,
-      username: user.username,
-      displayName: user.displayName,
-      avatar: user.profilePic,
-      verified: user.verified,
-      followerCount: user.followerCount || 0,
-    }));
-  };
+  // ---- Format helpers (fully typed) ----
+  const formatUsers = (users: RawUser[]): UserResult[] =>
+    users
+      .filter(u => !!u && typeof u.id === 'string')
+      .map(u => ({
+        id: u.id as string,
+        type: 'user',
+        username: u.username,
+        displayName: u.displayName ?? u.username,
+        avatar: u.profilePic,
+        verified: u.verified,
+        followerCount: u.followerCount,
+        createdAt: u.createdAt,
+      }));
 
-  const formatChannels = (channels: any[]): SearchResult[] => {
-    return channels.map(channel => ({
-      id: channel.id,
-      type: 'channel' as const,
-      title: channel.name,
-      username: channel.handle,
-      displayName: channel.name,
-      avatar: channel.avatar,
-      verified: channel.verified,
-      followerCount: channel.followerCount || 0,
-      videoCount: channel.videoCount || 0,
-      handle: channel.handle,
-    }));
-  };
+  const formatChannels = (channels: RawChannel[]): ChannelResult[] =>
+    channels
+      .filter(c => !!c && typeof c.id === 'string')
+      .map(c => ({
+        id: c.id as string,
+        type: 'channel',
+        handle: c.handle,
+        title: c.name,
+        displayName: c.name,
+        avatar: c.avatar,
+        verified: c.verified,
+        followerCount: c.followerCount,
+        videoCount: c.videoCount,
+        createdAt: c.createdAt,
+      }));
 
-  const formatVideos = (videos: any[]): SearchResult[] => {
-    return videos.map(video => ({
-      id: video.id || video.videoId,
-      type: 'video' as const,
-      title: video.title,
-      description: video.description,
-      thumbnail: video.thumbnail || video.thumbnailUrl,
-      views: video.views || video.viewCount,
-      duration: video.duration,
-      createdAt: video.createdAt || video.publishedAt,
-      channelName: video.channel?.name || video.channelName,
-      verified: video.channel?.verified || false,
-    }));
-  };
+  const formatVideos = (videos: RawVideo[]): VideoResult[] =>
+    videos
+      .filter(v => !!(v.id || v.videoId))
+      .map(v => ({
+        id: (v.id || v.videoId) as string,
+        type: 'video',
+        title: v.title,
+        description: v.description,
+        thumbnail: (v.thumbnail as string) || (v.thumbnailUrl as string),
+        views: v.views ?? v.viewCount,
+        duration: v.duration,
+        createdAt: v.createdAt || v.publishedAt,
+        channelName: v.channel?.name || v.channelName,
+        verified: v.channel?.verified,
+      }));
 
-  const formatShorts = (shorts: any[]): SearchResult[] => {
-    return shorts.map(short => ({
-      id: short.id,
-      type: 'short' as const,
-      title: short.title,
-      description: short.caption || short.description,
-      thumbnail: short.thumbnailUrl || short.thumbnail,
-      views: short.views || short.viewCount,
-      createdAt: short.createdAt || short.publishedAt,
-      channelName: short.channel?.name || short.channelName,
-      verified: short.channel?.verified || false,
-    }));
-  };
+  const formatShorts = (shorts: RawShort[]): ShortResult[] =>
+    shorts
+      .filter(s => !!s.id)
+      .map(s => ({
+        id: s.id as string,
+        type: 'short',
+        title: s.title,
+        description: s.caption || s.description,
+        thumbnail: s.thumbnailUrl || s.thumbnail,
+        views: s.views ?? s.viewCount,
+        createdAt: s.createdAt || s.publishedAt,
+        channelName: s.channel?.name || s.channelName,
+        verified: s.channel?.verified,
+        duration: s.duration,
+      }));
 
-  const formatPosts = (posts: any[]): SearchResult[] => {
-    return posts.map(post => ({
-      id: post.id,
-      type: 'post' as const,
-      title: post.title || post.content?.substring(0, 50) + '...',
-      description: post.content,
-      content: post.content,
-      createdAt: post.createdAt,
-      username: post.user?.username || post.author?.username,
-      displayName: post.user?.displayName || post.author?.displayName,
-      avatar: post.user?.profilePic || post.author?.profilePic,
-      verified: post.user?.verified || post.author?.verified,
-    }));
-  };
+  const formatPosts = (posts: RawPost[]): PostResult[] =>
+    posts
+      .filter(p => !!p.id)
+      .map(p => {
+        const author = p.user || p.author || {};
+        const content = p.content || p.desc;
+        return {
+          id: p.id as string,
+          type: 'post',
+          title: p.title || (content ? content.substring(0, 50) + '...' : undefined),
+          description: content,
+          content,
+          createdAt: p.createdAt,
+          username: author.username,
+          displayName: author.displayName,
+          avatar: author.profilePic,
+          verified: author.verified,
+        };
+      });
 
-  const formatBlogs = (blogs: any[]): SearchResult[] => {
-    return blogs.map(blog => ({
-      id: blog.id,
-      type: 'blog' as const,
-      title: blog.title,
-      description: blog.excerpt || blog.subtitle,
-      createdAt: blog.publishedAt,
-      username: blog.authorUsername,
-      displayName: blog.authorDisplayName,
-      avatar: blog.authorProfilePic,
-      verified: blog.authorVerified,
-    }));
-  };
+  const formatBlogs = (blogs: RawBlog[]): BlogResult[] =>
+    blogs
+      .filter(b => !!b.id)
+      .map(b => ({
+        id: b.id as string,
+        type: 'blog',
+        title: b.title ?? undefined,
+        description: (b.excerpt ?? b.subtitle) ?? undefined,
+        createdAt: b.publishedAt ?? undefined,
+        username: b.authorUsername ?? undefined,
+        displayName: b.authorDisplayName ?? undefined,
+        avatar: b.authorProfilePic ?? undefined,
+        verified: b.authorVerified ?? undefined,
+      }));
 
-  const formatSearchResults = (results: any[], resultType: string): SearchResult[] => {
+  const formatSearchResults = useCallback((raw: unknown[], resultType: string): SearchResult[] => {
     switch (resultType) {
       case 'users':
       case 'people':
-        return formatUsers(results);
+        return formatUsers(raw as RawUser[]);
       case 'channels':
-        return formatChannels(results);
+        return formatChannels(raw as RawChannel[]);
       case 'videos':
-        return formatVideos(results);
+        return formatVideos(raw as RawVideo[]);
       case 'shorts':
-        return formatShorts(results);
+        return formatShorts(raw as RawShort[]);
       case 'posts':
-        return formatPosts(results);
-      case 'blogs': // Added blogs
-        return formatBlogs(results);
+        return formatPosts(raw as RawPost[]);
+      case 'blogs':
+        return formatBlogs(raw as RawBlog[]);
       default:
-        return results.map(item => ({
-          id: item.id,
-          type: item.type || 'post',
-          title: item.title || item.name || item.displayName,
-          description: item.description || item.content,
-          ...item
-        }));
+        return formatPosts(raw as RawPost[]); // fallback
     }
-  };
+  }, []);
 
-  // Updated debounced search function with correct endpoint and response handling
-  const debouncedSearch = useCallback(
-    debounce(async (searchQuery: string, searchType: string) => {
-      if (!searchQuery.trim()) {
-        setResults([]);
-        setHasSearched(false);
-        return;
-      }
+  // Debounced search
+  const debouncedSearchRef = useRef<((q: string, t: string) => void) | undefined>(undefined);
 
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}&limit=20`,
-          {
-            credentials: 'include',
-            headers: { 'Accept': 'application/json' }
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error('Search failed');
-        }
-
-        const data = await response.json();
-
-        let searchResults: SearchResult[] = [];
-
-        if (data.results) {
-          // For comprehensive search (all types)
-          if (typeof data.results === 'object' && !Array.isArray(data.results) && data.type === 'all') {
-            searchResults = [
-              ...formatUsers(data.results.users || []),
-              ...formatChannels(data.results.channels || []),
-              ...formatVideos(data.results.videos || []),
-              ...formatShorts(data.results.shorts || []),
-              ...formatPosts(data.results.posts || []),
-              ...formatBlogs(data.results.blogs || []) // Added blogs
-            ];
-          } else if (Array.isArray(data.results)) {
-            searchResults = formatSearchResults(data.results, data.type || searchType);
-          }
-        }
-
-        setResults(searchResults);
-        setHasSearched(true);
-      } catch (err) {
-        console.error('Search error:', err);
-        setError('Failed to search. Please try again.');
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 300),
-    []
-  );
-
-  // Search when query or type changes
   useEffect(() => {
-    if (query) {
-      debouncedSearch(query, type);
+    debouncedSearchRef.current = debounce(
+      async (searchQuery: string, searchType: string) => {
+        if (!searchQuery.trim()) {
+          setResults([]);
+            setHasSearched(false);
+          return;
+        }
+        setLoading(true);
+        setError(null);
+        try {
+          const response = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}&limit=20`,
+            { credentials: 'include', headers: { Accept: 'application/json' } }
+          );
+          if (!response.ok) throw new Error('Search failed');
+
+          const data: {
+            type?: string;
+            results?:
+              | unknown[]
+              | {
+                  users?: RawUser[];
+                  channels?: RawChannel[];
+                  videos?: RawVideo[];
+                  shorts?: RawShort[];
+                  posts?: RawPost[];
+                  blogs?: RawBlog[];
+                };
+          } = await response.json();
+
+          let aggregated: SearchResult[] = [];
+
+          if (data.results) {
+            if (!Array.isArray(data.results) && data.type === 'all') {
+              const bucket = data.results;
+              aggregated = [
+                ...formatUsers(bucket.users || []),
+                ...formatChannels(bucket.channels || []),
+                ...formatVideos(bucket.videos || []),
+                ...formatShorts(bucket.shorts || []),
+                ...formatPosts(bucket.posts || []),
+                ...formatBlogs(bucket.blogs || []),
+              ];
+            } else if (Array.isArray(data.results)) {
+              aggregated = formatSearchResults(data.results, data.type || searchType);
+            }
+          }
+          setResults(aggregated);
+          setHasSearched(true);
+        } catch (err) {
+          console.error('Search error:', err);
+          setError('Failed to search. Please try again.');
+          setResults([]);
+        } finally {
+          setLoading(false);
+        }
+      },
+      300
+    );
+  }, [formatSearchResults]);
+
+  // Trigger search
+  useEffect(() => {
+    if (query && debouncedSearchRef.current) {
+      debouncedSearchRef.current(query, type);
     } else {
       setResults([]);
       setHasSearched(false);
     }
-  }, [query, type, debouncedSearch]);
+  }, [query, type]);
 
-  // Load trending searches on mount with updated endpoint
+  // Trending
   useEffect(() => {
     const loadTrending = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/search/trending`,
-          {
-            credentials: 'include',
-            headers: { 'Accept': 'application/json' }
-          }
-        );
-
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/search/trending`, {
+          credentials: 'include',
+          headers: { Accept: 'application/json' },
+        });
         if (response.ok) {
           const data = await response.json();
-          // Handle different possible response structures
           const trendingData = data.results || data.trending || data;
-          setTrending(Array.isArray(trendingData) ? trendingData : []);
+          setTrending(Array.isArray(trendingData) ? (trendingData as TrendingItem[]) : []);
         }
       } catch (err) {
         console.error('Failed to load trending:', err);
       }
     };
-
     loadTrending();
   }, []);
 
-  // Handle search type change
   const handleTypeChange = (newType: string) => {
     const params = new URLSearchParams(searchParams);
     params.set('type', newType);
@@ -281,7 +400,6 @@ export default function SearchPage() {
     router.push(`/search?${params.toString()}`);
   };
 
-  // Handle trending click
   const handleTrendingClick = (term: string) => {
     router.push(`/search?q=${encodeURIComponent(term)}&type=top`);
   };
@@ -289,16 +407,10 @@ export default function SearchPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
-      
       <div className="flex pt-16">
-        <Sidebar 
-          isExpanded={isSidebarExpanded} 
-          setIsExpanded={setIsSidebarExpanded} 
-        />
-        
+        <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
         <main className="flex-1 min-w-0">
           <div className="max-w-4xl mx-auto px-4 py-6">
-            {/* Search Header */}
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
                 <FiSearch className="w-5 h-5 text-gray-500" />
@@ -306,52 +418,46 @@ export default function SearchPage() {
                   {query ? `Search results for "${query}"` : 'Search'}
                 </h1>
               </div>
-
-              {/* Search Type Filters */}
               <div className="flex gap-2 overflow-x-auto pb-2">
-                {SEARCH_TYPES.map((searchType) => {
-                  const Icon = searchType.icon;
+                {SEARCH_TYPES.map(t => {
+                  const Icon = t.icon;
                   return (
                     <button
-                      key={searchType.key}
-                      onClick={() => handleTypeChange(searchType.key)}
+                      key={t.key}
+                      onClick={() => handleTypeChange(t.key)}
                       className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-colors ${
-                        type === searchType.key
+                        type === t.key
                           ? 'bg-blue-600 text-white'
                           : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
-                      {searchType.label}
+                      {t.label}
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Loading State */}
             {loading && (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
                 <span className="ml-3 text-gray-600 dark:text-gray-400">Searching...</span>
               </div>
             )}
 
-            {/* Error State */}
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
                 <p className="text-red-700 dark:text-red-400">{error}</p>
               </div>
             )}
 
-            {/* No Query - Show Trending */}
             {!query && !loading && (
               <div className="space-y-6">
                 <TrendingSection trending={trending} onTrendingClick={handleTrendingClick} />
               </div>
             )}
 
-            {/* Search Results */}
             {query && hasSearched && !loading && (
               <div className="space-y-4">
                 {results.length > 0 ? (
@@ -359,7 +465,7 @@ export default function SearchPage() {
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                       Found {results.length} results
                     </p>
-                    <SearchResults results={results} type={type} />
+                    <SearchResults results={results} />
                   </>
                 ) : (
                   <NoResults query={query} />
@@ -373,7 +479,7 @@ export default function SearchPage() {
   );
 }
 
-// Updated Individual Search Result Item with better handling
+// Result Item
 function SearchResultItem({ result }: { result: SearchResult }) {
   const getResultLink = () => {
     switch (result.type) {
@@ -382,11 +488,10 @@ function SearchResultItem({ result }: { result: SearchResult }) {
       case 'short':
         return `/shorts/${result.id}`;
       case 'channel':
-        return `/channel/${result.handle || result.username || result.id}`;
+        return `/channel/${result.handle || result.id}`;
       case 'user':
         return `/profile/${result.username || result.id}`;
       case 'post':
-        // External frontend link for posts
         return `${process.env.NEXT_PUBLIC_FRONTEND_B_URL}/${result.username || 'user'}/status/${result.id}`;
       case 'blog':
         return `/blogs/${result.id}`;
@@ -412,30 +517,32 @@ function SearchResultItem({ result }: { result: SearchResult }) {
     }
   };
 
-  // Use <a> for posts to open in new tab, <Link> for internal links
-  const linkProps =
-    result.type === 'post'
-      ? {
-          href: getResultLink(),
-          target: '_blank',
-          rel: 'noopener noreferrer',
-        }
-      : {
-          href: getResultLink(),
-        };
+  const post = isPost(result);
+  const linkProps = post
+    ? { href: getResultLink(), target: '_blank', rel: 'noopener noreferrer' }
+    : { href: getResultLink() };
 
-  return result.type === 'post' ? (
-    <a {...linkProps}>
+  const Wrapper: React.ElementType = post ? 'a' : Link;
+
+  const label = primaryLabel(result);
+  const createdAt = result.createdAt || '';
+  const views = resultViews(result) || 0;
+  const resultDesc =
+    (isVideo(result) || isShort(result) || isBlog(result) || isPost(result))
+      ? (result.description || (isPost(result) ? result.content : undefined))
+      : undefined;
+
+  return (
+    <Wrapper {...linkProps}>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
         <div className="flex gap-4">
-          {/* Avatar and content as before */}
           <div className="flex-shrink-0">
-            {(result.type === 'video' || result.type === 'short') ? (
+            {(isVideo(result) || isShort(result)) ? (
               <div className="relative w-40 h-24 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
                 {result.thumbnail ? (
                   <AuthenticatedImage
                     mediaKey={result.thumbnail}
-                    alt={result.title || ''}
+                    alt={label}
                     fill
                     className="object-cover"
                     sizes="160px"
@@ -454,10 +561,10 @@ function SearchResultItem({ result }: { result: SearchResult }) {
               </div>
             ) : (
               <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                {result.avatar ? (
+                {resultAvatar(result) ? (
                   <AuthenticatedImage
-                    mediaKey={result.avatar}
-                    alt={result.displayName || result.username || ''}
+                    mediaKey={resultAvatar(result) as string}
+                    alt={label}
                     width={48}
                     height={48}
                     className="w-full h-full object-cover"
@@ -470,53 +577,53 @@ function SearchResultItem({ result }: { result: SearchResult }) {
             )}
           </div>
 
-          {/* Content */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <div className="min-w-0 flex-1">
                 <h3 className="font-medium text-gray-900 dark:text-white line-clamp-2 mb-1">
-                  {result.title || result.displayName || result.username}
+                  {label}
                 </h3>
-                
-                {result.type === 'video' || result.type === 'short' ? (
+
+                {(isVideo(result) || isShort(result)) ? (
                   <div className="space-y-1">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {result.channelName}
                     </p>
                     <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                      <span>{formatCount(result.views || 0)} views</span>
+                      <span>{formatCount(views)} views</span>
                       <span>•</span>
-                      <span>{timeAgo(result.createdAt || '')}</span>
+                      <span>{timeAgo(createdAt)}</span>
                     </div>
                   </div>
-                ) : result.type === 'post' ? (
+                ) : isPost(result) ? (
                   <div className="space-y-1">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       by @{result.username}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {timeAgo(result.createdAt || '')}
+                      {timeAgo(createdAt)}
                     </p>
                   </div>
-                ) : result.type === 'blog' ? (
+                ) : isBlog(result) ? (
                   <div className="space-y-1">
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       by {result.displayName || result.username}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {timeAgo(result.createdAt || '')}
+                      {timeAgo(createdAt)}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    {result.username && (
+                    {resultUsername(result) && (
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        @{result.username}
+                        @{resultUsername(result)}
                       </p>
                     )}
-                    {result.followerCount !== undefined && (
+                    {'followerCount' in result && typeof (result as { followerCount?: number }).followerCount === 'number' && (
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatCount(result.followerCount)} {result.type === 'channel' ? 'subscribers' : 'followers'}
+                        {formatCount((result as { followerCount: number }).followerCount)}{' '}
+                        {isChannel(result) ? 'subscribers' : 'followers'}
                       </p>
                     )}
                   </div>
@@ -527,23 +634,27 @@ function SearchResultItem({ result }: { result: SearchResult }) {
                 <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full capitalize">
                   {result.type}
                 </div>
-                {result.verified && (
+                {'verified' in result && result.verified && (
                   <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
                     <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                 )}
               </div>
             </div>
 
-            {result.description && result.type !== 'post' && (
+            {resultDesc && !isPost(result) && (
               <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                {result.description}
+                {resultDesc}
               </p>
             )}
-            
-            {result.content && result.type === 'post' && (
+
+            {isPost(result) && result.content && (
               <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mt-2">
                 {result.content}
               </p>
@@ -551,150 +662,27 @@ function SearchResultItem({ result }: { result: SearchResult }) {
           </div>
         </div>
       </div>
-    </a>
-  ) : (
-    <Link {...linkProps}>
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
-        <div className="flex gap-4">
-          {/* Avatar and content as before */}
-          <div className="flex-shrink-0">
-            {result.type === 'video' || result.type === 'short' ? (
-              <div className="relative w-40 h-24 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
-                {result.thumbnail ? (
-                  <AuthenticatedImage
-                    mediaKey={result.thumbnail}
-                    alt={result.title || ''}
-                    fill
-                    className="object-cover"
-                    sizes="160px"
-                    fallbackSrc="/placeholder-video.png"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    {getResultIcon()}
-                  </div>
-                )}
-                {result.duration && (
-                  <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1.5 py-0.5 rounded">
-                    {result.duration}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                {result.avatar ? (
-                  <AuthenticatedImage
-                    mediaKey={result.avatar}
-                    alt={result.displayName || result.username || ''}
-                    width={48}
-                    height={48}
-                    className="w-full h-full object-cover"
-                    fallbackSrc="/placeholder.png"
-                  />
-                ) : (
-                  getResultIcon()
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Content */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between mb-2">
-              <div className="min-w-0 flex-1">
-                <h3 className="font-medium text-gray-900 dark:text-white line-clamp-2 mb-1">
-                  {result.title || result.displayName || result.username}
-                </h3>
-                
-                {result.type === 'video' || result.type === 'short' ? (
-                  <div className="space-y-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {result.channelName}
-                    </p>
-                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                      <span>{formatCount(result.views || 0)} views</span>
-                      <span>•</span>
-                      <span>{timeAgo(result.createdAt || '')}</span>
-                    </div>
-                  </div>
-                ) : result.type === 'post' ? (
-                  <div className="space-y-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      by @{result.username}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {timeAgo(result.createdAt || '')}
-                    </p>
-                  </div>
-                ) : result.type === 'blog' ? (
-                  <div className="space-y-1">
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      by {result.displayName || result.username}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {timeAgo(result.createdAt || '')}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="space-y-1">
-                    {result.username && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        @{result.username}
-                      </p>
-                    )}
-                    {result.followerCount !== undefined && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {formatCount(result.followerCount)} {result.type === 'channel' ? 'subscribers' : 'followers'}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2 ml-4">
-                <div className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full capitalize">
-                  {result.type}
-                </div>
-                {result.verified && (
-                  <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                    <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {result.description && result.type !== 'post' && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                {result.description}
-              </p>
-            )}
-            
-            {result.content && result.type === 'post' && (
-              <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 mt-2">
-                {result.content}
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
-    </Link>
+    </Wrapper>
   );
 }
 
-// Trending Section Component
-function TrendingSection({ trending, onTrendingClick }: { 
-  trending: TrendingItem[]; 
-  onTrendingClick: (term: string) => void; 
+// Trending Section
+function TrendingSection({
+  trending,
+  onTrendingClick,
+}: {
+  trending: TrendingItem[];
+  onTrendingClick: (term: string) => void;
 }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center gap-2 mb-4">
         <FiTrendingUp className="w-5 h-5 text-gray-500" />
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Trending Searches</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Trending Searches
+        </h2>
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {trending.map((item, index) => (
           <button
@@ -707,9 +695,13 @@ function TrendingSection({ trending, onTrendingClick }: {
                 #{index + 1}
               </span>
               <div>
-                <p className="font-medium text-gray-900 dark:text-white">{item.term}</p>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {item.term}
+                </p>
                 {item.category && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{item.category}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {item.category}
+                  </p>
                 )}
               </div>
             </div>
@@ -723,18 +715,18 @@ function TrendingSection({ trending, onTrendingClick }: {
   );
 }
 
-// Search Results Component
-function SearchResults({ results, type }: { results: SearchResult[]; type: string }) {
+// Results list
+function SearchResults({ results }: { results: SearchResult[] }) {
   return (
     <div className="space-y-4">
-      {results.map((result) => (
-        <SearchResultItem key={`${result.type}-${result.id}`} result={result} />
+      {results.map(r => (
+        <SearchResultItem key={`${r.type}-${r.id}`} result={r} />
       ))}
     </div>
   );
 }
 
-// No Results Component
+// No results
 function NoResults({ query }: { query: string }) {
   return (
     <div className="text-center py-12">
@@ -743,7 +735,8 @@ function NoResults({ query }: { query: string }) {
         No results found
       </h3>
       <p className="text-gray-600 dark:text-gray-400 mb-4">
-        We couldn't find anything for "{query}". Try a different search term.
+        We couldn&apos;t find anything for &quot;{query}&quot;. Try a different
+        search term.
       </p>
       <div className="text-sm text-gray-500 dark:text-gray-400">
         <p>Search tips:</p>
@@ -757,14 +750,47 @@ function NoResults({ query }: { query: string }) {
   );
 }
 
-// Debounce utility function
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
+// Helper type guards & accessors (replace prior (result as any) usage)
+function isVideo(r: SearchResult): r is VideoResult { return r.type === 'video'; }
+function isShort(r: SearchResult): r is ShortResult { return r.type === 'short'; }
+function isPost(r: SearchResult): r is PostResult { return r.type === 'post'; }
+function isBlog(r: SearchResult): r is BlogResult { return r.type === 'blog'; }
+function isChannel(r: SearchResult): r is ChannelResult { return r.type === 'channel'; }
+function isUser(r: SearchResult): r is UserResult { return r.type === 'user'; }
+
+function primaryLabel(r: SearchResult): string {
+  if (isVideo(r) || isShort(r) || isBlog(r)) return r.title || '';
+  if (isPost(r)) return r.title || r.content?.slice(0, 50) || '';
+  if (isChannel(r)) return r.title || r.displayName || '';
+  if (isUser(r)) return r.displayName || r.username || '';
+  return '';
+}
+
+function resultUsername(r: SearchResult): string | undefined {
+  if (isUser(r) || isPost(r) || isBlog(r)) return r.username;
+  return undefined;
+}
+
+function resultAvatar(r: SearchResult): string | null | undefined {
+  if (isVideo(r) || isShort(r)) return undefined;
+  return (r as UserResult | ChannelResult | PostResult | BlogResult).avatar;
+}
+
+function resultViews(r: SearchResult): number | undefined {
+  if (isVideo(r) || isShort(r)) return r.views;
+  return undefined;
+}
+
+// Debounce (preserve argument types)
+function debounce<Args extends unknown[]>(
+  func: (...args: Args) => unknown,
   wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
+): (...args: Args) => void {
+  let timeout: ReturnType<typeof setTimeout>;
+  return (...args: Args) => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => {
+      void func(...args);
+    }, wait);
   };
 }

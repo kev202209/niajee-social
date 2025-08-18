@@ -44,6 +44,9 @@ export default function PricingPage() {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
 
+  const getErrorMessage = (err: unknown, fallback: string) =>
+    err instanceof Error ? err.message : fallback;
+
   // Fetch plans
   useEffect(() => {
     let active = true;
@@ -51,10 +54,10 @@ export default function PricingPage() {
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/payments/plans`, { credentials: 'include' });
         if (!res.ok) throw new Error('Failed to load plans');
-        const data = await res.json();
-        if (active) setPlans(Array.isArray(data) ? data : []);
-      } catch (e: any) {
-        if (active) setError(e.message || 'Failed to load plans');
+        const data: unknown = await res.json();
+        if (active) setPlans(Array.isArray(data) ? (data as Plan[]) : []);
+      } catch (err: unknown) {
+        if (active) setError(getErrorMessage(err, 'Failed to load plans'));
       } finally {
         if (active) setLoading(false);
       }
@@ -81,7 +84,6 @@ export default function PricingPage() {
   };
 
   const recommendedPlanId = useMemo(() => {
-    // Choose mid / pro plan if exists
     const pro = plans.find(p => /pro|plus|growth/i.test(p.name));
     return pro?.id || plans.find(p => p.name !== 'Free')?.id || plans[0]?.id;
   }, [plans]);
@@ -113,11 +115,11 @@ export default function PricingPage() {
         }),
         credentials: 'include'
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed');
-      setMessage(data.message || 'STK Push sent. Complete on device.');
-    } catch (e: any) {
-      setMessage(e.message || 'Payment failed.');
+      const data: unknown = await res.json();
+      if (!res.ok) throw new Error((data as { message?: string })?.message || 'Failed');
+      setMessage((data as { message?: string })?.message || 'STK Push sent. Complete on device.');
+    } catch (err: unknown) {
+      setMessage(getErrorMessage(err, 'Payment failed.'));
     } finally {
       setInitiating(false);
     }

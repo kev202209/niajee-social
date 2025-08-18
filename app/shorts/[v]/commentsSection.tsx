@@ -1,11 +1,9 @@
-import { FC, useRef, useState, useEffect } from 'react';
+import { FC, useRef, useState, useEffect, useCallback } from 'react';
 import {
   FiFilter,
   FiX,
   FiThumbsUp,
   FiThumbsDown,
-  FiMoreHorizontal,
-  FiArrowDown,
   FiShare2,
   FiSend,
   FiEdit3,
@@ -40,7 +38,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
   const [isVisible, setIsVisible] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null); // now displayed in UI
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [commentsCount, setCommentsCount] = useState(0);
@@ -58,118 +56,120 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
   const { user } = useAuth();
   const isAuthenticated = !!user;
 
+  // Fetch comments for shorts
+  const fetchComments = useCallback(async () => {
+    if (!commentsEnabled) return;
+     try {
+       setLoading(true);
+       setError(null);
+
+       const response = await fetch(
+         `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/${shortId}`,
+         { 
+           method: 'GET',
+           credentials: 'include',
+           headers: { 'Accept': 'application/json' }
+         }
+       );
+
+       if (!response.ok) {
+         if (response.status === 404) {
+           setComments([]);
+           setCommentsCount(0);
+           return;
+         }
+         throw new Error(`Failed to fetch comments: ${response.status}`);
+       }
+
+      const data: unknown = await response.json();
+      const fetched = (data as { comments?: Comment[] })?.comments ?? [];
+      setComments(fetched);
+       
+       // Fetch comments count
+       try {
+         const countResponse = await fetch(
+           `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/${shortId}/count`,
+           { 
+             method: 'GET',
+             credentials: 'include',
+             headers: { 'Accept': 'application/json' }
+           }
+         );
+
+         if (countResponse.ok) {
+          const countData: unknown = await countResponse.json();
+            setCommentsCount(
+              (countData as { count?: number })?.count ??
+              fetched.length
+            );
+         } else {
+           setCommentsCount(fetched.length);
+         }
+       } catch {
+        setCommentsCount(fetched.length);
+       }
+
+    } catch (err: unknown) {
+      console.error('Error fetching comments:', err);
+      setError('Failed to load comments. Please try again later.');
+       setComments([]);
+       setCommentsCount(0);
+     } finally {
+       setLoading(false);
+     }
+  }, [shortId, commentsEnabled]);
+
   useEffect(() => {
     setIsVisible(true);
     if (commentsEnabled && shortId) {
       fetchComments();
     }
-  }, [shortId, commentsEnabled]);
-
-  // Fetch comments for shorts
-  const fetchComments = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/${shortId}`,
-        { 
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-          }
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setComments([]);
-          setCommentsCount(0);
-          return;
-        }
-        throw new Error(`Failed to fetch comments: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setComments(data.comments || []);
-      
-      // Fetch comments count
-      try {
-        const countResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/${shortId}/count`,
-          { 
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              'Accept': 'application/json',
-            }
-          }
-        );
-
-        if (countResponse.ok) {
-          const countData = await countResponse.json();
-          setCommentsCount(countData.count || 0);
-        } else {
-          setCommentsCount(data.comments?.length || 0);
-        }
-      } catch (countError) {
-        setCommentsCount(data.comments?.length || 0);
-      }
-
-    } catch (err: any) {
-      console.error('Error fetching comments:', err);
-      setError('Failed to load comments. Please try again later.');
-      setComments([]);
-      setCommentsCount(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  }, [shortId, commentsEnabled, fetchComments]); // include fetchComments
+ 
   // Submit new comment
-  const handleSubmitComment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() || !isAuthenticated || submitting) return;
+   const handleSubmitComment = async (e: React.FormEvent) => {
+     e.preventDefault();
+     if (!newComment.trim() || !isAuthenticated || submitting) return;
 
-    try {
-      setSubmitting(true);
-      setError(null);
+     try {
+       setSubmitting(true);
+       setError(null);
+       const response = await fetch(
+         `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/${shortId}`,
+         {
+           method: 'POST',
+           credentials: 'include',
+           headers: {
+             'Content-Type': 'application/json',
+             'Accept': 'application/json',
+           },
+           body: JSON.stringify({
+             text: newComment.trim(),
+             parentId: undefined,
+           }),
+         }
+       );
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/${shortId}`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({
-            text: newComment.trim(),
-            parentId: undefined,
-          }),
-        }
-      );
+       if (!response.ok) {
+         const errorData: unknown = await response.json().catch(() => ({}));
+         throw new Error((errorData as { message?: string })?.message || 'Failed to submit comment');
+       }
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to submit comment');
-      }
-
-      const data = await response.json();
-      setComments(prev => [data.comment, ...prev]);
-      setCommentsCount(prev => prev + 1);
-      setNewComment('');
-      setIsInputFocused(false);
-      setIsDesktopInputFocused(false);
-    } catch (err: any) {
+      const data: unknown = await response.json();
+      const created = (data as { comment?: Comment })?.comment;
+      if (created) setComments(prev => [created, ...prev]);
+       setCommentsCount(prev => prev + 1);
+       setNewComment('');
+       setIsInputFocused(false);
+       setIsDesktopInputFocused(false);
+     } catch (err: unknown) {
       console.error('Error submitting comment:', err);
-      setError(err.message || 'Failed to submit comment');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      const message = err instanceof Error ? err.message : 'Failed to submit comment';
+      setError(message);
+     } finally {
+       setSubmitting(false);
+     }
+   };
 
   // Edit comment
   const handleEditComment = (comment: Comment) => {
@@ -179,47 +179,37 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
   };
 
   const handleEditSubmit = async (commentId: string) => {
-    if (!editContent.trim() || submitting) return;
-
-    try {
-      setSubmitting(true);
-      setError(null);
-
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/comment/${commentId}`,
-        {
-          method: 'PUT',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({ text: editContent.trim() }),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to update comment');
-      }
-
-      // Update comment in the list
-      setComments(prev => prev.map(comment => {
-        if (comment.id === commentId) {
-          return { ...comment, content: editContent.trim() };
-        }
-        return comment;
-      }));
-
-      setEditingId(null);
-      setEditContent('');
-    } catch (err: any) {
+     if (!editContent.trim() || submitting) return;
+     try {
+       setSubmitting(true);
+       setError(null);
+       const response = await fetch(
+         `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/comment/${commentId}`,
+         {
+           method: 'PUT',
+           credentials: 'include',
+           headers: {
+             'Content-Type': 'application/json',
+             'Accept': 'application/json',
+           },
+           body: JSON.stringify({ text: editContent.trim() }),
+         }
+       );
+       if (!response.ok) {
+         const errorData: unknown = await response.json().catch(() => ({}));
+         throw new Error((errorData as { message?: string })?.message || 'Failed to update comment');
+       }
+       setComments(prev => prev.map(c => c.id === commentId ? { ...c, content: editContent.trim() } : c));
+       setEditingId(null);
+       setEditContent('');
+     } catch (err: unknown) {
       console.error('Error updating comment:', err);
-      setError(err.message || 'Failed to update comment');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      const message = err instanceof Error ? err.message : 'Failed to update comment';
+      setError(message);
+     } finally {
+       setSubmitting(false);
+     }
+   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
@@ -228,68 +218,49 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
 
   // Like comment
   const handleLikeComment = async (commentId: string) => {
-    if (!isAuthenticated) return;
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/comment/${commentId}/like`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to like comment');
-      }
-
-      // Update comment like status
-      setComments(prev => prev.map(comment => {
-        if (comment.id === commentId) {
-          return {
-            ...comment,
-            isLiked: !comment.isLiked,
-            likeCount: comment.isLiked ? comment.likeCount - 1 : comment.likeCount + 1
-          };
-        }
-        return comment;
-      }));
-    } catch (err: any) {
+     if (!isAuthenticated) return;
+     try {
+       const response = await fetch(
+         `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/comment/${commentId}/like`,
+         {
+           method: 'POST',
+           credentials: 'include',
+           headers: {
+             'Content-Type': 'application/json',
+             'Accept': 'application/json',
+           },
+         }
+       );
+       if (!response.ok) throw new Error('Failed to like comment');
+       setComments(prev => prev.map(c => c.id === commentId
+         ? { ...c, isLiked: !c.isLiked, likeCount: c.isLiked ? c.likeCount - 1 : c.likeCount + 1 }
+         : c));
+     } catch (err: unknown) {
       console.error('Error liking comment:', err);
-    }
-  };
+     }
+   };
 
   // Delete comment
   const handleDeleteComment = async (commentId: string) => {
-    setConfirmDeleteId(null);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/comment/${commentId}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to delete comment');
-      }
-
-      setComments(prev => prev.filter(comment => comment.id !== commentId));
-      setCommentsCount(prev => prev - 1);
-    } catch (err: any) {
+     setConfirmDeleteId(null);
+     try {
+       const response = await fetch(
+         `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/comment/${commentId}`,
+         {
+           method: 'DELETE',
+           credentials: 'include',
+           headers: { 'Accept': 'application/json' }
+         }
+       );
+       if (!response.ok) throw new Error('Failed to delete comment');
+       setComments(prev => prev.filter(c => c.id !== commentId));
+       setCommentsCount(prev => prev - 1);
+     } catch (err: unknown) {
       console.error('Error deleting comment:', err);
-      setError(err.message || 'Failed to delete comment');
-    }
-  };
+      const message = err instanceof Error ? err.message : 'Failed to delete comment';
+      setError(message);
+     }
+   };
 
   const handleClose = () => {
     setIsVisible(false);
@@ -469,6 +440,11 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
 
         {/* Comments list - scrollable area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+         {error && (
+           <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-sm text-red-700 dark:text-red-300">
+             {error}
+           </div>
+         )}
           {!commentsEnabled ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="text-gray-400 dark:text-gray-500 mb-2">
@@ -603,6 +579,11 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
 
         {/* Desktop Comments list - scrollable area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
+         {error && (
+           <div className="p-3 rounded-md bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-sm text-red-700 dark:text-red-300">
+             {error}
+           </div>
+         )}
           {!commentsEnabled ? (
             <div className="flex flex-col items-center justify-center py-12">
               <div className="text-gray-400 dark:text-gray-500 mb-2">

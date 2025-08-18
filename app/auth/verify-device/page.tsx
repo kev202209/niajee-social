@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from "next/link";
 import BlobAnimation from "@/components/Blob";
@@ -11,7 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 interface DeviceVerificationResponse {
   success: boolean;
   message: string;
-  user?: any;
+  user?: unknown;
 }
 
 export default function VerifyDevicePage() {
@@ -27,30 +27,24 @@ export default function VerifyDevicePage() {
   
   const api_link = process.env.NEXT_PUBLIC_API_URL;
 
-  useEffect(() => {
-    if (token && !hasVerified.current) {
-      // Auto-verify the device when component loads
-      verifyDevice(token);
-    }
-  }, [token]);
-
-  const getAuthToken = (): string | null => {
-    // Check multiple storage locations for auth token
+  // keep getAuthToken stable
+  const getAuthToken = useCallback((): string | null => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('authToken') || 
-             sessionStorage.getItem('authToken') || 
-             document.cookie.split('; ').find(row => row.startsWith('authToken='))?.split('=')[1] || 
-             null;
+      return (
+        localStorage.getItem('authToken') ||
+        sessionStorage.getItem('authToken') ||
+        document.cookie.split('; ').find(row => row.startsWith('authToken='))?.split('=')[1] ||
+        null
+      );
     }
     return null;
-  };
+  }, []);
 
-  const verifyDevice = async (deviceToken: string) => {
+  // stable verifyDevice so we can safely include it in effect deps & call it elsewhere
+  const verifyDevice = useCallback(async (deviceToken: string) => {
     if (hasVerified.current) return;
     hasVerified.current = true;
-    
     setIsVerifying(true);
-    
     try {
       const authToken = getAuthToken();
       const response = await fetch(`${api_link}/auth/devices/verify`, {
@@ -69,11 +63,7 @@ export default function VerifyDevicePage() {
         setVerificationStatus('success');
         setMessage(data.message || 'Device verified successfully!');
         toast.success('Device verified successfully!');
-        
-        // Redirect after 3 seconds
-        setTimeout(() => {
-          router.push('/');
-        }, 3000);
+        setTimeout(() => router.push('/'), 3000);
       } else {
         setVerificationStatus('error');
         setMessage(data.message || 'Device verification failed');
@@ -87,7 +77,13 @@ export default function VerifyDevicePage() {
     } finally {
       setIsVerifying(false);
     }
-  };
+  }, [api_link, getAuthToken, router]);
+
+  useEffect(() => {
+    if (token && !hasVerified.current) {
+      verifyDevice(token);
+    }
+  }, [token, verifyDevice]);
 
   const handleTrustDevice = async () => {
     if (!token) return;
@@ -122,7 +118,7 @@ export default function VerifyDevicePage() {
   };
 
   const handleDenyDevice = () => {
-    toast.success('Device access denied. Please contact support if this wasn\'t you.');
+    toast.success('Device access denied. Please contact support if this wasn&apos;t you.');
     router.push('/auth/login');
   };
 
@@ -247,7 +243,7 @@ export default function VerifyDevicePage() {
                   <p className="text-red-800 dark:text-red-300 font-medium">{message}</p>
                 </div>
                 <p className="text-gray-600 dark:text-gray-300 mb-6">
-                  If this wasn't you, please secure your account immediately.
+                  If this wasn&apos;t you, please secure your account immediately.
                 </p>
                 <div className="space-y-3">
                   <button
@@ -260,7 +256,7 @@ export default function VerifyDevicePage() {
                     onClick={handleDenyDevice}
                     className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-xl transition-colors"
                   >
-                    ❌ This Wasn't Me
+                    ❌ This Wasn&apos;t Me
                   </button>
                   <Link
                     href="/auth/login"
@@ -294,7 +290,7 @@ export default function VerifyDevicePage() {
                     onClick={handleDenyDevice}
                     className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-xl transition-colors"
                   >
-                    ❌ This Wasn't Me
+                    ❌ This Wasn&apos;t Me
                   </button>
                 </div>
               </div>

@@ -11,6 +11,7 @@ import {
 import { SaveVideo, SaveShort, SaveBlog } from './SavedCards';
 import Header from '@/components/Landing/Header';
 import Footer from '@/components/Landing/Footer';
+import type { Video, Short, Blog } from '@/types';
 
 type TabKey = 'all' | 'videos' | 'shorts' | 'blogs';
 
@@ -20,7 +21,7 @@ interface BaseSave {
   title: string;
   createdAt?: string;
   savedAt?: string;
-  data: any;
+  data: Video | Short | Blog;
 }
 
 export default function SavedClient() {
@@ -46,22 +47,27 @@ export default function SavedClient() {
     setLoading(true);
     try {
       const res = await fetchVideoSaved(videoPage, 20);
-      const list = res.videos || [];
+      const list = (res.videos ?? []) as Video[];
       setVideos(prev => [
         ...prev,
-        ...list.map((v: any) => ({
-          type: 'video' as const,
-          id: v.id,
-          title: v.title,
-          createdAt: v.createdAt,
-          savedAt: v.savedAt,
-          data: v
-        }))
+        ...list.map((v) => {
+          const raw = (v as unknown) as Record<string, unknown>;
+          const savedAt = typeof raw.savedAt === 'string' ? raw.savedAt : undefined;
+          return {
+            type: 'video' as const,
+            id: v.id,
+            title: v.title ?? '',
+            createdAt: typeof v.createdAt === 'string' ? v.createdAt : undefined,
+            savedAt,
+            data: v
+          };
+        })
       ]);
       if (res.pagination?.page >= res.pagination?.totalPages) setVideoDone(true);
       setVideoPage(p => p + 1);
-    } catch (e: any) {
-      setError(e.message || 'Failed to load video saves');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message || 'Failed to load video saves');
     } finally {
       setLoading(false);
     }
@@ -72,22 +78,27 @@ export default function SavedClient() {
     setLoading(true);
     try {
       const res = await fetchShortSaved(shortPage, 20);
-      const list = res.shorts || [];
+      const list = (res.shorts ?? []) as Short[];
       setShorts(prev => [
         ...prev,
-        ...list.map((s: any) => ({
-          type: 'short' as const,
+        ...list.map((s) => {
+          const raw = (s as unknown) as Record<string, unknown>;
+          const savedAt = typeof raw.savedAt === 'string' ? raw.savedAt : undefined;
+          return {
+            type: 'short' as const,
             id: s.id,
-            title: s.title || s.caption,
-            createdAt: s.createdAt,
-            savedAt: s.savedAt,
+            title: s.title ?? s.caption ?? '',
+            createdAt: typeof s.createdAt === 'string' ? s.createdAt : undefined,
+            savedAt,
             data: s
-        }))
+          };
+        })
       ]);
       if (res.pagination?.page >= res.pagination?.totalPages) setShortDone(true);
       setShortPage(p => p + 1);
-    } catch (e: any) {
-      setError(e.message || 'Failed to load short saves');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message || 'Failed to load short saves');
     } finally {
       setLoading(false);
     }
@@ -98,22 +109,27 @@ export default function SavedClient() {
     setLoading(true);
     try {
       const res = await fetchBlogSaved(blogPage, 20);
-      const list = res.saves || [];
+      const list = (res.saves ?? []) as Blog[];
       setBlogs(prev => [
         ...prev,
-        ...list.map((b: any) => ({
-          type: 'blog' as const,
-          id: b.id,
-          title: b.title,
-          createdAt: b.createdAt,
-          savedAt: b.savedAt,
-          data: b
-        }))
+        ...list.map((b) => {
+          const raw = (b as unknown) as Record<string, unknown>;
+          const savedAt = typeof raw.savedAt === 'string' ? raw.savedAt : undefined;
+          return {
+            type: 'blog' as const,
+            id: b.id,
+            title: b.title,
+            createdAt: typeof b.createdAt === 'string' ? b.createdAt : undefined,
+            savedAt,
+            data: b
+          };
+        })
       ]);
       if (res.pagination?.page >= res.pagination?.totalPages) setBlogDone(true);
       setBlogPage(p => p + 1);
-    } catch (e: any) {
-      setError(e.message || 'Failed to load blog saves');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message || 'Failed to load blog saves');
     } finally {
       setLoading(false);
     }
@@ -162,24 +178,27 @@ export default function SavedClient() {
     try {
       await toggleVideoSave(id);
       setVideos(prev => prev.filter(v => v.id !== id));
-    } catch (e: any) {
-      setError(e.message || 'Toggle failed');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message || 'Toggle failed');
     }
   };
   const handleToggleShort = async (id: string) => {
     try {
       await toggleShortSave(id);
       setShorts(prev => prev.filter(s => s.id !== id));
-    } catch (e: any) {
-      setError(e.message || 'Toggle failed');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message || 'Toggle failed');
     }
   };
   const handleToggleBlog = async (id: string) => {
     try {
       await toggleBlogSave(id);
       setBlogs(prev => prev.filter(b => b.id !== id));
-    } catch (e: any) {
-      setError(e.message || 'Toggle failed');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : String(e);
+      setError(message || 'Toggle failed');
     }
   };
 
@@ -222,7 +241,7 @@ export default function SavedClient() {
                 return (
                   <SaveVideo
                     key={`video-${item.id}`}
-                    data={item.data}
+                    data={item.data as Video}
                     onRemove={() => handleToggleVideo(item.id)}
                   />
                 );
@@ -230,14 +249,14 @@ export default function SavedClient() {
                 return (
                   <SaveShort
                     key={`short-${item.id}`}
-                    data={item.data}
+                    data={item.data as Short}
                     onRemove={() => handleToggleShort(item.id)}
                   />
                 );
               return (
                 <SaveBlog
                   key={`blog-${item.id}`}
-                  data={item.data}
+                  data={item.data as Blog}
                   onRemove={() => handleToggleBlog(item.id)}
                 />
               );

@@ -5,22 +5,26 @@ import {
   FiUsers, 
   FiVideo, 
   FiFlag, 
-  FiMail, 
-  FiFileText, 
+  FiMail,  
   FiMessageSquare,
   FiBarChart,
   FiHome,
   FiMenu,
   FiX,
-  FiAlertCircle,
   FiBook
 } from 'react-icons/fi';
+
+export interface AdminSidebarStats {
+  pendingReports?: number;
+  unprocessedContacts?: number;
+}
+
 
 interface AdminSidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   userRole: string;
-  stats: any;
+  stats?: AdminSidebarStats;
 }
 
 export default function AdminSidebar({ activeTab, setActiveTab, userRole, stats }: AdminSidebarProps) {
@@ -42,9 +46,9 @@ export default function AdminSidebar({ activeTab, setActiveTab, userRole, stats 
     
     switch (itemId) {
       case 'reports':
-        return stats.pendingReports || 0;
+        return stats.pendingReports ?? 0;
       case 'contacts':
-        return stats.unprocessedContacts || 0;
+        return stats.unprocessedContacts ?? 0;
       default:
         return 0;
     }

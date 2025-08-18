@@ -28,7 +28,7 @@ const getBestQualityUrl = (videoUrl: Record<string, string>) => {
 };
 
 
-export default function VideoPlayer({ video }: { video: mVideo }) {
+export default function VideoPlayer({ video }: VideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Use master playlist if available, otherwise use best quality
@@ -47,8 +47,8 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
     videoId: video.id,
   }) as ReturnType<typeof useVideoPlayer> & { setHlsInstance?: (hls: Hls) => void };
 
-  // Use buffering from controls
-  const { buffering, setBuffering } = controls;
+  // Destructure the specific values we need so we don't have to include the whole `controls` object in deps
+  const { buffering, setBuffering, hlsInstance, setHlsInstance, containerRef } = controls;
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -62,8 +62,8 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
     videoElement.removeAttribute('src');
 
     // Destroy existing HLS instance
-    if (controls.hlsInstance) {
-      controls.hlsInstance.destroy();
+    if (hlsInstance) {
+      hlsInstance.destroy();
     }
 
     if (Hls.isSupported()) {
@@ -75,23 +75,19 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
         maxBufferLength: 30,
         maxBufferSize: 60 * 1000 * 1000,
         xhrSetup: function(xhr) {
-        xhr.withCredentials = true;
+          xhr.withCredentials = true;
         }
       });
 
-      hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-        setBuffering && setBuffering(false);
+      // Manifest parsed -> stop buffering
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        if (setBuffering) setBuffering(false);
       });
 
-      hls.on(Hls.Events.LEVEL_LOADED, (event, data) => {
-      });
-
-      hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
-      });
-
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('HLS Error:', event, data);
-        if (data.fatal) {
+      // Keep a couple of event handlers for diagnostics (use underscore names for unused params)
+      hls.on(Hls.Events.ERROR, (_event, data) => {
+        console.error('HLS Error:', _event, data);
+     if (data && data.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
               hls.startLoad();
@@ -109,7 +105,7 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
       });
 
       // Set buffering state
-      setBuffering && setBuffering(true);
+      if (setBuffering) setBuffering(true);
 
       try {
         hls.loadSource(streamUrl);
@@ -120,7 +116,7 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
         videoElement.src = streamUrl;
       }
 
-      controls.setHlsInstance?.(hls);
+      setHlsInstance?.(hls);
 
       return () => {
         hls.destroy();
@@ -131,7 +127,7 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
     } else {
       console.error('HLS not supported and no native support');
     }
-  }, [streamUrl, setBuffering]);
+  }, [streamUrl, setBuffering, hlsInstance, setHlsInstance]);
 
   // Add event listeners to video element for debugging
   useEffect(() => {
@@ -144,11 +140,11 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
     const handleError = (e: Event) => console.error('Video error:', e);
     const handleWaiting = () => {
       console.log('Video waiting');
-      setBuffering && setBuffering(true);
+      if (setBuffering) setBuffering(true);
     };
     const handlePlaying = () => {
       console.log('Video playing');
-      setBuffering && setBuffering(false);
+      if (setBuffering) setBuffering(false);
     };
 
     videoElement.addEventListener('loadstart', handleLoadStart);
@@ -178,7 +174,7 @@ export default function VideoPlayer({ video }: { video: mVideo }) {
 
   return (
     <div className="space-y-4">
-      <div className="relative" ref={controls.containerRef}>
+      <div className="relative" ref={containerRef}>
         {/* Buffering Spinner */}
         {buffering && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">

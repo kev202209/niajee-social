@@ -9,7 +9,6 @@ import {
   FiLink, 
   FiImage, 
   FiCode,
-  FiType,
   FiAlignLeft,
   FiAlignCenter,
   FiAlignRight
@@ -236,7 +235,7 @@ export default function RichTextEditor({ value, onChange, placeholder }: RichTex
     return () => {
       document.removeEventListener('selectionchange', handleSelectionChange);
     };
-  }, []);
+  }, [handleSelectionChange]);
 
   const execCommand = (command: string, value?: string) => {
     document.execCommand(command, false, value);

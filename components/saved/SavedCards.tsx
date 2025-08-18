@@ -12,18 +12,11 @@ import React from 'react';
   Adds a small remove (unsave) button – avoids duplicate markup.
 */
 
-interface Base {
-  id: string;
-  type: 'video' | 'short' | 'blog';
-  data: any;
-  onRemove: () => void;
-}
-
-export function SaveVideo({ data, onRemove }: { data: any; onRemove: () => void }) {
+export function SaveVideo({ data, onRemove }: { data: Video; onRemove: () => void }) {
   // Adapt save video shape to VideoCard expected shape (VideoCard uses video.videoId)
   const adapted: Video = {
-    ...(data as any),
-    videoId: data.id || data.videoId,
+    ...data,
+    videoId: (data as Video).videoId || (data as Video).id,
   };
   return (
     <div className="relative group">
@@ -39,9 +32,9 @@ export function SaveVideo({ data, onRemove }: { data: any; onRemove: () => void 
   );
 }
 
-export function SaveShort({ data, onRemove }: { data: any; onRemove: () => void }) {
+export function SaveShort({ data, onRemove }: { data: Short; onRemove: () => void }) {
   const adapted: Short = {
-    ...(data as any),
+    ...data,
     id: data.id,
   };
   return (
@@ -58,9 +51,9 @@ export function SaveShort({ data, onRemove }: { data: any; onRemove: () => void 
   );
 }
 
-export function SaveBlog({ data, onRemove }: { data: any; onRemove: () => void }) {
+export function SaveBlog({ data, onRemove }: { data: Blog; onRemove: () => void }) {
   const adapted: Blog = {
-    ...(data as any),
+    ...data,
   };
   return (
     <div className="relative group">

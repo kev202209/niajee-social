@@ -39,224 +39,226 @@ const BlockEditor = forwardRef<EditorJS | null, BlockEditorProps>(({
 
   useImperativeHandle(ref, () => ejInstance.current);
 
-  const initEditor = async () => {
-    // Prevent multiple initializations
-    if (isInitialized.current || !editorRef.current) {
-      return;
-    }
+  // NOTE: moved initialization logic into the effect to avoid initEditor deps lint
+  useEffect(() => {
+    isMounted.current = true;
 
-    try {
-      // Clear any existing content in the holder
-      if (editorRef.current) {
-        editorRef.current.innerHTML = '';
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    const init = async () => {
+      // Prevent multiple initializations
+      if (isInitialized.current || !editorRef.current) {
+        return;
       }
 
-      const editor = new EditorJS({
-        holder: editorRef.current,
-        onReady: () => {
-          if (isMounted.current) {
-            ejInstance.current = editor;
-            isInitialized.current = true;
-          }
-        },
-        onChange: async (api, event) => {
-          if (onChange && isMounted.current) {
-            try {
-              const content = await api.saver.save();
-              onChange(content);
-            } catch (error) {
-              console.error('Error saving editor content:', error);
-            }
-          }
-        },
-        autofocus: !readOnly,
-        placeholder,
-        readOnly,
-        data: value || { blocks: [] },
-        minHeight: 0,
-        tools: {
-          // Typography
-          header: {
-            class: Header,
-            inlineToolbar: ['marker', 'link'],
-            config: {
-              placeholder: 'Enter a header',
-              levels: [1, 2, 3, 4, 5, 6],
-              defaultLevel: 2
-            }
-          },
-          paragraph: {
-            class: Paragraph,
-            inlineToolbar: true,
-            config: {
-              placeholder: 'Start writing...'
-            }
-          },
+      try {
+        // Clear any existing content in the holder
+        if (editorRef.current) {
+          editorRef.current.innerHTML = '';
+        }
 
-          // Lists
-          list: {
-            class: List,
-            inlineToolbar: true,
-            config: {
-              defaultStyle: 'unordered'
+        const editor = new EditorJS({
+          holder: editorRef.current,
+          onReady: () => {
+            if (isMounted.current) {
+              ejInstance.current = editor;
+              isInitialized.current = true;
             }
           },
-          checklist: {
-            class: Checklist,
-            inlineToolbar: true,
+          // remove unused 'event' param from signature
+          onChange: async (api) => {
+            if (onChange && isMounted.current) {
+              try {
+                const content = await api.saver.save();
+                onChange(content);
+              } catch (error) {
+                console.error('Error saving editor content:', error);
+              }
+            }
           },
+          autofocus: !readOnly,
+          placeholder,
+          readOnly,
+          data: value || { blocks: [] },
+          minHeight: 0,
+          tools: {
+            // Typography
+            header: {
+              class: Header,
+              inlineToolbar: ['marker', 'link'],
+              config: {
+                placeholder: 'Enter a header',
+                levels: [1, 2, 3, 4, 5, 6],
+                defaultLevel: 2
+              }
+            },
+            paragraph: {
+              class: Paragraph,
+              inlineToolbar: true,
+              config: {
+                placeholder: 'Start writing...'
+              }
+            },
 
-          // Media
-          image: {
-            class: Image,
-            config: {
-              endpoints: {
-                byFile: `${process.env.NEXT_PUBLIC_API_URL}/api/upload/image`,
-                byUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/upload/image-by-url`,
-              },
-              field: 'image',
-              types: 'image/*',
-              additionalRequestHeaders: {
-                'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') : ''}`,
-              },
-              uploader: {
-                uploadByFile: async (file: File) => {
-                  try {
-                    const formData = new FormData();
-                    formData.append('image', file);
-                    
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/image`, {
-                      method: 'POST',
-                      credentials: 'include',
-                      body: formData,
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                      return {
-                        success: 1,
-                        file: {
-                          url: data.data.url,
-                        }
-                      };
-                    } else {
-                      throw new Error(data.message || 'Upload failed');
-                    }
-                  } catch (error) {
-                    console.error('Image upload error:', error);
-                    return {
-                      success: 0,
-                      error: 'Upload failed'
-                    };
-                  }
+            // Lists
+            list: {
+              class: List,
+              inlineToolbar: true,
+              config: {
+                defaultStyle: 'unordered'
+              }
+            },
+            checklist: {
+              class: Checklist,
+              inlineToolbar: true,
+            },
+
+            // Media
+            image: {
+              class: Image,
+              config: {
+                endpoints: {
+                  byFile: `${process.env.NEXT_PUBLIC_API_URL}/api/upload/image`,
+                  byUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/upload/image-by-url`,
                 },
-                uploadByUrl: async (url: string) => {
-                  try {
-                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/image-by-url`, {
-                      method: 'POST',
-                      credentials: 'include',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({ url }),
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (data.success) {
+                field: 'image',
+                types: 'image/*',
+                additionalRequestHeaders: {
+                  'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('token') : ''}`,
+                },
+                uploader: {
+                  uploadByFile: async (file: File) => {
+                    try {
+                      const formData = new FormData();
+                      formData.append('image', file);
+                      
+                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/image`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        body: formData,
+                      });
+                      
+                      const data = await response.json();
+                      
+                      if (data.success) {
+                        return {
+                          success: 1,
+                          file: {
+                            url: data.data.url,
+                          }
+                        };
+                      } else {
+                        throw new Error(data.message || 'Upload failed');
+                      }
+                    } catch (error) {
+                      console.error('Image upload error:', error);
                       return {
-                        success: 1,
-                        file: {
-                          url: data.data.url,
-                        }
+                        success: 0,
+                        error: 'Upload failed'
                       };
-                    } else {
-                      throw new Error(data.message || 'Upload failed');
                     }
-                  } catch (error) {
-                    console.error('Image upload by URL error:', error);
-                    return {
-                      success: 0,
-                      error: 'Upload failed'
-                    };
+                  },
+                  uploadByUrl: async (url: string) => {
+                    try {
+                      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/image-by-url`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ url }),
+                      });
+                      
+                      const data = await response.json();
+                      
+                      if (data.success) {
+                        return {
+                          success: 1,
+                          file: {
+                            url: data.data.url,
+                          }
+                        };
+                      } else {
+                        throw new Error(data.message || 'Upload failed');
+                      }
+                    } catch (error) {
+                      console.error('Image upload by URL error:', error);
+                      return {
+                        success: 0,
+                        error: 'Upload failed'
+                      };
+                    }
                   }
                 }
               }
-            }
-          },
-          simpleImage: SimpleImage,
-
-          // Code
-          code: {
-            class: Code,
-            config: {
-              placeholder: 'Enter code here...'
-            }
-          },
-          inlineCode: {
-            class: InlineCode,
-            shortcut: 'CMD+SHIFT+M',
-          },
-
-          // Links & Embeds
-          linkTool: {
-            class: LinkTool,
-            config: {
-              endpoint: `${process.env.NEXT_PUBLIC_API_URL}/api/link-preview`,
-            }
-          },
-          embed: {
-            class: Embed,
-            config: {
-              services: {
-                youtube: true,
-                twitter: true,
-                instagram: true,
-                codepen: true,
-                github: true,
-              }
-            }
-          },
-
-          // Formatting
-          marker: {
-            class: Marker,
-            shortcut: 'CMD+SHIFT+H',
-          },
-
-          // Layout
-          delimiter: Delimiter,
-          table: {
-            class: Table,
-            inlineToolbar: true,
-            config: {
-              rows: 2,
-              cols: 3,
             },
+            simpleImage: SimpleImage,
+
+            // Code
+            code: {
+              class: Code,
+              config: {
+                placeholder: 'Enter code here...'
+              }
+            },
+            inlineCode: {
+              class: InlineCode,
+              shortcut: 'CMD+SHIFT+M',
+            },
+
+            // Links & Embeds
+            linkTool: {
+              class: LinkTool,
+              config: {
+                endpoint: `${process.env.NEXT_PUBLIC_API_URL}/api/link-preview`,
+              }
+            },
+            embed: {
+              class: Embed,
+              config: {
+                services: {
+                  youtube: true,
+                  twitter: true,
+                  instagram: true,
+                  codepen: true,
+                  github: true,
+                }
+              }
+            },
+
+            // Formatting
+            marker: {
+              class: Marker,
+              shortcut: 'CMD+SHIFT+H',
+            },
+
+            // Layout
+            delimiter: Delimiter,
+            table: {
+              class: Table,
+              inlineToolbar: true,
+              config: {
+                rows: 2,
+                cols: 3,
+              },
+            },
+            raw: Raw,
           },
-          raw: Raw,
-        },
-      });
-
-    } catch (error) {
-      console.error('Failed to initialize Editor.js:', error);
-      isInitialized.current = false;
-    }
-  };
-
-  // Initialize editor only once
-  useEffect(() => {
-    isMounted.current = true;
-    
-    const timeoutId = setTimeout(() => {
-      if (editorRef.current && !isInitialized.current && isMounted.current) {
-        initEditor();
+        });
+      } catch (error) {
+        console.error('Failed to initialize Editor.js:', error);
+        isInitialized.current = false;
       }
-    }, 100); // Small delay to ensure DOM is ready
+    };
+
+    timeoutId = setTimeout(() => {
+      if (editorRef.current && !isInitialized.current && isMounted.current) {
+        void init();
+      }
+    }, 100);
 
     return () => {
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
       isMounted.current = false;
       
       // Cleanup editor
@@ -270,7 +272,8 @@ const BlockEditor = forwardRef<EditorJS | null, BlockEditorProps>(({
       }
       isInitialized.current = false;
     };
-  }, []); // Empty dependency array - initialize only once
+    // init and dependencies intentionally local to effect
+  }, [value, placeholder, readOnly, onChange]);
 
   return (
     <div className="block-editor-wrapper">

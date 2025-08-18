@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, FC } from 'react';
+import React, { useState, useEffect, FC, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Channel } from '@/types';
 import { FiBookmark, FiTrash2, FiUpload, FiLoader } from 'react-icons/fi';
@@ -32,11 +32,7 @@ const ChannelSettingsPage: FC = () => {
     'Technology', 'Comedy', 'News', 'Lifestyle', 'Travel', 'Other'
   ];
 
-  useEffect(() => {
-    fetchChannel();
-  }, [channelId]);
-
-  const fetchChannel = async () => {
+  const fetchChannel = useCallback(async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}`, {
         credentials: 'include'
@@ -65,7 +61,11 @@ const ChannelSettingsPage: FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [channelId]);
+
+  useEffect(() => {
+    fetchChannel();
+  }, [fetchChannel]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;

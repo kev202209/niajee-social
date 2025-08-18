@@ -17,7 +17,7 @@ export default function CookiePolicy() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">1. Introduction</h2>
           <p className="mb-4">
-            This Cookie Policy explains how Mosaic ("we", "us", or "our") uses cookies and similar technologies to recognize you when you visit our website, mobile applications, and other platforms (collectively, the "Services"). It explains what these technologies are and why we use them, as well as your rights to control our use of them.
+            This Cookie Policy explains how Mosaic (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) uses cookies and similar technologies to recognize you when you visit our website, mobile applications, and other platforms (collectively, the &quot;Services&quot;). It explains what these technologies are and why we use them, as well as your rights to control our use of them.
           </p>
         </section>
 
@@ -27,7 +27,7 @@ export default function CookiePolicy() {
             Cookies are small data files that are placed on your computer or mobile device when you visit a website. Cookies are widely used by website owners to make their websites work, or to work more efficiently, as well as to provide reporting information.
           </p>
           <p className="mb-4">
-            Cookies set by the website owner (in this case, Mosaic) are called "first-party cookies." Cookies set by parties other than the website owner are called "third-party cookies." Third-party cookies enable third-party features or functionality to be provided on or through the website (e.g., advertising, interactive content, and analytics). The parties that set these third-party cookies can recognize your computer both when it visits the website in question and also when it visits certain other websites.
+            Cookies set by the website owner (in this case, Mosaic) are called &quot;first-party cookies.&quot; Cookies set by parties other than the website owner are called &quot;third-party cookies.&quot; Third-party cookies enable third-party features or functionality to be provided on or through the website (e.g., advertising, interactive content, and analytics). The parties that set these third-party cookies can recognize your computer both when it visits the website in question and also when it visits certain other websites.
           </p>
         </section>
 
@@ -58,7 +58,7 @@ export default function CookiePolicy() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">4. How Long Do Cookies Stay On Your Device</h2>
           <p className="mb-4">
-            The length of time a cookie will remain on your device depends on whether it is a "persistent" or "session" cookie. Session cookies will remain on your device until you stop browsing. Persistent cookies remain on your device until they expire or are deleted.
+            The length of time a cookie will remain on your device depends on whether it is a &quot;persistent&quot; or &quot;session&quot; cookie. Session cookies will remain on your device until you stop browsing. Persistent cookies remain on your device until they expire or are deleted.
           </p>
         </section>
 
@@ -78,7 +78,7 @@ export default function CookiePolicy() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">6. Changes to This Cookie Policy</h2>
           <p className="mb-4">
-            We may update this Cookie Policy from time to time. The updated version will be indicated by an updated "Last updated" date at the top of this Cookie Policy. We encourage you to review this Cookie Policy frequently to be informed of how we are using cookies.
+            We may update this Cookie Policy from time to time. The updated version will be indicated by an updated &quot;Last updated&quot; date at the top of this Cookie Policy. We encourage you to review this Cookie Policy frequently to be informed of how we are using cookies.
           </p>
         </section>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/watch/Header';
@@ -57,8 +57,8 @@ export default function CreateBlogPage() {
   //   }
   // }, [user, router]);
 
-  const handleInputChange = (field: keyof CreateBlogDto, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = <K extends keyof CreateBlogDto>(field: K, value: CreateBlogDto[K]) => {
+    setFormData(prev => ({ ...prev, [field]: value } as CreateBlogDto));
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
@@ -206,48 +206,28 @@ export default function CreateBlogPage() {
         toast.error(data.message || 'Failed to create blog');
         setErrors({ submit: data.message || 'Failed to create blog' });
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create blog');
-      setErrors({ submit: error.message || 'Failed to create blog' });
-    } finally {
-      setIsSubmitting(false);
-    }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to create blog';
+      toast.error(message);
+      setErrors({ submit: message });
+     } finally {
+       setIsSubmitting(false);
+     }
   };
 
-  // Add this helper function to render the content in preview
-  const renderEditorContent = (content: any) => {
-    if (!content || !content.blocks) {
+  // Simple, safe preview renderer — avoids using `any` and prevents XSS by escaping HTML.
+  const escapeHtml = (str: string) =>
+    str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+  const renderEditorContent = (content?: OutputData) => {
+    if (!content?.blocks || content.blocks.length === 0) {
       return '<p>Your blog content will appear here...</p>';
     }
-    
-    return content.blocks.map((block: any) => {
-      const alignment = block.tunes?.alignment || 'left';
-      const alignStyle = `text-align: ${alignment};`;
-      
-      switch (block.type) {
-        case 'header':
-          const level = block.data.level || 1;
-          return `<h${level} style="${alignStyle}">${block.data.text || ''}</h${level}>`;
-        
-        case 'paragraph':
-          return `<p style="${alignStyle}">${block.data.text || ''}</p>`;
-        
-        case 'list':
-          const items = block.data.items || [];
-          const listItems = items.map((item: string) => `<li>${item}</li>`).join('');
-          const listTag = block.data.style === 'ordered' ? 'ol' : 'ul';
-          return `<${listTag} style="${alignStyle}">${listItems}</${listTag}>`;
-        
-        case 'code':
-          return `<pre style="${alignStyle}"><code>${block.data.code || ''}</code></pre>`;
-        
-        case 'image':
-          return `<img src="${block.data.src}" alt="${block.data.alt || ''}" style="max-width: 100%; height: auto; ${alignStyle}" />`;
-        
-        default:
-          return `<p style="${alignStyle}">${block.data.text || ''}</p>`;
-      }
-    }).join('');
+
+    // Render each block as JSON preview — safe and avoids `any` typing.
+    return content.blocks
+      .map(block => `<pre class="editor-block-preview">${escapeHtml(JSON.stringify(block, null, 2))}</pre>`)
+      .join('');
   };
 
   if (!user) {
@@ -484,7 +464,7 @@ export default function CreateBlogPage() {
                 {/* Preview Badge */}
                 <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-6">
                   <p className="text-sm text-yellow-800 dark:text-yellow-200 text-center">
-                    📝 This is a preview of your blog. Click "Edit" to continue editing.
+                    📝 This is a preview of your blog. Click &quot;Edit&quot; to continue editing.
                   </p>
                 </div>
 

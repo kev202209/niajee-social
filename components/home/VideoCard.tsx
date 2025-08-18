@@ -1,6 +1,5 @@
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useEffect, useRef, useState, useCallback } from "react";
 import { Video } from "../../types";
-import Image from "next/image";
 import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiUser } from "react-icons/fi";
 import Link from "next/link";
 import timeAgo from "../../app/utils/timeAgo";
@@ -36,18 +35,18 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
   
   useOutsideClick(optionsRef, () => setShowOptions(false));
 
-  // Helper to get video source URL from key
-  const getVideoSource = () => {
+  // Helper to get video source URL from key (memoized so effects can depend on it)
+  const getVideoSource = useCallback(() => {
     const qualities = ['1080p', '720p', '360p'];
     for (const quality of qualities) {
-      if (video.videoUrl[quality]) {
-        return getFullUrl(video.videoUrl[quality]);
+      if ((video.videoUrl as Record<string, string | undefined>)[quality]) {
+        return getFullUrl((video.videoUrl as Record<string, string>)[quality]);
       }
     }
     const first = Object.values(video.videoUrl)[0] || '';
-    return getFullUrl(first);
-  };
-
+    return getFullUrl(String(first));
+  }, [video.videoUrl]);
+ 
   // Setup HLS and video source
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -109,7 +108,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
         hlsRef.current = null;
       }
     };
-  }, [video, volume]);
+  }, [getVideoSource, volume]);
 
   const handleMouseEnter = async () => {
     if (!videoReady || !videoRef.current) return;
@@ -185,7 +184,11 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
     <Link href={`/watch/${video.videoId}`}>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer relative">
         {/* Video Thumbnail Container with 16:9 Aspect Ratio */}
-        <div className="relative group rounded-t-lg overflow-hidden aspect-video">
+        <div
+          className="relative group rounded-t-lg overflow-hidden aspect-video"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
           {/* Thumbnail */}
           <AuthenticatedImage
             mediaKey={video.thumbnail}

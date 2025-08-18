@@ -1,7 +1,6 @@
 'use client';
 
 import React from "react";
-import Link from "next/link";
 
 export default function TermsOfUse() {
   return (
@@ -17,7 +16,7 @@ export default function TermsOfUse() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">1. Introduction</h2>
           <p className="mb-4">
-            Welcome to Mosaic ("we", "us", or "our"). Mosaic is an all-in-one social media platform that centralizes long videos, short-form content, and community-driven discussions into one unified experience. These Terms of Use ("Terms") govern your access to and use of our website, mobile applications, and other services (collectively, the "Services"). By using our Services, you agree to be bound by these Terms. If you do not agree with these Terms, please do not use our Services.
+            Welcome to Mosaic (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). Mosaic is an all-in-one social media platform that centralizes long videos, short-form content, and community-driven discussions into one unified experience. These Terms of Use (&quot;Terms&quot;) govern your access to and use of our website, mobile applications, and other services (collectively, the &quot;Services&quot;). By using our Services, you agree to be bound by these Terms. If you do not agree with these Terms, please do not use our Services.
           </p>
         </section>
 
@@ -79,7 +78,7 @@ export default function TermsOfUse() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">8. Disclaimers</h2>
           <p className="mb-4">
-            The Services are provided on an "as is" and "as available" basis without any warranties of any kind, either express or implied, including, but not limited to, implied warranties of merchantability, fitness for a particular purpose, and non-infringement.
+            The Services are provided on an &quot;as is&quot; and &quot;as available&quot; basis without any warranties of any kind, either express or implied, including, but not limited to, implied warranties of merchantability, fitness for a particular purpose, and non-infringement.
           </p>
           <p className="mb-4">
             Mosaic does not warrant that the Services will be uninterrupted, error-free, or completely secure.
@@ -102,7 +101,7 @@ export default function TermsOfUse() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">10. Indemnification</h2>
           <p className="mb-4">
-            You agree to indemnify, defend, and hold harmless Mosaic, its affiliates, and their respective officers, directors, employees, and agents from and against any and all claims, liabilities, damages, losses, or expenses, including reasonable attorneys' fees, arising out of or in any way connected with your access to or use of the Services or your violation of these Terms.
+            You agree to indemnify, defend, and hold harmless Mosaic, its affiliates, and their respective officers, directors, employees, and agents from and against any and all claims, liabilities, damages, losses, or expenses, including reasonable attorneys&apos; fees, arising out of or in any way connected with your access to or use of the Services or your violation of these Terms.
           </p>
         </section>
 

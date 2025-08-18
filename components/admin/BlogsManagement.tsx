@@ -51,7 +51,46 @@ interface Blog {
   updatedAt: string;
   publishedAt?: string;
 }
+interface RawBlog {
+  id: string;
+  title?: string;
+  content?: string;
+  excerpt?: string;
+  featuredImage?: string | null;
+  authorId?: string;
+  authorUsername?: string;
+  authorAvatar?: string | null;
+  categoryId?: string;
+  categoryName?: string;
+  categorySlug?: string;
+  tags?: string[];
+  likeCount?: number;
+  commentCount?: number;
+  shareCount?: number;
+  viewCount?: number;
+  readTime?: number;
+  status?: string;
+  isFeatured?: boolean;
+  isSensitive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  publishedAt?: string;
+}
 
+interface RawReport {
+  id: string;
+  blogId?: string;
+  blogTitle?: string;
+  blogAuthorName?: string;
+  blogAuthorUsername?: string;
+  reporterUsername?: string;
+  reason?: string;
+  description?: string;
+  status?: 'pending' | 'reviewed' | 'resolved';
+  reviewNotes?: string;
+  createdAt?: string;
+  reviewedAt?: string;
+}
 interface BlogReport {
   id: string;
   blog: Blog;
@@ -96,13 +135,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
   const [showReportModal, setShowReportModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (activeTab === 'blogs') {
-      fetchBlogs();
-    } else {
-      fetchReports();
-    }
-  }, [activeTab, currentPage, filters, reportFilters, searchTerm]);
+
 
   const fetchBlogs = async () => {
     try {
@@ -129,36 +162,43 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       }
 
       const data = await response.json();
-      const mappedBlogs = data.data.blogs.map((b: any) => ({
-        id: b.id,
-        title: b.title,
-        content: b.content ?? '',
-        excerpt: b.excerpt ?? '',
-        featuredImage: b.featuredImage ? `${BLOG_IMAGES_BASE_URL}${b.featuredImage}` : null,
-        author: {
-          id: b.authorId ?? '',
-          name: b.authorUsername ?? '',
-          username: b.authorUsername ?? '',
-          avatar: b.authorAvatar ? `${PROFILE_IMAGES_BASE_URL}${b.authorAvatar}` : null,
-        },
-        category: {
-          id: b.categoryId ?? '',
-          name: b.categoryName ?? 'Uncategorized',
-          slug: b.categorySlug ?? '',
-        },
-        tags: b.tags ?? [],
-        likes: b.likeCount ?? 0,
-        comments: b.commentCount ?? 0,
-        shares: b.shareCount ?? 0,
-        views: b.viewCount ?? 0,
-        readTime: b.readTime ?? 0,
-        status: b.status ?? 'draft',
-        featured: b.isFeatured ?? false,
-        sensitive: b.isSensitive ?? false,
-        createdAt: b.createdAt,
-        updatedAt: b.updatedAt ?? '',
-        publishedAt: b.publishedAt ?? '',
-      }));
+      const mappedBlogs = (data?.data?.blogs as RawBlog[]|undefined ?? []).map((b: RawBlog): Blog => {
+        const statusValue = (b.status === 'published' || b.status === 'draft' || b.status === 'archived')
+          ? b.status as Blog['status']
+          : 'draft';
+
+        return {
+          id: b.id,
+          title: b.title ?? '',
+          content: b.content ?? '',
+          excerpt: b.excerpt ?? '',
+          featuredImage: b.featuredImage ? `${BLOG_IMAGES_BASE_URL}${b.featuredImage}` : undefined,
+          author: {
+            id: b.authorId ?? '',
+            name: b.authorUsername ?? '',
+            username: b.authorUsername ?? '',
+            avatar: b.authorAvatar ? `${PROFILE_IMAGES_BASE_URL}${b.authorAvatar}` : '',
+          },
+          category: {
+            id: b.categoryId ?? '',
+            name: b.categoryName ?? 'Uncategorized',
+            slug: b.categorySlug ?? '',
+          },
+          tags: b.tags ?? [],
+          likes: b.likeCount ?? 0,
+          comments: b.commentCount ?? 0,
+          shares: b.shareCount ?? 0,
+          views: b.viewCount ?? 0,
+          readTime: b.readTime ?? 0,
+          status: statusValue,
+          featured: b.isFeatured ?? false,
+          sensitive: b.isSensitive ?? false,
+          createdAt: b.createdAt ?? '',
+          updatedAt: b.updatedAt ?? '',
+          publishedAt: b.publishedAt ?? '',
+        };
+      });
+
       setBlogs(mappedBlogs);
       setTotalPages(data.data.pagination.totalPages ?? 1);
       setTotalItems(data.data.pagination.total ?? mappedBlogs.length);
@@ -194,50 +234,50 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       const data = await response.json();
       
       // Map the backend response to your frontend structure
-      const mappedReports = data.data.reports.map((r: any) => ({
-        id: r.id,
-        blog: {
-          id: r.blogId,
-          title: r.blogTitle,
-          content: '', // Not provided by backend
-          excerpt: '', // Not provided by backend
-          featuredImage: null, // Not provided by backend
-          author: {
-            id: '',
-            name: r.blogAuthorName || 'Unknown Author', // Add if available
-            username: r.blogAuthorUsername || 'unknown',
-            avatar: null,
-          },
-          category: { id: '', name: 'Uncategorized', slug: '' },
-          tags: [],
-          likes: 0,
-          comments: 0,
-          shares: 0,
-          views: 0,
-          readTime: 0,
-          status: 'published' as const,
-          featured: false,
-          sensitive: false,
-          createdAt: r.createdAt,
-          updatedAt: '',
-          publishedAt: '',
-        },
-        reporter: {
-          id: '',
-          name: r.reporterUsername,
-          username: r.reporterUsername,
-        },
-        reason: r.reason,
-        description: r.description,
-        status: r.status,
-        reviewNotes: r.reviewNotes,
-        createdAt: r.createdAt,
-        reviewedAt: r.reviewedAt,
-      }));
-      
-      setReports(mappedReports);
-      setTotalPages(data.data.pagination.totalPages ?? 1);
-      setTotalItems(data.data.pagination.total ?? mappedReports.length);
+            const mappedReports = (data?.data?.reports as RawReport[]|undefined ?? []).map((r: RawReport): BlogReport => ({
+              id: r.id,
+              blog: {
+                id: r.blogId ?? '',
+                title: r.blogTitle ?? '',
+                content: '', // Not provided by backend
+                excerpt: '', // Not provided by backend
+                featuredImage: undefined, // Not provided by backend
+                author: {
+                  id: '',
+                  name: r.blogAuthorName ?? 'Unknown Author',
+                  username: r.blogAuthorUsername ?? 'unknown',
+                  avatar: '',
+                },
+                category: { id: '', name: 'Uncategorized', slug: '' },
+                tags: [],
+                likes: 0,
+                comments: 0,
+                shares: 0,
+                views: 0,
+                readTime: 0,
+                status: 'published',
+                featured: false,
+                sensitive: false,
+                createdAt: r.createdAt ?? '',
+                updatedAt: '',
+                publishedAt: '',
+              },
+              reporter: {
+                id: '',
+                name: r.reporterUsername ?? '',
+                username: r.reporterUsername ?? '',
+              },
+              reason: r.reason ?? '',
+              description: r.description ?? '',
+              status: (r.status === 'pending' || r.status === 'reviewed' || r.status === 'resolved') ? r.status : 'pending',
+              reviewNotes: r.reviewNotes,
+              createdAt: r.createdAt ?? '',
+              reviewedAt: r.reviewedAt,
+            }));
+            
+            setReports(mappedReports);
+            setTotalPages(data.data.pagination.totalPages ?? 1);
+            setTotalItems(data.data.pagination.total ?? mappedReports.length);
     } catch (error) {
       console.error('Error fetching blog reports:', error);
       toast.error('Failed to load blog reports');
@@ -405,6 +445,15 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
+
+  useEffect(() => {
+    if (activeTab === 'blogs') {
+      fetchBlogs();
+    } else {
+      fetchReports();
+    }
+  }, [activeTab, currentPage, filters, reportFilters, searchTerm, fetchBlogs, fetchReports]);
+
 
   const BlogModal = ({ blog, onClose }: { blog: Blog; onClose: () => void }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">

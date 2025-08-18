@@ -50,8 +50,9 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
 
       setComment("");
       onCommentAdded?.();
-    } catch (err: any) {
-      setError(err.message || "Failed to post comment");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || "Failed to post comment");
     } finally {
       setSubmitting(false);
     }
@@ -79,8 +80,9 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || "Failed to delete comment");
       onCommentAdded?.();
-    } catch (err: any) {
-      setError(err.message || "Failed to delete comment");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || "Failed to delete comment");
     }
   };
 
@@ -104,8 +106,9 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
       setEditingId(null);
       setEditContent("");
       onCommentAdded?.();
-    } catch (err: any) {
-      setError(err.message || "Failed to update comment");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || "Failed to update comment");
     }
   };
 
@@ -119,8 +122,9 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || "Failed to like comment");
       onCommentAdded?.();
-    } catch (err: any) {
-      setError(err.message || "Failed to like comment");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || "Failed to like comment");
     } finally {
       setLikeLoading(null);
     }

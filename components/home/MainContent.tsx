@@ -78,12 +78,13 @@ const MainContent: FC = () => {
         setError(`Failed to load content (${response.status})`);
         console.error("Failed to fetch content:", response.statusText);
       }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        return; // Request was aborted, don't set error
+    } catch (err: unknown) {
+      // handle AbortError safely
+      if (err instanceof Error && err.name === 'AbortError') {
+        return;
       }
       setError("Something went wrong while loading content");
-      console.error("Error fetching content", error);
+      console.error("Error fetching content", err);
     } finally {
       if (!signal?.aborted) {
         setLoading(false);
@@ -175,7 +176,7 @@ const MainContent: FC = () => {
               No content available
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              There's no content to show right now. Check back later or try refreshing.
+              There&apos;s no content to show right now. Check back later or try refreshing.
             </p>
           </div>
           <button
@@ -265,7 +266,7 @@ const MainContent: FC = () => {
         {!hasMoreContent && videos.length > 0 && (
           <div className="flex justify-center py-8">
             <div className="text-gray-500 dark:text-gray-400 text-sm">
-              You've reached the end! 🎉
+              You&apos;ve reached the end! 🎉
             </div>
           </div>
         )}

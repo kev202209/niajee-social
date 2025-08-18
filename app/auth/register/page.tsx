@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
@@ -14,7 +14,6 @@ import { DatePicker } from "@/components/ui/DatePicker";
 import { differenceInYears, parseISO } from "date-fns";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const { register, checkEmailAvailability } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);

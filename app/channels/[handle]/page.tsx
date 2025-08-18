@@ -10,10 +10,41 @@ import { FiUsers, FiVideo, FiPlay, FiBell } from 'react-icons/fi';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+// Added minimal interfaces for typing (only the fields actually used in this component)
+interface Channel {
+  id: string;
+  avatar: string;
+  name: string;
+  handle: string;
+  description?: string;
+}
+
+interface ChannelStats {
+  subscriberCount?: number;
+  videoCount?: number;
+  shortCount?: number;
+  isSubscribed?: boolean;
+}
+
+interface MediaItem {
+  id: string;
+  thumbnail: string;
+  title: string;
+  views?: number;
+  publishedAt?: string;
+  duration?: string; // videos only
+}
+
+interface ChannelOverview {
+  stats?: ChannelStats;
+  videos?: MediaItem[];
+  shorts?: MediaItem[];
+}
+
 export default function ChannelPage() {
   const { handle } = useParams<{ handle: string }>();
-  const [channel, setChannel] = useState<any>(null);
-  const [overview, setOverview] = useState<any>(null);
+  const [channel, setChannel] = useState<Channel | null>(null);
+  const [overview, setOverview] = useState<ChannelOverview | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
@@ -32,7 +63,7 @@ export default function ChannelPage() {
         if (!res.ok) throw new Error('Channel not found');
         return res.json();
       })
-      .then(data => setChannel(data))
+      .then((data: unknown) => setChannel(data as Channel))
       .catch(() => setError('Channel not found'))
       .finally(() => setLoading(false));
   }, [handle]);
@@ -42,7 +73,7 @@ export default function ChannelPage() {
     // Fetch channel overview (videos, shorts, stats)
     fetch(`${API_URL}/api/channels/${channel.id}/overview`)
       .then(res => res.json())
-      .then(data => setOverview(data))
+      .then((data: unknown) => setOverview(data as ChannelOverview))
       .catch(() => {});
   }, [channel?.id]);
 
@@ -51,7 +82,7 @@ export default function ChannelPage() {
     // Optionally, check if user is subscribed
     fetch(`${API_URL}/api/channels/${channel.id}/stats`)
       .then(res => res.json())
-      .then(data => setSubscribed(data?.stats?.isSubscribed || false))
+      .then(data => setSubscribed(Boolean(data?.stats?.isSubscribed)))
       .catch(() => {});
   }, [channel?.id]);
 
@@ -65,7 +96,7 @@ export default function ChannelPage() {
         headers: { 'Accept': 'application/json' }
       });
       if (res.ok) {
-        setSubscribed((prev) => !prev);
+        setSubscribed(prev => !prev);
       }
     } catch {}
     setSubLoading(false);
@@ -195,7 +226,7 @@ export default function ChannelPage() {
                 <p className="text-gray-500 dark:text-gray-400">No videos uploaded yet.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  {videos.map((video: any) => (
+                  {videos.map((video: MediaItem) => (
                     <Link key={video.id} href={`/watch/${video.id}`}>
                       <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition overflow-hidden group">
                         <div className="relative">
@@ -237,7 +268,7 @@ export default function ChannelPage() {
                 <p className="text-gray-500 dark:text-gray-400">No shorts uploaded yet.</p>
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {shorts.map((short: any) => (
+                  {shorts.map((short: MediaItem) => (
                     <Link key={short.id} href={`/shorts/${short.id}`}>
                       <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition overflow-hidden group">
                         <div className="relative">

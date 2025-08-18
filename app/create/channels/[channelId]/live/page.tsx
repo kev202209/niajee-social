@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, FC } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Channel } from '@/types';
 import { FiRadio, FiPlay, FiSquare, FiSettings, FiUsers, FiEye, FiCopy, FiLoader, FiMonitor, FiClock } from 'react-icons/fi';
@@ -21,7 +21,12 @@ interface StreamStats {
   resolution: string;
 }
 
-const ChannelLivePage: FC = () => {
+// Extend Window for typed interval storage
+interface LiveWindow extends Window {
+  liveStatsInterval?: number;
+}
+
+const ChannelLivePage = () => {
   const params = useParams();
   const channelId = params.channelId as string;
   
@@ -57,53 +62,53 @@ const ChannelLivePage: FC = () => {
     'Technology', 'Comedy', 'News', 'Lifestyle', 'Travel', 'Other'
   ];
 
-  useEffect(() => {
-    fetchChannel();
-    checkLiveStatus();
-    
-    // Cleanup function
-    return () => {
-      if ((window as any).liveStatsInterval) {
-        clearInterval((window as any).liveStatsInterval);
-      }
-    };
-  }, [channelId]);
-
-  const fetchChannel = async () => {
+  const fetchChannel = useCallback(async () => {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}`, {
         credentials: 'include'
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setChannel(data.channel || data);
+        const data: unknown = await response.json();
+        const payload = (data as { channel?: Channel }).channel ?? data;
+        setChannel(payload as Channel);
         
         // Pre-fill title with channel name
         setSettings(prev => ({
           ...prev,
-          title: `${(data.channel || data).name} Live Stream`
+          title: `${(payload as { name?: string })?.name || 'Channel'} Live Stream`
         }));
       } else {
         setError('Failed to load channel data');
       }
-    } catch (error) {
-      console.error('Error fetching channel:', error);
+    } catch (err: unknown) {
+      console.error('Error fetching channel:', err);
       setError('Failed to load channel data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [channelId]);
 
-  const checkLiveStatus = async () => {
+  const checkLiveStatus = useCallback(async () => {
     try {
-      // This would check your backend for current live status
-      // For now, we'll simulate it
+      // Placeholder: simulate not live
       setIsLive(false);
-    } catch (error) {
-      console.error('Error checking live status:', error);
+    } catch (err) {
+      console.error('Error checking live status:', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchChannel();
+    checkLiveStatus();
+    
+    return () => {
+      const w = window as LiveWindow;
+      if (w.liveStatsInterval) {
+        clearInterval(w.liveStatsInterval);
+      }
+    };
+  }, [channelId, fetchChannel, checkLiveStatus]);
 
   const handleSettingsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -205,13 +210,13 @@ const ChannelLivePage: FC = () => {
       }));
     }, 1000);
 
-    (window as any).liveStatsInterval = interval;
+    (window as LiveWindow).liveStatsInterval = interval as unknown as number;
   };
 
   const stopStatsUpdates = () => {
-    if ((window as any).liveStatsInterval) {
-      clearInterval((window as any).liveStatsInterval);
-      delete (window as any).liveStatsInterval;
+    if ((window as LiveWindow).liveStatsInterval) {
+      clearInterval((window as LiveWindow).liveStatsInterval);
+      delete (window as LiveWindow).liveStatsInterval;
     }
     
     setStreamStats({
@@ -500,11 +505,11 @@ const ChannelLivePage: FC = () => {
                 <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400">
                   <li>Open OBS Studio</li>
                   <li>Go to Settings → Stream</li>
-                  <li>Select "Custom..." as Service</li>
+                  <li>Select Custom&quot;...&quot; as Service</li>
                   <li>Copy and paste the Stream URL above</li>
                   <li>Copy and paste the Stream Key above</li>
-                  <li>Click "Start Streaming" in OBS</li>
-                  <li>Then click "Go Live" here</li>
+                  <li>Click &quot;Start Streaming&quot; in OBS</li>
+                  <li>Then click &quot;Go Live&quot; here</li>
                 </ol>
               </div>
               

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import axios from 'axios';
 import { Channel } from '@/types';
 import { FiUpload, FiLoader, FiCheck } from 'react-icons/fi';
@@ -20,17 +20,14 @@ import { useUploadSocket } from './useUploadSocket';
 import { useUploadForm } from '../../../../../hooks/upload/useUploadForm';
 import { useFileHandlers } from '../../../../../hooks/upload/useFileHandlers';
 import { useUploadState } from '../../../../../hooks/upload/useUploadState';
-import { 
-  formatBytes, 
-  generateUploadId, 
-  calculateUploadMetrics, 
-  getVideoMetadata,
-  getProcessingStepStatus
+import {
+  generateUploadId,
+  calculateUploadMetrics,
+  getVideoMetadata
 } from './utils';
 
 const ChannelUploadPage = () => {
   const params = useParams();
-  const router = useRouter();
   const channelId = params.channelId as string;
   
   const [channel, setChannel] = useState<Channel | null>(null);
@@ -65,7 +62,6 @@ const ChannelUploadPage = () => {
     form,
     setForm,
     videoPreview,
-    setVideoPreview,
     thumbnailPreview,
     setThumbnailPreview,
     handleContentTypeChange,
@@ -111,9 +107,19 @@ const ChannelUploadPage = () => {
     'Technology', 'Comedy', 'News', 'Lifestyle', 'Travel', 'Other'
   ];
 
-  useEffect(() => {
-    fetchChannel();
-  }, [channelId]);
+  const fetchChannel = useCallback(async () => {
+    try {
+      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}`, {
+        withCredentials: true
+      });
+      setChannel(response.data.channel || response.data);
+    } catch (err) {
+      console.error('Error fetching channel:', err);
+      setError('Failed to load channel data');
+    } finally {
+      setLoading(false);
+    }
+  }, [channelId, setError]);
 
   // Show notification when uploading starts
   useEffect(() => {
@@ -133,20 +139,9 @@ const ChannelUploadPage = () => {
     }
   }, [uploadState.processingStep, showNotification]);
 
-  const fetchChannel = async () => {
-    try {
-      const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}`, {
-        withCredentials: true
-      });
-      
-      setChannel(response.data.channel || response.data);
-    } catch (error) {
-      console.error('Error fetching channel:', error);
-      setError('Failed to load channel data');
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    fetchChannel();
+  }, [fetchChannel]);
 
   // Cancel upload function
   const cancelUpload = () => {
@@ -325,12 +320,23 @@ const ChannelUploadPage = () => {
           }
         );
       }
-    } catch (error: any) {
-      if (axios.isCancel(error)) {
+    } catch (err: unknown) {
+      if (axios.isCancel(err)) {
         setError('Upload cancelled');
+      } else if (axios.isAxiosError(err)) {
+        console.error('Upload error:', err);
+        const data: unknown = err.response?.data;
+        const msg =
+          data &&
+          typeof data === 'object' &&
+          'message' in data &&
+          typeof (data as { message?: unknown }).message === 'string'
+            ? (data as { message: string }).message
+            : 'Upload failed. Please try again.';
+        setError(msg);
       } else {
-        console.error('Upload error:', error);
-        setError(error.response?.data?.message || 'Upload failed. Please try again.');
+        console.error('Upload error:', err);
+        setError('Upload failed. Please try again.');
       }
       resetUploadState();
       uploadIdRef.current = '';

@@ -1,7 +1,6 @@
 'use client';
 
 import React from "react";
-import Link from "next/link";
 
 export default function PrivacyPolicy() {
   return (
@@ -17,7 +16,7 @@ export default function PrivacyPolicy() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">1. Introduction</h2>
           <p className="mb-4">
-            Welcome to Mosaic ("we", "us", or "our"). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you access or use our services, including our website, mobile applications, and other platforms (collectively, the "Services"). By using our Services, you agree to the collection and use of information in accordance with this policy.
+            Welcome to Mosaic (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you access or use our services, including our website, mobile applications, and other platforms (collectively, the &quot;Services&quot;). By using our Services, you agree to the collection and use of information in accordance with this policy.
           </p>
         </section>
 

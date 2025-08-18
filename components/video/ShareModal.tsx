@@ -32,12 +32,12 @@ const ShareModal: React.FC<ShareModalProps> = ({
   onShareComplete,
   contentType = 'video'
 }) => {
-  // ✅ Early return BEFORE any hooks
-  if (!isOpen) return null;
-
-  // ✅ All hooks come after the early return check
+  // Hooks must be called on every render — declare them unconditionally
   const [copied, setCopied] = useState(false);
   const [sharedPlatforms, setSharedPlatforms] = useState<Set<string>>(new Set());
+
+  // Early return after hooks to avoid rendering when closed
+  if (!isOpen) return null;
 
   const currentUrl = videoUrl || (typeof window !== 'undefined' ? window.location.href : '');
 

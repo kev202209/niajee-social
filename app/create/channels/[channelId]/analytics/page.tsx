@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, FC } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Channel } from '@/types';
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiCalendar, FiLoader } from 'react-icons/fi';
@@ -24,7 +24,29 @@ interface AnalyticsData {
   }>;
 }
 
-const ChannelAnalyticsPage: FC = () => {
+interface RawAnalyticsResponse {
+  success?: boolean;
+  data?: {
+    totalViews?: number;
+    totalSubscribers?: number;
+    totalVideos?: number;
+    averageViewDuration?: number;
+    topVideos?: Array<{
+      id: string;
+      title: string;
+      views: number;
+      thumbnail: string;
+    }>;
+    recentActivity?: Array<{
+      date: string;
+      views: number;
+      subscribers: number;
+    }>;
+  };
+  message?: string;
+}
+
+export default function ChannelAnalyticsPage() {
   const params = useParams();
   const channelId = params.channelId as string;
   
@@ -33,42 +55,86 @@ const ChannelAnalyticsPage: FC = () => {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
 
-  useEffect(() => {
-    fetchChannelData();
-  }, [channelId, timeRange]);
-
-  const fetchChannelData = async () => {
+  const fetchChannelData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Fetch channel info
-      const channelResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}`, {
-        credentials: 'include'
-      });
-      
-      if (channelResponse.ok) {
-        const channelData = await channelResponse.json();
-        setChannel(channelData.channel || channelData);
-        
-        // Mock analytics data (you would fetch real data from your analytics endpoint)
-        const mockAnalytics: AnalyticsData = {
-          totalViews: (channelData.channel?.viewCount || channelData.viewCount) || 0,
-          totalSubscribers: (channelData.channel?.subscriberCount || channelData.subscriberCount) || 0,
-          totalVideos: (channelData.channel?.videoCount || channelData.videoCount) || 0,
+      const channelResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}`,
+        { credentials: 'include' }
+      );
+
+      if (!channelResponse.ok) return;
+
+      // Replace explicit any with a typed union
+      // type ChannelApiResponse = Channel | { channel: Channel };
+
+      const rawChannel = await channelResponse.json() as unknown;
+
+      let c: Channel | null = null;
+      if (rawChannel && typeof rawChannel === 'object') {
+        if ('channel' in (rawChannel as Record<string, unknown>) && (rawChannel as { channel?: unknown }).channel) {
+          c = (rawChannel as { channel: Channel }).channel;
+        } else {
+          c = rawChannel as Channel;
+        }
+      }
+
+      if (!c) return;
+
+      setChannel(c);
+
+      // Fetch analytics with selected time range
+      let analyticsData: AnalyticsData | null = null;
+      try {
+        const analyticsRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}/analytics?range=${timeRange}`,
+          { credentials: 'include' }
+        );
+
+        if (analyticsRes.ok) {
+          const raw: unknown = await analyticsRes.json();
+          const parsed = raw as RawAnalyticsResponse;
+          if (parsed.success && parsed.data) {
+            analyticsData = {
+              totalViews: parsed.data.totalViews ?? c.viewCount ?? 0,
+              totalSubscribers: parsed.data.totalSubscribers ?? c.subscriberCount ?? 0,
+              totalVideos: parsed.data.totalVideos ?? c.videoCount ?? 0,
+              averageViewDuration: parsed.data.averageViewDuration ?? 0,
+              topVideos: parsed.data.topVideos ?? [],
+              recentActivity: parsed.data.recentActivity ?? []
+            };
+          }
+        }
+      } catch (err) {
+        console.warn('Analytics endpoint unavailable, using fallback.', err);
+      }
+
+      // Fallback (mock) if real analytics not available
+      if (!analyticsData) {
+        analyticsData = {
+          totalViews: c.viewCount || 0,
+          totalSubscribers: c.subscriberCount || 0,
+            totalVideos: c.videoCount || 0,
           averageViewDuration: 0,
           topVideos: [],
           recentActivity: []
         };
-        
-        setAnalytics(mockAnalytics);
       }
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
+
+      setAnalytics(analyticsData);
+    } catch (err) {
+      console.error('Error fetching analytics:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [channelId, timeRange]); // timeRange now genuinely used
 
+  useEffect(() => {
+    fetchChannelData();
+  }, [fetchChannelData]);
+ 
   const timeRangeOptions = [
     { value: '7d', label: 'Last 7 days' },
     { value: '30d', label: 'Last 30 days' },
@@ -101,7 +167,7 @@ const ChannelAnalyticsPage: FC = () => {
               Analytics
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Track your channel's performance and growth
+              Track your channel&apos;s performance and growth
             </p>
           </div>
           
@@ -110,7 +176,7 @@ const ChannelAnalyticsPage: FC = () => {
             <FiCalendar className="w-4 h-4 text-gray-500" />
             <select
               value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value as any)}
+              onChange={(e) => setTimeRange(e.target.value as '7d' | '30d' | '90d' | '1y')}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
             >
               {timeRangeOptions.map(option => (
@@ -237,5 +303,7 @@ const ChannelAnalyticsPage: FC = () => {
             </div>
             )}
         </div>
+      </div>
     </div>
-</div>);}
+  );
+}

@@ -85,110 +85,116 @@ const getVideoSource = () => {
       }
     };
   }, [short.videoUrl, volume]);
-
-  const handleMouseEnter = async () => {
-    if (!videoReady || !videoRef.current) return;
-    
-    try {
-      if (hlsRef.current && !hlsRef.current.loadLevel) {
-        hlsRef.current.startLoad();
-      }
-      
-      await videoRef.current.play();
-      setIsPlaying(true);
-    } catch (error) {
-      console.error('Error playing video:', error);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (videoRef.current && isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
+ 
+   const handleMouseEnter = async () => {
+     if (!videoReady || !videoRef.current) return;
+     
+     try {
+       if (hlsRef.current && !hlsRef.current.loadLevel) {
+         hlsRef.current.startLoad();
+       }
+       
+       await videoRef.current.play();
+       setIsPlaying(true);
+     } catch (error) {
+       console.error('Error playing video:', error);
+     }
+   };
+ 
+   const handleMouseLeave = () => {
+     if (videoRef.current && isPlaying) {
+       videoRef.current.pause();
+       setIsPlaying(false);
+     }
+   };
+ 
   const toggleMute = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    setIsMuted((prev) => {
-      const newMuted = !prev;
-      if (videoRef.current) {
-        videoRef.current.muted = newMuted;
-      }
-      return newMuted;
-    });
-  };
+     e.stopPropagation();
+     setIsMuted((prev) => {
+       const newMuted = !prev;
+       if (videoRef.current) {
+         videoRef.current.muted = newMuted;
+       }
+       return newMuted;
+     });
+   };
+ 
+   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+     const newVolume = parseFloat(e.target.value);
+     setVolume(newVolume);
+     if (videoRef.current) {
+       videoRef.current.volume = newVolume;
+       if (newVolume > 0 && isMuted) {
+         setIsMuted(false);
+         videoRef.current.muted = false;
+       }
+       if (newVolume === 0 && !isMuted) {
+         setIsMuted(true);
+         videoRef.current.muted = true;
+       }
+     }
+   };
+ 
+   const handleToggleOptions = (e: React.MouseEvent<HTMLButtonElement>) => {
+     e.stopPropagation();
+     if (menuButtonRef.current) {
+       const rect = menuButtonRef.current.getBoundingClientRect();
+       setDropdownPosition({
+         top: rect.bottom + window.scrollY,
+         left: rect.left + window.scrollX,
+       });
+     }
+     setShowOptions((prev) => !prev);
+   };
+ 
+   const formatViews = (views: number): string => {
+     if (views >= 1000000) {
+       return `${(views / 1000000).toFixed(1)}M`;
+     } else if (views >= 1000) {
+       return `${(views / 1000).toFixed(1)}K`;
+     }
+     return views.toString();
+   };
+ 
+   const formatDuration = (seconds: number): string => {
+     if (seconds < 60) {
+       return `${seconds}s`;
+     }
+     return `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
+   };
+ 
+   useEffect(() => {
+     const handleClickOutside = (e: MouseEvent) => {
+       if (menuButtonRef.current && !menuButtonRef.current.contains(e.target as Node)) {
+         setShowOptions(false);
+       }
+     };
+     if (showOptions) {
+       window.addEventListener("click", handleClickOutside);
+     }
+     return () => window.removeEventListener("click", handleClickOutside);
+   }, [showOptions]);
 
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (videoRef.current) {
-      videoRef.current.volume = newVolume;
-      if (newVolume > 0 && isMuted) {
-        setIsMuted(false);
-        videoRef.current.muted = false;
-      }
-      if (newVolume === 0 && !isMuted) {
-        setIsMuted(true);
-        videoRef.current.muted = true;
-      }
-    }
-  };
-
-  const handleToggleOptions = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    if (menuButtonRef.current) {
-      const rect = menuButtonRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY,
-        left: rect.left + window.scrollX,
-      });
-    }
-    setShowOptions((prev) => !prev);
-  };
-
-  const formatViews = (views: number): string => {
-    if (views >= 1000000) {
-      return `${(views / 1000000).toFixed(1)}M`;
-    } else if (views >= 1000) {
-      return `${(views / 1000).toFixed(1)}K`;
-    }
-    return views.toString();
-  };
-
-  const formatDuration = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${seconds}s`;
-    }
-    return `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (menuButtonRef.current && !menuButtonRef.current.contains(e.target as Node)) {
-        setShowOptions(false);
-      }
-    };
-    if (showOptions) {
-      window.addEventListener("click", handleClickOutside);
-    }
-    return () => window.removeEventListener("click", handleClickOutside);
-  }, [showOptions]);
-
-  return (
-    <Link href={`/shorts/${short.id}`}>
-      <div className="bg-inherit rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer relative w-40 flex-shrink-0">
-        {/* Short Video Container with 9:16 Aspect Ratio */}
-        <div className="relative group rounded-t-xl overflow-hidden aspect-[9/16]">
-          {/* Thumbnail */}
-          <AuthenticatedImage
-            mediaKey={short.thumbnailUrl}
-            alt={short.title}
-            fill
-            className="absolute inset-0 object-cover w-full h-full"
-            sizes="(max-width: 640px) 100vw, 320px"
-            fallbackSrc="/placeholder-video.png"
-          />
+   return (
+     <Link href={`/shorts/${short.id}`}>
+      <div
+        className="bg-inherit rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer relative w-40 flex-shrink-0"
+      >
+         {/* Short Video Container with 9:16 Aspect Ratio */}
+        <div
+          className="relative group rounded-t-xl overflow-hidden aspect-[9/16]"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+           {/* Thumbnail */}
+           <AuthenticatedImage
+             mediaKey={short.thumbnailUrl ?? ""}
+             alt={short.title}
+             fill
+             className="absolute inset-0 object-cover w-full h-full"
+             sizes="(max-width: 640px) 100vw, 320px"
+             fallbackSrc="/placeholder-video.png"
+           />
           {/* Video Preview */}
           <video
             ref={videoRef}
@@ -219,7 +225,14 @@ const getVideoSource = () => {
               className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer transform -rotate-90"
             />
           </div>
-        </div>
+
+          {/* Duration badge */}
+          {typeof short.duration === 'number' && (
+            <span className="absolute top-2 right-2 z-10 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded">
+              {formatDuration(short.duration)}
+            </span>
+          )}
+         </div>
         
         {/* Details Section */}
         <div className="p-3 relative">

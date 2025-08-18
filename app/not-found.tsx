@@ -12,7 +12,7 @@ const NotFoundPage: NextPage = () => {
           Oops! The page you&apos;re looking for can&apos;t be found.
         </p>
         <p className="text-gray-600 dark:text-white mb-8">
-          It seems we've misplaced this page. Don't worry, you can always head back to the homepage.
+          It seems we&apos;ve misplaced this page. Don&apos;t worry, you can always head back to the homepage.
         </p>
         <Link
           href="/"

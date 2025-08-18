@@ -35,7 +35,7 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
       .then((res) => res.json())
       .then((data) => setTagline(data.tagline))
       .catch(() => setTagline("Craft your digital legacy."))
-  }, [])
+  }, [api_link])
 
   const handleLogout = async () => {
     await logout()

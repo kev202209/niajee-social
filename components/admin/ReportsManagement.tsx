@@ -1,18 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { 
-  FiSearch, 
   FiFilter, 
-  FiFlag, 
-  FiUser, 
-  FiCalendar,
   FiEye,
   FiCheck,
-  FiX,
   FiAlertTriangle,
-  FiMessageSquare
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
 import Image from 'next/image';
@@ -51,10 +45,26 @@ interface ReportsManagementProps {
   userRole: string;
 }
 
+// Raw backend report shape (narrowed to fields we use)
+interface RawReport {
+  id: string;
+  contentType?: string;
+  contentId?: string;
+  contentTitle?: string;
+  reporterUsername?: string;
+  contentChannelName?: string;
+  reason?: string;
+  description?: string;
+  status?: 'pending' | 'reviewed' | 'resolved';
+  createdAt?: string;
+  reviewedAt?: string;
+  reviewedByUsername?: string;
+  adminNotes?: string;
+}
+
 export default function ReportsManagement({ userRole }: ReportsManagementProps) {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalReports, setTotalReports] = useState(0);
@@ -63,15 +73,11 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
     type: ''
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [showReportModal, setShowReportModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchReports();
-  }, [currentPage, filters]);
+  const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(userRole);
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
@@ -94,34 +100,33 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
       }
 
       const data = await response.json();
-      const mappedReports = data.data.reports.map((r: any) => ({
+      const mappedReports: Report[] = (data?.data?.reports as RawReport[] | undefined ?? []).map((r: RawReport) => ({
         id: r.id,
-        type: r.contentType === 'short' ? 'short' : 'video', // or use r.contentType directly if you support more types
-        contentId: r.contentId,
-        contentTitle: r.contentTitle,
-        contentThumbnail: '', // If you have a thumbnail URL, map it here, else leave as empty string or placeholder
+        type: (r.contentType === 'short' ? 'short' : 'video') as 'short' | 'video',
+        contentId: r.contentId ?? '',
+        contentTitle: r.contentTitle ?? '',
+        contentThumbnail: '', // map if available
         reporter: {
-          id: '', // Not provided in API, leave blank or fetch if needed
-          name: r.reporterUsername,
-          username: r.reporterUsername,
-          avatar: '', // Not provided in API, use placeholder
+          id: '',
+          name: r.reporterUsername ?? '',
+          username: r.reporterUsername ?? '',
+          avatar: '',
         },
         contentAuthor: {
-          id: '', // Not provided in API, leave blank or fetch if needed
-          name: r.contentChannelName,
-          username: r.contentChannelName,
-          avatar: '', // Not provided in API, use placeholder
+          id: '',
+          name: r.contentChannelName ?? '',
+          username: r.contentChannelName ?? '',
+          avatar: '',
         },
-        reason: r.reason.replace(/_/g, ' '), // Optional: make reason more readable
-        description: r.description,
-        status: r.status,
-        createdAt: r.createdAt,
+        reason: (r.reason ?? '').replace(/_/g, ' '),
+        description: r.description ?? '',
+        status: r.status ?? 'pending',
+        createdAt: r.createdAt ?? '',
         reviewedAt: r.reviewedAt,
-        reviewedBy: r.reviewedByUsername
-          ? { id: '', name: r.reviewedByUsername }
-          : undefined,
+        reviewedBy: r.reviewedByUsername ? { id: '', name: r.reviewedByUsername } : undefined,
         adminNotes: r.adminNotes,
       }));
+
       setReports(mappedReports);
       setTotalPages(data.data.pagination.totalPages ?? 1);
       setTotalReports(data.data.pagination.total ?? mappedReports.length);
@@ -131,7 +136,11 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, filters]);
+
+  useEffect(() => {
+    fetchReports();
+  }, [fetchReports]);
 
   const handleUpdateReportStatus = async (reportId: string, status: 'pending' | 'reviewed' | 'resolved', adminNotes?: string) => {
     try {
@@ -352,15 +361,15 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => {
-                            setSelectedReport(report);
-                            setShowReportModal(true);
+                            // setSelectedReport(report);
+                            // setShowReportModal(true);
                           }}
                           className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                         >
                           <FiEye className="w-4 h-4" />
                         </button>
                         
-                        {report.status === 'pending' && (
+                        {isAdmin && report.status === 'pending' && (
                           <>
                             <button
                               onClick={() => handleUpdateReportStatus(report.id, 'reviewed')}

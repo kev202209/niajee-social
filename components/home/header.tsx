@@ -1,5 +1,5 @@
 "use client";
-import { FC, useRef, useState, useEffect, useCallback } from "react";
+import { FC, useRef, useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import DarkModeToggle from "../DarkModeToggle";
 import useOutsideClick from "@/hooks/useOutsideClick";
@@ -9,7 +9,6 @@ import {
   FiSettings,
   FiLogOut,
   FiPlus,
-  FiClock,
   FiTrendingUp,
   FiVideo,
   FiPlay,
@@ -24,9 +23,10 @@ interface SearchSuggestion {
   id: string;
   text: string;
   displayText: string;
-  type: 'trending' | 'user' | 'channel' | 'search' | 'blog'; // Add 'blog'
+  type: 'trending' | 'user' | 'channel' | 'search' | 'blog';
   category?: string;
-  data?: any;
+  // safer typed container for arbitrary backend payload
+  data?: Record<string, unknown> | null;
   isTrending?: boolean;
   score?: number;
 }
@@ -40,19 +40,23 @@ const Header: FC = () => {
   const [showProfileMenu, setShowProfileMenu] = useState<boolean>(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
-  const api_link = process.env.NEXT_PUBLIC_API_URL;
-  
+
   useOutsideClick(profileMenuRef, () => setShowProfileMenu(false));
   useOutsideClick(searchRef, () => setShowSuggestions(false));
 
-  const [tagline, setTagline] = useState<string>("Loading...");
+  // small tagline placed under logo to avoid unused-var lint
+  const [tagline, setTagline] = useState<string>("Craft your digital legacy.");
 
   useEffect(() => {
-    fetch(`${api_link}/api/content/taglines`)
+    const api = process.env.NEXT_PUBLIC_API_URL;
+    if (!api) return;
+    void fetch(`${api}/api/content/taglines`)
       .then((res) => res.json())
-      .then((data) => setTagline(data.tagline))
+      .then((data) => {
+        if (data && typeof data.tagline === 'string') setTagline(data.tagline);
+      })
       .catch(() => setTagline("Craft your digital legacy."));
-  }, []);
+  }, []); // env is stable, safe to leave deps empty
 
   const { user, logout } = useAuth();
 
@@ -60,11 +64,11 @@ const Header: FC = () => {
     await logout();
   };
 
-  // Fixed debounced search suggestions to match backend response
-  const debouncedGetSuggestions = useCallback(
-    debounce(async (query: string) => {
+  // Fixed debounced search suggestions: useMemo to create debounced fn and safely narrow backend data
+  const debouncedGetSuggestions = useMemo(() => {
+    return debounce(async (query: string) => {
       setLoadingSuggestions(true);
-      
+
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/search/suggestions?q=${encodeURIComponent(query)}`,
@@ -76,20 +80,32 @@ const Header: FC = () => {
 
         if (response.ok) {
           const data = await response.json();
-          
-          // Transform backend response to match frontend expectations
-          const formattedSuggestions: SearchSuggestion[] = (data.suggestions || []).map((suggestion: any, index: number) => ({
-            id: `${suggestion.type}-${index}`,
-            text: suggestion.text,
-            displayText: suggestion.displayText || suggestion.text,
-            type: suggestion.type,
-            category: suggestion.category,
-            data: suggestion.data,
-            isTrending: suggestion.isTrending || false,
-            score: suggestion.score
-          }));
+          const raw = Array.isArray(data.suggestions) ? data.suggestions as unknown[] : [];
+          const formattedSuggestions: SearchSuggestion[] = raw.map((s, index) => {
+            const rec = (s as Record<string, unknown>) ?? {};
+            const type = typeof rec.type === 'string' ? (rec.type as SearchSuggestion['type']) : 'search';
+            const text = typeof rec.text === 'string' ? rec.text : String(rec.id ?? `s-${index}`);
+            const displayText = typeof rec.displayText === 'string' ? rec.displayText : text;
+            const category = typeof rec.category === 'string' ? rec.category : undefined;
+            const isTrending = Boolean(rec.isTrending);
+            const score = typeof rec.score === 'number' ? rec.score : undefined;
+            const dataField = rec.data ? (rec.data as Record<string, unknown>) : undefined;
+
+            return {
+              id: `${type}-${index}`,
+              text,
+              displayText,
+              type,
+              category,
+              data: dataField,
+              isTrending,
+              score
+            };
+          });
 
           setSuggestions(formattedSuggestions);
+        } else {
+          setSuggestions([]);
         }
       } catch (err) {
         console.error('Failed to get suggestions:', err);
@@ -97,9 +113,9 @@ const Header: FC = () => {
       } finally {
         setLoadingSuggestions(false);
       }
-    }, 300),
-    []
-  );
+    }, 300);
+    // empty deps - uses only stable refs / env / setters
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,13 +128,13 @@ const Header: FC = () => {
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchQuery(value);
-    
+
     if (value.trim()) {
       debouncedGetSuggestions(value);
       setShowSuggestions(true);
     } else {
       // Load trending suggestions for empty query
-      loadTrendingSuggestions();
+      void loadTrendingSuggestions();
       setShowSuggestions(true);
     }
   };
@@ -136,15 +152,23 @@ const Header: FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const trendingSuggestions: SearchSuggestion[] = (data.trending || []).slice(0, 6).map((trend: any, index: number) => ({
-          id: `trending-${index}`,
-          text: trend.text,
-          displayText: `${trend.text} · Trending in ${trend.category}`,
-          type: 'trending' as const,
-          category: trend.category,
-          isTrending: true,
-          score: trend.score
-        }));
+        const raw = Array.isArray(data.trending) ? data.trending as unknown[] : [];
+        const trendingSuggestions: SearchSuggestion[] = raw.slice(0, 6).map((t, index) => {
+          const rec = (t as Record<string, unknown>) ?? {};
+          const text = typeof rec.text === 'string' ? rec.text : `trend-${index}`;
+          const category = typeof rec.category === 'string' ? rec.category : undefined;
+          const score = typeof rec.score === 'number' ? rec.score : undefined;
+          return {
+            id: `trending-${index}`,
+            text,
+            displayText: `${text} · Trending in ${category ?? 'General'}`,
+            type: 'trending',
+            category,
+            data: rec.data as Record<string, unknown> | undefined,
+            isTrending: true,
+            score
+          };
+        });
         setSuggestions(trendingSuggestions);
       }
     } catch (err) {
@@ -157,7 +181,7 @@ const Header: FC = () => {
 
   const handleSuggestionClick = (suggestion: SearchSuggestion) => {
     setSearchQuery(suggestion.text);
-    
+
     // Navigate based on suggestion type
     switch (suggestion.type) {
       case 'user':
@@ -175,7 +199,7 @@ const Header: FC = () => {
         router.push(`/search?q=${encodeURIComponent(suggestion.text)}`);
         break;
     }
-    
+
     setShowSuggestions(false);
   };
 
@@ -198,7 +222,7 @@ const Header: FC = () => {
     switch (type) {
       case 'user': return 'User';
       case 'channel': return 'Channel';
-      case 'blog': return 'Blog'; // Add this case
+      case 'blog': return 'Blog';
       case 'trending': return 'Trending';
       default: return '';
     }
@@ -215,6 +239,7 @@ const Header: FC = () => {
           >
             MOSAIC
           </Link>
+          <span className="ml-3 text-xs text-gray-500 dark:text-gray-400 hidden sm:inline-block">{tagline}</span>
         </div>
 
         {/* Center: Enhanced Search Bar with Autocomplete */}
@@ -309,7 +334,7 @@ const Header: FC = () => {
                           >
                             <FiVideo className="w-4 h-4 text-red-500" />
                             <span className="text-sm text-gray-700 dark:text-gray-300">
-                              Videos for "{searchQuery}"
+                              Videos for &quot;{searchQuery}&quot;
                             </span>
                           </button>
                           <button
@@ -321,7 +346,7 @@ const Header: FC = () => {
                           >
                             <FiPlay className="w-4 h-4 text-green-500" />
                             <span className="text-sm text-gray-700 dark:text-gray-300">
-                              Shorts for "{searchQuery}"
+                              Shorts for &quot;{searchQuery}&quot;
                             </span>
                           </button>
                           {/* Add this button for blogs */}
@@ -334,7 +359,7 @@ const Header: FC = () => {
                           >
                             <FiFileText className="w-4 h-4 text-green-600" />
                             <span className="text-sm text-gray-700 dark:text-gray-300">
-                              Blogs for "{searchQuery}"
+                              Blogs for &quot;{searchQuery}&quot;
                             </span>
                           </button>
                           <button
@@ -346,7 +371,7 @@ const Header: FC = () => {
                           >
                             <FiUsers className="w-4 h-4 text-purple-500" />
                             <span className="text-sm text-gray-700 dark:text-gray-300">
-                              Channels for "{searchQuery}"
+                              Channels for &quot;{searchQuery}&quot;
                             </span>
                           </button>
                         </div>
@@ -383,7 +408,7 @@ const Header: FC = () => {
                     {user ? user.username : "Username"}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {user ? user.email : "user@example.com"}
+                    {user ? user.email : "you@email.com"}
                   </p>
                 </div>
                 <ul className="space-y-1">
@@ -427,7 +452,7 @@ const Header: FC = () => {
 export default Header;
 
 // Debounce utility function
-function debounce<T extends (...args: any[]) => any>(
+function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/watch/Header';
 import Sidebar from '@/components/watch/Sidebar';
@@ -68,17 +68,7 @@ export default function BlogsPage() {
     setCurrentPage(page ? parseInt(page) : 1);
   }, [searchParams]);
 
-  // Fetch blogs when filters change
-  useEffect(() => {
-    fetchBlogs();
-  }, [filters]);
-
-  // Fetch featured blogs on mount
-  useEffect(() => {
-    fetchFeaturedBlogs();
-  }, []);
-
-  const fetchBlogs = async () => {
+  const fetchBlogs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -108,16 +98,17 @@ export default function BlogsPage() {
       } else {
         throw new Error(data.message || 'Failed to fetch blogs');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching blogs:', err);
-      setError(err.message || 'Failed to load blogs');
+      const msg = err instanceof Error ? err.message : 'Failed to load blogs';
+      setError(msg);
       setBlogs([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
-  const fetchFeaturedBlogs = async () => {
+  const fetchFeaturedBlogs = useCallback(async () => {
     try {
       setFeaturedLoading(true);
       
@@ -134,12 +125,22 @@ export default function BlogsPage() {
       if (data.success) {
         setFeaturedBlogs(data.data.blogs?.map(normalizeBlog) || []);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching featured blogs:', err);
     } finally {
       setFeaturedLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch blogs when filters (deps inside fetchBlogs) change
+  useEffect(() => {
+    fetchBlogs();
+  }, [fetchBlogs]);
+
+  // Fetch featured blogs on mount
+  useEffect(() => {
+    fetchFeaturedBlogs();
+  }, [fetchFeaturedBlogs]);
 
   const handleSearch = (searchTerm: string) => {
     setFilters(prev => ({ ...prev, search: searchTerm, page: 1 }));
@@ -171,11 +172,11 @@ export default function BlogsPage() {
     handleFilterChange({ sortBy });
   };
 
-  const updateURL = (params: any) => {
+  const updateURL = (params: Record<string, unknown>) => {
     const searchParams = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value && value !== '') {
-        searchParams.append(key, value.toString());
+      if (value !== undefined && value !== null && value !== '') {
+        searchParams.append(key, String(value));
       }
     });
     
@@ -189,19 +190,22 @@ export default function BlogsPage() {
     router.push('/blogs');
   };
 
-  const normalizeBlog = (blog: any) => ({
-    ...blog,
-    category: Array.isArray(blog.category)
-      ? blog.category
-      : typeof blog.category === "string"
-        ? blog.category.replace(/[{}"]/g, '').split(',').map(s => s.trim()).filter(Boolean)
-        : [],
-    tags: Array.isArray(blog.tags)
-      ? blog.tags
-      : typeof blog.tags === "string"
-        ? blog.tags.split(',').map(s => s.trim()).filter(Boolean)
-        : [],
-  });
+  const normalizeBlog = (raw: unknown): Blog => {
+    const blog = (raw as Record<string, unknown>) || {};
+    const rawCat = blog.category;
+    const rawTags = blog.tags;
+    const category = Array.isArray(rawCat)
+      ? rawCat as string[]
+      : typeof rawCat === 'string'
+        ? rawCat.replace(/[{}"]/g, '').split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+    const tags = Array.isArray(rawTags)
+      ? rawTags as string[]
+      : typeof rawTags === 'string'
+        ? rawTags.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+    return { ...(blog as unknown as Blog), category, tags };
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">

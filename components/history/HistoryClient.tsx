@@ -8,34 +8,46 @@ import Footer from '@/components/Landing/Footer';
 
 type TabKey = 'all' | 'videos' | 'shorts';
 
-interface UnifiedItem {
-  type: 'video' | 'short';
+interface RawHistoryChannel {
+  id?: string;
+  name?: string;
+  handle?: string;
+  avatar?: string | null;
+}
+
+interface RawHistoryItem {
   id: string;
-  title: string;
-  thumbnailUrl: string | null;
-  duration: number | null;
-  channel: {
-    id: string;
-    name: string;
-    handle: string;
-    avatar?: string | null;
-  };
-  history: {
+  title?: string;
+  thumbnailUrl?: string | null;
+  duration?: number | null;
+  channel?: RawHistoryChannel;
+  history?: {
     lastWatchedAt: string;
-    positionSec: number;
-    durationSec: number | null;
-    completed: boolean;
-    timesWatched: number;
+    positionSec?: number;
+    durationSec?: number | null;
+    completed?: boolean;
+    timesWatched?: number;
   };
-  raw: any;
+  // extra raw fields are allowed
+  [key: string]: unknown;
+}
+
+interface PagedResponse<T> {
+  videos?: T[];
+  shorts?: T[];
+  pagination: {
+    page: number;
+    totalPages: number;
+    total?: number;
+  };
 }
 
 export default function HistoryClient() {
   const [tab, setTab] = useState<TabKey>('all');
   const [videoPage, setVideoPage] = useState(1);
   const [shortPage, setShortPage] = useState(1);
-  const [videos, setVideos] = useState<any[]>([]);
-  const [shorts, setShorts] = useState<any[]>([]);
+  const [videos, setVideos] = useState<RawHistoryItem[]>([]);
+  const [shorts, setShorts] = useState<RawHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [videoDone, setVideoDone] = useState(false);
   const [shortDone, setShortDone] = useState(false);
@@ -45,12 +57,13 @@ export default function HistoryClient() {
     if (videoDone || loading) return;
     setLoading(true);
     try {
-      const res = await fetchVideoHistory(videoPage, 20);
-      setVideos(prev => [...prev, ...res.videos]);
+      const res = (await fetchVideoHistory(videoPage, 20)) as PagedResponse<RawHistoryItem>;
+      setVideos(prev => [...prev, ...(res.videos ?? [])]);
       if (res.pagination.page >= res.pagination.totalPages) setVideoDone(true);
       setVideoPage(p => p + 1);
-    } catch (e: any) {
-      setError(e.message || 'Failed to load video history');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || 'Failed to load video history');
     } finally {
       setLoading(false);
     }
@@ -60,52 +73,53 @@ export default function HistoryClient() {
     if (shortDone || loading) return;
     setLoading(true);
     try {
-      const res = await fetchShortHistory(shortPage, 40);
-      setShorts(prev => [...prev, ...res.shorts]);
+      const res = (await fetchShortHistory(shortPage, 40)) as PagedResponse<RawHistoryItem>;
+      setShorts(prev => [...prev, ...(res.shorts ?? [])]);
       if (res.pagination.page >= res.pagination.totalPages) setShortDone(true);
       setShortPage(p => p + 1);
-    } catch (e: any) {
-      setError(e.message || 'Failed to load shorts history');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message || 'Failed to load shorts history');
     } finally {
       setLoading(false);
     }
   }, [shortPage, shortDone, loading]);
 
   useEffect(() => {
-    loadVideos();
-    loadShorts();
+    void loadVideos();
+    void loadShorts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const unified: UnifiedItem[] = [
+  const unified = [
     ...videos.map(v => ({
       type: 'video' as const,
       id: v.id,
-      title: v.title,
-      thumbnailUrl: v.thumbnailUrl,
-      duration: v.duration,
+      title: v.title ?? '',
+      thumbnailUrl: v.thumbnailUrl ?? null,
+      duration: v.duration ?? null,
       channel: {
-        id: v.channel.id,
-        name: v.channel.name,
-        handle: v.channel.handle,
-        avatar: v.channel.avatar
+        id: v.channel?.id ?? '',
+        name: v.channel?.name ?? '',
+        handle: v.channel?.handle ?? '',
+        avatar: v.channel?.avatar ?? null
       },
-      history: v.history,
+      history: v.history ?? { lastWatchedAt: new Date().toISOString(), positionSec: 0, durationSec: null, completed: false, timesWatched: 0 },
       raw: v
     })),
     ...shorts.map(s => ({
       type: 'short' as const,
       id: s.id,
-      title: s.title || s.caption,
-      thumbnailUrl: s.thumbnailUrl,
-      duration: s.duration,
+      title: s.title ?? '',
+      thumbnailUrl: s.thumbnailUrl ?? null,
+      duration: s.duration ?? null,
       channel: {
-        id: s.channel.id,
-        name: s.channel.name,
-        handle: s.channel.handle,
-        avatar: s.channel.avatar
+        id: s.channel?.id ?? '',
+        name: s.channel?.name ?? '',
+        handle: s.channel?.handle ?? '',
+        avatar: s.channel?.avatar ?? null
       },
-      history: s.history,
+      history: s.history ?? { lastWatchedAt: new Date().toISOString(), positionSec: 0, durationSec: null, completed: false, timesWatched: 0 },
       raw: s
     }))
   ].sort(
@@ -122,12 +136,12 @@ export default function HistoryClient() {
 
   const loadMore = () => {
     if (tab === 'all') {
-      if (!videoDone) loadVideos();
-      if (!shortDone) loadShorts();
+      if (!videoDone) void loadVideos();
+      if (!shortDone) void loadShorts();
     } else if (tab === 'videos') {
-      loadVideos();
+      void loadVideos();
     } else {
-      loadShorts();
+      void loadShorts();
     }
   };
 

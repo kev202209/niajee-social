@@ -17,7 +17,7 @@ export default function GDPRPolicy() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">1. Introduction</h2>
           <p className="mb-4">
-            This General Data Protection Regulation (GDPR) compliance statement explains how Mosaic ("we", "us", or "our") ensures compliance with the GDPR, a regulation in EU law on data protection and privacy for all individuals within the European Union and the European Economic Area. It addresses how we collect, use, protect, and share personal data of EU residents.
+            This General Data Protection Regulation (GDPR) compliance statement explains how Mosaic (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) ensures compliance with the GDPR, a regulation in EU law on data protection and privacy for all individuals within the European Union and the European Economic Area. It addresses how we collect, use, protect, and share personal data of EU residents.
           </p>
         </section>
 

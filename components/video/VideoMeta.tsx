@@ -6,10 +6,6 @@ import {
   Download, 
   Save, 
   MoreHorizontal,
-  Copy,
-  Facebook,
-  Twitter,
-  Mail,
   Link,
   Flag,
   EyeOff 

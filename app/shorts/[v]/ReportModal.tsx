@@ -73,12 +73,13 @@ const ReportModal = ({
       setReportReason("");
       setReportDescription("");
       
-    } catch (error: any) {
-      console.error('Error reporting video:', error);
-      if (error.message.includes('401') || error.message.includes('unauthorized')) {
+    } catch (err: unknown) {
+      console.error('Error reporting video:', err);
+      const message = err instanceof Error ? err.message : 'Failed to report video. Please try again.';
+      if (/401|unauthorized/i.test(message)) {
         toast.error('Please log in to report videos');
       } else {
-        toast.error(error.message || 'Failed to report video. Please try again.');
+        toast.error(message);
       }
     } finally {
       setReportSubmitting(false);
@@ -118,7 +119,7 @@ const ReportModal = ({
                 </h2>
                 {videoTitle && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate max-w-xs">
-                    "{videoTitle}"
+                    &quot;{videoTitle}&quot;
                   </p>
                 )}
               </div>
@@ -136,13 +137,13 @@ const ReportModal = ({
           <form onSubmit={submitReport} className="p-6 space-y-6">
             <div className="space-y-2">
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Help us understand what's happening with this video. Your report is anonymous and helps keep our community safe.
+                Help us understand what&apos;s happening with this video. Your report is anonymous and helps keep our community safe.
               </p>
             </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                What's the issue? <span className="text-red-500">*</span>
+                What&apos;s the issue? <span className="text-red-500">*</span>
               </label>
               <select
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"

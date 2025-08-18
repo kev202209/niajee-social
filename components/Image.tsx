@@ -40,7 +40,7 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   const { user } = useAuth(); // Only need user state, not token
   const [imageSrc, setImageSrc] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  // const [hasError, setHasError] = useState(false);
   const api_url = process.env.NEXT_PUBLIC_API_URL;
   const isMounted = useRef(true);
 
@@ -77,7 +77,7 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
         }
       }).catch(() => {
         if (isMounted.current) {
-          setHasError(true);
+          // setHasError(true);
           setImageSrc(fallbackSrc);
           setIsLoading(false);
         }
@@ -88,7 +88,7 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
     const fetchImage = async (): Promise<string> => {
       try {
         setIsLoading(true);
-        setHasError(false);
+        // setHasError(false);
 
         // HTTP-only cookie sent automatically with credentials: 'include'
         const response = await fetch(`${api_url}/media/${mediaKey}`, {
@@ -127,7 +127,7 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       })
       .catch(() => {
         if (isMounted.current) {
-          setHasError(true);
+          // setHasError(true);
           setImageSrc(fallbackSrc);
           onError?.();
         }
@@ -173,7 +173,7 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   };
 
   const handleImageError = () => {
-    setHasError(true);
+    // setHasError(true);
     setImageSrc(fallbackSrc);
     onError?.();
   };

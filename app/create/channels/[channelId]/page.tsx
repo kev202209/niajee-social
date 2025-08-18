@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { DetailedChannel as Channel } from '@/types'
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiClock, FiPlay, FiCalendar, FiSmartphone } from 'react-icons/fi'
@@ -44,17 +44,7 @@ export default function ChannelOverview() {
   const [overview, setOverview] = useState<ChannelOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string>('')
-  useEffect(() => {
-    const abortController = new AbortController()
-    fetchChannelOverview(abortController.signal)
-    
-    // Cleanup function to abort fetch when component unmounts or channelId changes
-    return () => {
-      abortController.abort()
-    }
-  }, [channelId])
-
-  const fetchChannelOverview = async (signal?: AbortSignal) => {
+  const fetchChannelOverview = useCallback(async (signal?: AbortSignal) => {
     try {
       setLoading(true)
       setError('')
@@ -134,7 +124,13 @@ export default function ChannelOverview() {
         setLoading(false)
       }
     }
-  }
+  }, [channelId])
+
+  useEffect(() => {
+    const abortController = new AbortController()
+    fetchChannelOverview(abortController.signal)
+    return () => abortController.abort()
+  }, [fetchChannelOverview])
 
   const formatNumber = (num: number | undefined | null): string => {
     // Handle undefined, null, or NaN values

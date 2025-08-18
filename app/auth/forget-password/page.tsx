@@ -29,11 +29,11 @@ export default function ForgetPasswordPage() {
       console.log("Raw response:", text);
       const data = JSON.parse(text);
       if (res.ok) {
-        setMessage(data.message);
-        toast.success(data.message);
+        setMessage(data.message || 'OTP sent. Check your email.');
+        toast.success(data.message || 'OTP sent. Check your email.');
       } else {
-        setError(data.message);
-        toast.error(data.message);
+        setError(data.message || 'Failed to send OTP.');
+        toast.error(data.message || 'Failed to send OTP.');
       }
     } catch (err) {
       setError('Connection error. Please check your internet connection or try again later.');
@@ -98,6 +98,18 @@ export default function ForgetPasswordPage() {
               {isLoading ? <LoadingDots /> : "Send OTP"}
             </button>
           </form>
+
+          {/* show message / error so the variables are used and linter is happy */}
+          {message && (
+            <div className="mt-4 text-sm text-green-700 bg-green-50 dark:bg-green-900/30 dark:text-green-300 px-4 py-2 rounded">
+              {message}
+            </div>
+          )}
+          {error && (
+            <div className="mt-4 text-sm text-red-700 bg-red-50 dark:bg-red-900/30 dark:text-red-300 px-4 py-2 rounded">
+              {error}
+            </div>
+          )}
           
           {/* Additional navigation options */}
           <div className="mt-4 text-center">
@@ -105,7 +117,7 @@ export default function ForgetPasswordPage() {
               href="/auth/register" 
               className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
             >
-              Don't have an account? Sign up
+              Don&apos;t have an account? Sign up
             </Link>
           </div>
         </div>

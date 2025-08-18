@@ -1,21 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { 
   FiSearch, 
   FiFilter, 
-  FiVideo, 
   FiFlag, 
   FiTrash2,
   FiEye,
   FiPlayCircle,
-  FiUser,
-  FiCalendar,
   FiHeart,
   FiMessageCircle,
-  FiShare2
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
 
@@ -59,15 +55,9 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
     flagged: ''
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<ContentItem | null>(null);
-  const [showContentModal, setShowContentModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchContent();
-  }, [currentPage, filters, searchTerm]);
-
-  const fetchContent = async () => {
+  const fetchContent = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
@@ -101,7 +91,11 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, filters, searchTerm]);
+
+  useEffect(() => {
+    void fetchContent();
+  }, [fetchContent]);
 
   const handleFlagContent = async (contentId: string, contentType: 'video' | 'short') => {
     const reason = prompt('Enter flag reason:');

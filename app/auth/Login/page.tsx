@@ -99,7 +99,7 @@ export default function LoginPage() {
             href={`/auth/register${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`} 
             className="block text-blue-600 dark:text-white mt-2 pb-2"
           >
-            Don't have an account? <span className="font-bold">Sign Up</span>
+            Don&apos;t have an account? <span className="font-bold">Sign Up</span>
           </Link>
 
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

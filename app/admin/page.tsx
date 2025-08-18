@@ -1,26 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { 
-  FiUsers, 
-  FiVideo, 
-  FiFlag, 
-  FiMail, 
-  FiFileText, 
-  FiMessageSquare,
-  FiBarChart2,
-  FiSettings,
-  FiShield,
-  FiTrendingUp,
-  FiAlertTriangle,
-  FiCheckCircle,
-  FiClock,
-  FiEye
-} from 'react-icons/fi';
-import AdminSidebar from '@/components/admin/AdminSidebar';
+import { FiShield } from 'react-icons/fi';
+import AdminSidebar, { type AdminSidebarStats } from '@/components/admin/AdminSidebar';
 import AdminDashboard from '@/components/admin/AdminDashboard';
 import UserManagement from '@/components/admin/UserManagement';
 import ContentManagement from '@/components/admin/ContentManagement';
@@ -30,7 +15,8 @@ import PostsManagement from '@/components/admin/PostsManagement';
 import BlogsManagement from '@/components/admin/BlogsManagement';
 import Analytics from '@/components/admin/Analytics';
 
-interface DashboardStats {
+// Full dashboard stats (renamed to avoid confusion with sidebar stats)
+interface FullDashboardStats {
   overview: {
     totalUsers: number;
     totalContent: number;
@@ -113,17 +99,34 @@ interface DashboardStats {
       channelName: string;
       ownerUsername: string;
     }>;
-    posts: Array<any>;
+    posts: Array<{
+      id: string;
+      content?: string;
+      author?: string;
+      likesCount?: number;
+      commentsCount?: number;
+    }>;
     blogs: Array<{
       id: string;
       title: string;
       viewCount: number;
       authorUsername: string;
     }>;
-    users: Array<any>;
+    users: Array<{
+      id: string;
+      username?: string;
+      displayName?: string;
+      followerCount?: number;
+      videoCount?: number;
+    }>;
   };
   alerts: {
-    criticalIssues: Array<any>;
+    criticalIssues: Array<{
+      id: string;
+      message: string;
+      severity?: 'critical' | 'warning' | 'info';
+      createdAt?: string;
+    }>;
     pendingReports: number;
     unprocessedContacts: number;
     flaggedContent: number;
@@ -141,49 +144,51 @@ export default function AdminPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [stats, setStats] = useState<FullDashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  if (authLoading) return; // Wait for auth to finish loading
-
-  if (!user) {
-    router.push('/auth/register');
-    return;
-  }
-
-  if (!['moderator', 'admin', 'super_admin'].includes(user.role)) {
-    toast.error('Access denied. Admin privileges required.');
-    router.push('/');
-    return;
-  }
-
-  fetchDashboardStats();
-}, [user, router, authLoading]);
-
-  const fetchDashboardStats = async () => {
+  const fetchDashboardStats = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/dashboard`, {
         credentials: 'include',
-        headers: {
-          'Accept': 'application/json',
-        }
+        headers: { Accept: 'application/json' }
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch dashboard stats');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch dashboard stats');
       const data = await response.json();
-      setStats(data.data);
-    } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      setStats(data.data as FullDashboardStats);
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      router.push('/auth/register');
+      return;
+    }
+    if (!['moderator', 'admin', 'super_admin'].includes(user.role)) {
+      toast.error('Access denied. Admin privileges required.');
+      router.push('/');
+      return;
+    }
+    void fetchDashboardStats();
+  }, [user, router, authLoading, fetchDashboardStats]);
+
+  // Derive the lightweight stats object needed by AdminSidebar
+  const sidebarStats: AdminSidebarStats | undefined = stats
+    ? ({
+        totalUsers: stats.overview.totalUsers,
+        totalContent: stats.overview.totalContent,
+        pendingReports: stats.moderation.pendingReports,
+        flaggedContent: stats.moderation.flaggedContent,
+        unprocessedContacts: stats.system.unprocessedContacts
+      } as AdminSidebarStats)
+    : undefined;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -217,7 +222,7 @@ useEffect(() => {
             Access Denied
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            You don't have permission to access this page.
+            You don&apos;t have permission to access this page.
           </p>
         </div>
       </div>
@@ -227,13 +232,12 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <div className="flex">
-        <AdminSidebar 
-          activeTab={activeTab} 
+        <AdminSidebar
+          activeTab={activeTab}
           setActiveTab={setActiveTab}
           userRole={user.role}
-          stats={stats}
+          stats={sidebarStats}
         />
-        
         <div className="flex-1 lg:ml-64">
           <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
             <div className="px-4 sm:px-6 lg:px-8 py-4">
@@ -245,12 +249,11 @@ useEffect(() => {
                   <span className="text-sm text-gray-500 dark:text-gray-400">
                     Role: {user.role}
                   </span>
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <div className="w-2 h-2 bg-green-500 rounded-full" />
                 </div>
               </div>
             </div>
           </div>
-          
           <div className="p-4 sm:p-6 lg:p-8">
             {renderContent()}
           </div>

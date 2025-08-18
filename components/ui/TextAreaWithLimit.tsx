@@ -54,7 +54,7 @@ export default function TextAreaWithLimit({
 
   useEffect(() => {
     updateRows();
-  }, [value, minRows, maxRows]);
+  }, [value, minRows, maxRows, updateRows]);
 
   // Handle input changes
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -67,13 +67,13 @@ export default function TextAreaWithLimit({
   };
 
   // Handle focus
-  const handleFocus = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+  const handleFocus = () => {
     setIsFocused(true);
     setRows(Math.max(3, minRows)); // Expand on focus
   };
 
   // Handle blur
-  const handleBlur = (e: React.FocusEvent<HTMLTextAreaElement>) => {
+  const handleBlur = () => {
     setIsFocused(false);
     if (!value.trim()) {
       setRows(minRows); // Collapse if empty
@@ -185,7 +185,7 @@ export default function TextAreaWithLimit({
         <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
           {isOverLimit ? (
             <span className="text-red-600 dark:text-red-400">
-              You've exceeded the character limit by {charCount - maxChars} characters
+              You&apos;ve exceeded the character limit by {charCount - maxChars} characters
             </span>
           ) : (
             <span>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 interface NavigationBlockerProps {
   when: boolean;
@@ -16,7 +15,6 @@ export default function NavigationBlocker({
   onBeforeUnload,
   allowNavigation
 }: NavigationBlockerProps) {
-  const router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 

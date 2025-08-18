@@ -1,5 +1,5 @@
 "use client";
-import { FC, useRef, useState, useEffect, useCallback } from "react";
+import { FC, useRef, useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import AuthenticatedImage from "@/components/Image";
 import DarkModeToggle from "../DarkModeToggle";
@@ -10,12 +10,11 @@ import {
   FiSettings,
   FiLogOut,
   FiPlus,
-  FiClock,
   FiTrendingUp,
   FiVideo,
   FiPlay,
   FiUsers,
-  FiFileText, // Add this for blogs
+  FiFileText,
 } from "react-icons/fi";
 import { ChevronRight, ChevronLeft } from "lucide-react";
 import Sidebar from "./Sidebar";
@@ -26,9 +25,9 @@ interface SearchSuggestion {
   id: string;
   text: string;
   displayText: string;
-  type: "trending" | "user" | "channel" | "search" | "blog"; // Add 'blog'
+  type: "trending" | "user" | "channel" | "search" | "blog";
   category?: string;
-  data?: any;
+  data?: unknown;
   isTrending?: boolean;
   score?: number;
 }
@@ -50,11 +49,16 @@ const Header: FC = () => {
   const [tagline, setTagline] = useState<string>("Loading...");
 
   useEffect(() => {
+    // include api_link in deps so linter knows about it
+    if (!api_link) {
+      setTagline("Craft your digital legacy.");
+      return;
+    }
     fetch(`${api_link}/api/content/taglines`)
       .then((res) => res.json())
-      .then((data) => setTagline(data.tagline))
+      .then((data) => setTagline(data?.tagline || "Craft your digital legacy."))
       .catch(() => setTagline("Craft your digital legacy."));
-  }, []);
+  }, [api_link]);
 
   const { user, logout } = useAuth();
 
@@ -62,14 +66,14 @@ const Header: FC = () => {
     await logout();
   };
 
-  // Debounced search suggestions to match backend response
-  const debouncedGetSuggestions = useCallback(
-    debounce(async (query: string) => {
+  // Debounced search suggestions (memoized so dependencies are explicit)
+  const debouncedGetSuggestions = useMemo(() => {
+    return debounce(async (query: string) => {
       setLoadingSuggestions(true);
 
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/search/suggestions?q=${encodeURIComponent(query)}`,
+          `${api_link}/search/suggestions?q=${encodeURIComponent(query)}`,
           {
             credentials: "include",
             headers: { Accept: "application/json" },
@@ -78,16 +82,19 @@ const Header: FC = () => {
 
         if (response.ok) {
           const data = await response.json();
-          const formattedSuggestions: SearchSuggestion[] = (data.suggestions || []).map((suggestion: any, index: number) => ({
-            id: `${suggestion.type}-${index}`,
-            text: suggestion.text,
-            displayText: suggestion.displayText || suggestion.text,
-            type: suggestion.type,
-            category: suggestion.category,
-            data: suggestion.data,
-            isTrending: suggestion.isTrending || false,
-            score: suggestion.score,
-          }));
+          const formattedSuggestions: SearchSuggestion[] = (Array.isArray(data?.suggestions) ? data.suggestions : []).map((s: unknown, index: number) => {
+            const suggestion = s as Record<string, unknown>;
+            return {
+              id: `${String(suggestion.type ?? "item")}-${index}`,
+              text: String(suggestion.text ?? ""),
+              displayText: String(suggestion.displayText ?? suggestion.text ?? ""),
+              type: (suggestion.type as SearchSuggestion["type"]) ?? "search",
+              category: typeof suggestion.category === "string" ? suggestion.category : undefined,
+              data: suggestion.data,
+              isTrending: Boolean(suggestion.isTrending),
+              score: typeof suggestion.score === "number" ? suggestion.score : undefined,
+            } as SearchSuggestion;
+          });
 
           setSuggestions(formattedSuggestions);
         }
@@ -97,9 +104,8 @@ const Header: FC = () => {
       } finally {
         setLoadingSuggestions(false);
       }
-    }, 300),
-    []
-  );
+    }, 300);
+  }, [api_link]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -126,7 +132,7 @@ const Header: FC = () => {
     setLoadingSuggestions(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/search/trending`,
+        `${api_link}/search/trending`,
         {
           credentials: "include",
           headers: { Accept: "application/json" },
@@ -135,17 +141,22 @@ const Header: FC = () => {
 
       if (response.ok) {
         const data = await response.json();
-        const trendingSuggestions: SearchSuggestion[] = (data.trending || [])
+        const trendingSuggestions: SearchSuggestion[] = (Array.isArray(data?.trending) ? data.trending : [])
           .slice(0, 6)
-          .map((trend: any, index: number) => ({
-            id: `trending-${index}`,
-            text: trend.text,
-            displayText: `${trend.text} · Trending in ${trend.category}`,
-            type: "trending" as const,
-            category: trend.category,
-            isTrending: true,
-            score: trend.score,
-          }));
+          .map((t: unknown, index: number) => {
+            const trend = t as Record<string, unknown>;
+            const text = String(trend.text ?? "");
+            const category = typeof trend.category === "string" ? trend.category : undefined;
+            return {
+              id: `trending-${index}`,
+              text,
+              displayText: `${text}${category ? ` · Trending in ${category}` : ""}`,
+              type: "trending",
+              category,
+              isTrending: true,
+              score: typeof trend.score === "number" ? trend.score : undefined,
+            } as SearchSuggestion;
+          });
         setSuggestions(trendingSuggestions);
       }
     } catch (err) {
@@ -161,13 +172,13 @@ const Header: FC = () => {
 
     switch (suggestion.type) {
       case "user":
-        router.push(`/profile/${suggestion.data?.username || suggestion.text.replace("@", "")}`);
+        router.push(`/profile/${(suggestion.data as Record<string, unknown>)?.username || suggestion.text.replace("@", "")}`);
         break;
       case "channel":
-        router.push(`/channel/${suggestion.data?.handle || suggestion.text.replace("@", "")}`);
+        router.push(`/channel/${(suggestion.data as Record<string, unknown>)?.handle || suggestion.text.replace("@", "")}`);
         break;
-      case "blog": // Add this case
-        router.push(`/blog/${suggestion.data?.slug || suggestion.data?.id}`);
+      case "blog":
+        router.push(`/blog/${(suggestion.data as Record<string, unknown>)?.slug || (suggestion.data as Record<string, unknown>)?.id}`);
         break;
       case "trending":
       case "search":
@@ -185,7 +196,7 @@ const Header: FC = () => {
         return <FiUser className="w-4 h-4 text-blue-500" />;
       case "channel":
         return <FiUsers className="w-4 h-4 text-purple-500" />;
-      case "blog": // Add this case
+      case "blog":
         return <FiFileText className="w-4 h-4 text-green-500" />;
       case "trending":
         return <FiTrendingUp className="w-4 h-4 text-orange-500" />;
@@ -201,7 +212,7 @@ const Header: FC = () => {
       case "channel":
         return "Channel";
       case "blog":
-        return "Blog"; // Add this case
+        return "Blog";
       case "trending":
         return "Trending";
       default:
@@ -218,14 +229,18 @@ const Header: FC = () => {
     setIsSidebarOpen((prev) => !prev);
   }, []);
 
-  const handleHeaderClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (isSidebarOpen) {
-        setIsSidebarOpen(false);
-      }
-    },
-    [isSidebarOpen]
-  );
+  // remove unused event param
+  const handleHeaderClick = useCallback(() => {
+    if (isSidebarOpen) {
+      setIsSidebarOpen(false);
+    }
+  }, [isSidebarOpen]);
+
+  // Safely coerce user to a record so we don't use `any`
+  const userRec = (user as Record<string, unknown> | null) ?? null;
+  const profilePicKey = typeof userRec?.profilePic === 'string' ? String(userRec.profilePic) : '';
+  const usernameText = userRec ? String(userRec.username ?? userRec.name ?? 'Username') : 'Username';
+  const emailText = userRec ? String(userRec.email ?? 'user@example.com') : 'user@example.com';
 
   return (
     <>
@@ -258,9 +273,14 @@ const Header: FC = () => {
             <Link
               href="/"
               className="font-extrabold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient"
+              title={tagline}
             >
               MOSAIC
             </Link>
+            {/* show tagline on md+ screens to avoid layout shift */}
+            <span className="hidden md:inline-block text-sm text-gray-600 dark:text-gray-300 ml-2">
+              {tagline}
+            </span>
           </div>
 
           {/* Center: Enhanced Search Bar with Autocomplete */}
@@ -269,7 +289,7 @@ const Header: FC = () => {
               <form onSubmit={handleSearchSubmit}>
                 <input
                   type="text"
-                  placeholder="Search videos, shorts, channels, blogs, and users..." // Updated placeholder
+                  placeholder="Search videos, shorts, channels, blogs, and users..."
                   value={searchQuery}
                   onChange={handleSearchChange}
                   onFocus={() => {
@@ -359,7 +379,7 @@ const Header: FC = () => {
                               >
                                 <FiVideo className="w-4 h-4 text-red-500" />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                                  Videos for "{searchQuery}"
+                                  Videos for &quot;{searchQuery}&quot;
                                 </span>
                               </button>
                               <button
@@ -371,7 +391,7 @@ const Header: FC = () => {
                               >
                                 <FiPlay className="w-4 h-4 text-green-500" />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                                  Shorts for "{searchQuery}"
+                                  Shorts for &quot;{searchQuery}&quot;
                                 </span>
                               </button>
                               {/* Add this button for blogs */}
@@ -384,7 +404,7 @@ const Header: FC = () => {
                               >
                                 <FiFileText className="w-4 h-4 text-green-600" />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                                  Blogs for "{searchQuery}"
+                                  Blogs for &quot;{searchQuery}&quot;
                                 </span>
                               </button>
                               <button
@@ -396,7 +416,7 @@ const Header: FC = () => {
                               >
                                 <FiUsers className="w-4 h-4 text-purple-500" />
                                 <span className="text-sm text-gray-700 dark:text-gray-300">
-                                  Channels for "{searchQuery}"
+                                  Channels for &quot;{searchQuery}&quot;
                                 </span>
                               </button>
                             </div>
@@ -421,7 +441,7 @@ const Header: FC = () => {
                 className="focus:outline-none"
               >
                 <AuthenticatedImage
-                  mediaKey={user && user.profilePic ? user.profilePic : ""}
+                  mediaKey={profilePicKey}
                   alt="Profile"
                   width={40}
                   height={40}
@@ -433,10 +453,10 @@ const Header: FC = () => {
                 <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50">
                   <div className="mb-2">
                     <p className="font-bold text-gray-900 dark:text-gray-100">
-                      {user ? user.username : "Username"}
+                      {usernameText}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {user ? user.email : "user@example.com"}
+                      {emailText}
                     </p>
                   </div>
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
@@ -479,12 +499,12 @@ const Header: FC = () => {
 export default Header;
 
 // Debounce utility function
-function debounce<T extends (...args: any[]) => any>(
-  func: T,
+function debounce<Args extends unknown[]>(
+  func: (...args: Args) => void,
   wait: number
-): (...args: Parameters<T>) => void {
+): (...args: Args) => void {
   let timeout: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
+  return (...args: Args) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   };

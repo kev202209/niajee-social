@@ -1,5 +1,3 @@
-import { Channel } from '@/types';
-
 export interface UploadForm {
   title: string;
   description: string;
@@ -36,7 +34,7 @@ export interface UploadProgressData {
 export interface UploadErrorData {
   step: string;
   message: string;
-  error?: any;
+  error?: unknown; // replaced any with unknown; narrow where you use it
   timestamp?: string;
 }
 

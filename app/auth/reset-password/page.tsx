@@ -15,17 +15,13 @@ export default function ResetPasswordPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [step, setStep] = useState(1); // 1: Verify OTP, 2: Set new password
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
-  const [isOtpLoading, setIsOtpLoading] = useState(false);
-  const [isResetLoading, setIsResetLoading] = useState(false);
+   const [isOtpLoading, setIsOtpLoading] = useState(false);
+   const [isResetLoading, setIsResetLoading] = useState(false);
 
   // Step 1: Verify OTP
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage('');
-    setError('');
-    setIsOtpLoading(true);
+     setIsOtpLoading(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/verify-reset-otp`, {
         method: 'POST',
@@ -34,16 +30,13 @@ export default function ResetPasswordPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage(data.message || 'OTP verified. Please enter your new password.');
         toast.success(data.message || 'OTP verified. Please enter your new password.');
         setStep(2);
       } else {
-        setError(data.message);
-        toast.error(data.message);
+         toast.error(data.message);
       }
     } catch (err) {
-      setError('Connection error. Please check your internet connection or try again later.');
-      toast.error('Connection error. Please check your internet connection or try again later.');
+       toast.error('Connection error. Please check your internet connection or try again later.');
       console.error(err);
     }
     setIsOtpLoading(false);
@@ -52,14 +45,11 @@ export default function ResetPasswordPage() {
   // Step 2: Reset Password
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage('');
-    setError('');
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      toast.error('Passwords do not match');
-      return;
-    }
-    setIsResetLoading(true);
+     if (newPassword !== confirmPassword) {
+       toast.error('Passwords do not match');
+       return;
+     }
+     setIsResetLoading(true);
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/reset-password-otp`, {
         method: 'POST',
@@ -68,18 +58,15 @@ export default function ResetPasswordPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage(data.message || 'Password has been reset successfully.');
         toast.success(data.message || 'Password has been reset successfully.');
         setTimeout(() => {
           router.push('/auth/login');
         }, 3000);
       } else {
-        setError(data.message);
-        toast.error(data.message);
+         toast.error(data.message);
       }
     } catch (err) {
-      setError('Connection error. Please check your internet connection or try again later.');
-      toast.error('Connection error. Please check your internet connection or try again later.');
+       toast.error('Connection error. Please check your internet connection or try again later.');
       console.error(err);
     }
     setIsResetLoading(false);

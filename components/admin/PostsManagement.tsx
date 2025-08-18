@@ -1,24 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import Image from 'next/image';
 import { 
   FiSearch, 
   FiFilter, 
   FiMessageSquare, 
-  FiUser, 
-  FiCalendar,
   FiEye,
   FiFlag,
   FiTrash2,
   FiStar,
   FiHeart,
-  FiShare2,
-  FiBookmark,
-  FiMoreVertical,
   FiAlertTriangle,
-  FiCheckCircle
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
 
@@ -73,11 +67,10 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
   const [showPostModal, setShowPostModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchPosts();
-  }, [currentPage, filters, searchTerm]);
 
-  const fetchPosts = async () => {
+
+  // wrap fetchPosts so its identity is stable for useEffect deps
+  const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams({
@@ -112,7 +105,18 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    currentPage,
+    searchTerm,
+    filters.sensitive,
+    filters.featured,
+    filters.published,
+    filters.communityId
+  ]);
+
+  useEffect(() => {
+    void fetchPosts();
+  }, [fetchPosts]);
 
   const handleFlagPost = async (postId: string, reason: string) => {
     try {

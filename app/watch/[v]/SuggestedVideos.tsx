@@ -1,12 +1,11 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { FiChevronLeft, FiChevronRight, FiClock, FiPlusCircle, FiAlertCircle, FiRefreshCw } from "react-icons/fi";
 import { SuggestedVideo } from "../../../types";
 import AuthenticatedImage from "@/components/Image";
 import Link from "next/link";
 import timeAgo from "@/app/utils/timeAgo";
-import Image from "next/image";
 
 interface SuggestedVideosProps {
   videoId: string;
@@ -36,36 +35,42 @@ export default function SuggestedVideos({ videoId }: SuggestedVideosProps) {
   const tagRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch suggested videos
-  const fetchSuggestedVideos = async () => {
+  // Fetch suggested videos (memoized so effect deps stable)
+  const fetchSuggestedVideos = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/content/suggested?v=${videoId}`, {
-        cache: "no-store",
-        credentials: 'include'
-      });
-      
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/content/suggested?v=${videoId}`,
+        { cache: "no-store", credentials: 'include' }
+      );
+
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
-      
-      const data = await res.json();
-      setSuggestedVideos(data.videos || []);
-    } catch (err: any) {
+
+      const json = (await res.json()) as unknown;
+      const videos =
+        json && typeof json === 'object' && 'videos' in (json as Record<string, unknown>)
+          ? (json as { videos?: SuggestedVideo[] }).videos ?? []
+          : [];
+
+      setSuggestedVideos(videos);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
       console.error('Error fetching suggested videos:', err);
-      setError(err.message || 'Failed to load suggested videos');
+      setError(message || 'Failed to load suggested videos');
     } finally {
       setLoading(false);
     }
-  };
+  }, [videoId]);
 
   useEffect(() => {
     if (videoId) {
-      fetchSuggestedVideos();
+      void fetchSuggestedVideos();
     }
-  }, [videoId]);
+  }, [videoId, fetchSuggestedVideos]);
 
   // On mount, measure the widths of the first three buttons plus gap.
   useEffect(() => {
@@ -231,15 +236,14 @@ export default function SuggestedVideos({ videoId }: SuggestedVideosProps) {
 
 function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
   const [hover, setHover] = useState(false);
-  const [imageError, setImageError] = useState(false);
-
-  const isNew = (() => {
-    const now = new Date();
-    const published = new Date(video.age);
-    const diffMs = now.getTime() - published.getTime();
-    return diffMs < 24 * 60 * 60 * 1000; // less than 1 day
-  })();
-
+ 
+   const isNew = (() => {
+     const now = new Date();
+     const published = new Date(video.age);
+     const diffMs = now.getTime() - published.getTime();
+     return diffMs < 24 * 60 * 60 * 1000; // less than 1 day
+   })();
+ 
   return (
     <Link href={`/watch/${video.id}`}>
       <div

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, FC } from 'react';
 import { Channel } from '@/types';
-import { FiSettings, FiUsers, FiVideo, FiEye, FiPlus, FiTrendingUp, FiUpload, FiPlayCircle } from 'react-icons/fi';
+import { FiUsers, FiVideo, FiEye, FiPlus, FiTrendingUp, FiUpload, FiPlayCircle } from 'react-icons/fi';
 import Link from 'next/link';
 import Image from 'next/image';
 

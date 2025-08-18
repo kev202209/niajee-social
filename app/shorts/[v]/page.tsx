@@ -1,7 +1,7 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useParams } from "next/navigation";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Header from "@/components/watch/Header";
 import Sidebar from "@/components/watch/Sidebar";
 import VideoPlayer from "./shortVideoPlayer";
@@ -11,7 +11,6 @@ import ReportModal from "./ReportModal";
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import CommentsSection from "./CommentsSection";
 import { getFullUrl } from "@/app/utils/videourl";
-import { Comment } from "@/types";
 
 // Updated backend data structure for shorts
 interface ShortData {
@@ -64,7 +63,6 @@ interface ShortData {
 const ShortVideoPage = () => {
   const params = useParams();
   const initialVideoId = Array.isArray(params?.v) ? params.v[0] : params?.v;
-  const router = useRouter();
 
   const [currentVideo, setCurrentVideo] = useState<ShortData | null>(null);
   const [nextVideo, setNextVideo] = useState<ShortData | null>(null);
@@ -104,77 +102,25 @@ const ShortVideoPage = () => {
     }
 
     // If videoUrl is an object, pick the best quality
-    if (typeof video.videoUrl === 'object') {
-      const qualities = video.qualities || Object.keys(video.videoUrl);
+    if (typeof video.videoUrl === 'object' && video.videoUrl) {
       const preferredQualities = ['1080p', '720p', '480p', '360p', '240p'];
       for (const quality of preferredQualities) {
-        if (video.videoUrl[quality]) {
-          return getFullUrl(video.videoUrl[quality]);
+        const candidate = (video.videoUrl as Record<string, string>)[quality];
+        if (typeof candidate === 'string' && candidate) {
+          return getFullUrl(candidate);
         }
       }
       // Fallback to first available quality
-      const firstQuality = Object.keys(video.videoUrl)[0];
-      if (firstQuality) {
-        return getFullUrl(video.videoUrl[firstQuality]);
+      const keys = Object.keys(video.videoUrl);
+      if (keys.length > 0) {
+        const first = (video.videoUrl as Record<string, string>)[keys[0]];
+        if (typeof first === 'string') return getFullUrl(first);
       }
     }
+ 
+     return '';
+   };
 
-    return '';
-  };
-
-  // Add keyboard navigation handler
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "ArrowUp") {
-        handleScrollUp();
-      } else if (event.key === "ArrowDown") {
-        handleScrollDown();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [currentVideo, nextVideo, videoHistory]);
-
-  useEffect(() => {
-    const handleScroll = (event: WheelEvent) => {
-      if (event.deltaY > 0) {
-        handleScrollDown();
-      } else if (event.deltaY < 0) {
-        handleScrollUp();
-      }
-    };
-
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener("wheel", handleScroll);
-      return () => container.removeEventListener("wheel", handleScroll);
-    }
-  }, [currentVideo, nextVideo, videoHistory]);
-
-  // On mount, read the saved volume from localStorage.
-  useEffect(() => {
-    try {
-      const savedVolume = localStorage.getItem('video-volume');
-      if (savedVolume) {
-        const volValue = parseFloat(savedVolume);
-        if (!isNaN(volValue) && volValue >= 0 && volValue <= 1) {
-          setVolume(volValue);
-        }
-      }
-    } catch (error) {
-      console.warn('Failed to read volume from localStorage:', error);
-    }
-  }, []);
-
-  // Update volume in localStorage
-  const updateVolumeStorage = (vol: number) => {
-    try {
-      localStorage.setItem('video-volume', vol.toString());
-    } catch (error) {
-      console.warn('Failed to save volume to localStorage:', error);
-    }
-  };
 
   // Fetch current video by ID or default.
   const fetchCurrentVideo = async (videoId?: string): Promise<ShortData | null> => {
@@ -217,11 +163,11 @@ const ShortVideoPage = () => {
   };
 
   // Fetch next video.
-  const fetchNextVideo = async (): Promise<ShortData | null> => {
+  const fetchNextVideo = useCallback(async (): Promise<ShortData | null> => {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`,
-        { credentials: "include" } // <-- Add this line
+        { credentials: "include" }
       );
       if (!res.ok) throw new Error('Failed to fetch next video');
       const result = await res.json();
@@ -243,7 +189,105 @@ const ShortVideoPage = () => {
       console.error(err);
       return null;
     }
+  }, []);
+
+
+
+     // Navigation: scroll down to next video.
+  const handleScrollDown = useCallback(async () => {
+    if (!nextVideo || !scrollContainerRef.current || !currentVideo) return;
+    scrollContainerRef.current.scrollTo({
+      top: window.innerHeight,
+      behavior: "smooth",
+    });
+    setTimeout(async () => {
+      setVideoHistory((prev) => [...prev, currentVideo]);
+      setCurrentVideo(nextVideo);
+      updateUrl(nextVideo.id);
+      setIsPaused(false);
+      setIsMuted(true);
+      if (currentVideoRef.current) {
+        currentVideoRef.current.muted = true;
+      }
+      const newNext = await fetchNextVideo();
+      setNextVideo(newNext);
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    }, 600);
+  }, [nextVideo, currentVideo, fetchNextVideo]);
+
+  // Navigation: scroll up to previous video.
+  const handleScrollUp = useCallback(() => {
+    if (videoHistory.length === 0 || !scrollContainerRef.current || !currentVideo)
+      return;
+    const prevVideo = videoHistory[videoHistory.length - 1];
+    scrollContainerRef.current.scrollTo({ top: window.innerHeight, behavior: "auto" });
+    scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => {
+      setVideoHistory((prev) => prev.slice(0, -1));
+      setCurrentVideo(prevVideo);
+      updateUrl(prevVideo.id);
+      setIsPaused(false);
+      setIsMuted(true);
+      if (currentVideoRef.current) {
+        currentVideoRef.current.muted = true;
+      }
+    }, 600);
+  }, [videoHistory, currentVideo]);
+
+  // Add keyboard navigation handler
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key === "ArrowUp") {
+        handleScrollUp();
+      } else if (event.key === "ArrowDown") {
+        handleScrollDown();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [handleScrollUp, handleScrollDown]);
+ 
+  useEffect(() => {
+    const handleScroll = (event: WheelEvent) => {
+      if (event.deltaY > 0) {
+        handleScrollDown();
+      } else if (event.deltaY < 0) {
+        handleScrollUp();
+      }
+    };
+
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener("wheel", handleScroll);
+      return () => container.removeEventListener("wheel", handleScroll);
+    }
+  }, [handleScrollDown, handleScrollUp]);
+
+  // On mount, read the saved volume from localStorage.
+  useEffect(() => {
+    try {
+      const savedVolume = localStorage.getItem('video-volume');
+      if (savedVolume) {
+        const volValue = parseFloat(savedVolume);
+        if (!isNaN(volValue) && volValue >= 0 && volValue <= 1) {
+          setVolume(volValue);
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to read volume from localStorage:', error);
+    }
+  }, []);
+
+  // Update volume in localStorage
+  const updateVolumeStorage = (vol: number) => {
+    try {
+      localStorage.setItem('video-volume', vol.toString());
+    } catch (error) {
+      console.warn('Failed to save volume to localStorage:', error);
+    }
   };
+
 
   // Helper: update URL with current short id.
   const updateUrl = (id: string) => {
@@ -307,46 +351,7 @@ const ShortVideoPage = () => {
     }
   };
 
-  // Navigation: scroll down to next video.
-  const handleScrollDown = async () => {
-    if (!nextVideo || !scrollContainerRef.current || !currentVideo) return;
-    scrollContainerRef.current.scrollTo({
-      top: window.innerHeight,
-      behavior: "smooth",
-    });
-    setTimeout(async () => {
-      setVideoHistory((prev) => [...prev, currentVideo]);
-      setCurrentVideo(nextVideo);
-      updateUrl(nextVideo.id);
-      setIsPaused(false);
-      setIsMuted(true);
-      if (currentVideoRef.current) {
-        currentVideoRef.current.muted = true;
-      }
-      const newNext = await fetchNextVideo();
-      setNextVideo(newNext);
-      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    }, 600);
-  };
 
-  // Navigation: scroll up to previous video.
-  const handleScrollUp = () => {
-    if (videoHistory.length === 0 || !scrollContainerRef.current || !currentVideo)
-      return;
-    const prevVideo = videoHistory[videoHistory.length - 1];
-    scrollContainerRef.current.scrollTo({ top: window.innerHeight, behavior: "auto" });
-    scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    setTimeout(() => {
-      setVideoHistory((prev) => prev.slice(0, -1));
-      setCurrentVideo(prevVideo);
-      updateUrl(prevVideo.id);
-      setIsPaused(false);
-      setIsMuted(true);
-      if (currentVideoRef.current) {
-        currentVideoRef.current.muted = true;
-      }
-    }, 600);
-  };
 
   // Toggle comments panel visibility.
   const toggleComments = () => {

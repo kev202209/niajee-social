@@ -36,7 +36,7 @@ const layers = [
 const RIM = 28;            // Visible rim offset between stacked cards
 const TOP_OFFSET = 112;    // Sticky top offset (match header height)
 const ENTER_SHIFT = 0.70;  // % of viewport height below start the card begins
-const MAX_WIDTH = '1400px';
+// const MAX_WIDTH = '1400px';
 const BOTTOM_MARGIN = 48; // px, adjust for more/less space
 
 function clamp(n: number, a: number, b: number) {

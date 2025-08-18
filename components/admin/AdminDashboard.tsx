@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { 
   FiUsers, 
   FiVideo, 
@@ -11,15 +10,12 @@ import {
   FiTrendingUp,
   FiAlertTriangle,
   FiCheckCircle,
-  FiClock,
   FiBook,
   FiEye,
   FiHeart,
-  FiShare2,
   FiMonitor,
   FiShield,
   FiActivity,
-  FiTrendingDown
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
 
@@ -113,17 +109,32 @@ interface DashboardApiResponse {
       channelName: string;
       ownerUsername: string;
     }>;
-    posts: Array<any>;
+    posts: Array<{
+      id: string;
+      content?: string;
+      author?: string;
+      likesCount?: number;
+      commentsCount?: number;
+    }>;
     blogs: Array<{
       id: string;
       title: string;
       viewCount: number;
       authorUsername: string;
     }>;
-    users: Array<any>;
+    users: Array<{
+      id: string;
+      username?: string;
+      displayName?: string;
+      followerCount?: number;
+    }>;
   };
   alerts: {
-    criticalIssues: Array<any>;
+    criticalIssues: Array<{
+      id: string;
+      message?: string;
+      severity?: 'critical' | 'warning' | 'info';
+    }>;
     pendingReports: number;
     unprocessedContacts: number;
     flaggedContent: number;
@@ -433,8 +444,8 @@ export default function AdminDashboard({ stats, loading }: AdminDashboardProps) 
             <div className="p-6">
               {stats.topPerformers.videos.length > 0 ? (
                 <div className="space-y-4">
-                  {stats.topPerformers.videos.map((video, index) => (
-                    <div key={video.id} className="flex items-center justify-between">
+                  {stats.topPerformers.videos.map((video) => (
+                     <div key={video.id} className="flex items-center justify-between">
                       <div className="flex-1 truncate">
                         <p className="font-medium text-gray-900 dark:text-white truncate">
                           {video.title}
@@ -464,7 +475,7 @@ export default function AdminDashboard({ stats, loading }: AdminDashboardProps) 
             <div className="p-6">
               {stats.topPerformers.shorts.length > 0 ? (
                 <div className="space-y-4">
-                  {stats.topPerformers.shorts.map((short, index) => (
+                  {stats.topPerformers.shorts.map((short) => (
                     <div key={short.id} className="flex items-center justify-between">
                       <div className="flex-1 truncate">
                         <p className="font-medium text-gray-900 dark:text-white truncate">

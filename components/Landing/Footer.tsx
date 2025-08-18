@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Logo from "../Logo";
-import { FiGithub, FiTwitter, FiInstagram, FiYoutube } from "react-icons/fi";
+// import { FiGithub, FiTwitter, FiInstagram, FiYoutube } from "react-icons/fi";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();

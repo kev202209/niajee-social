@@ -19,7 +19,7 @@ interface VideoPlayerProps {
   onVolumeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   toggleMute: () => void;
   togglePlayPause: () => void;
-  channel: Channel;
+  channel: Channel; // currently unused (reserved for future channel overlay)
   caption: string;
   song: string;
 }
@@ -41,18 +41,27 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
   onVolumeChange,
   toggleMute,
   togglePlayPause,
-  channel,
   caption,
   song,
 }) => {
   const hlsRef = useRef<Hls | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [viewRecorded, setViewRecorded] = useState(false); // Track if view was sent
   // Add buffering state
   const [isBuffering, setIsBuffering] = useState(true);
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [viewRecorded, setViewRecorded] = useState(false); // UI state
+  const viewRecordedRef = useRef(false); // ref to avoid stale closure in handler
+  const volumeRef = useRef(volume);
+  const mutedRef = useRef(isMuted);
+  const videoIdRef = useRef(videoId);
+
+  // keep refs in sync (no effect dependency changes to main setup)
+  useEffect(() => { volumeRef.current = volume; }, [volume]);
+  useEffect(() => { mutedRef.current = isMuted; }, [isMuted]);
+  useEffect(() => { videoIdRef.current = videoId; }, [videoId]);
+  useEffect(() => { viewRecordedRef.current = viewRecorded; }, [viewRecorded]);
 
   useEffect(() => {
     const video = videoRef?.current;
@@ -106,11 +115,12 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
 
       // --- View Tracking Logic ---
       const VIEW_THRESHOLD = 5; // 5 seconds for a short
-      if (!viewRecorded && video.currentTime >= VIEW_THRESHOLD) {
-        setViewRecorded(true); // Mark as attempted
-        ViewTrackingService.recordView(videoId, 'short').then(result => {
+      if (!viewRecordedRef.current && video.currentTime >= VIEW_THRESHOLD) {
+        viewRecordedRef.current = true;
+        setViewRecorded(true);
+        ViewTrackingService.recordView(videoIdRef.current, 'short').then(result => {
           if (result.viewRecorded) {
-            console.log(`View recorded for short ${videoId}. New count: ${result.newViewCount}`);
+            console.log(`View recorded for short ${videoIdRef.current}. New count: ${result.newViewCount}`);
           }
         });
       }
@@ -148,8 +158,8 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           console.log('HLS manifest parsed, attempting to play');
-          video.volume = volume;
-          video.muted = isMuted;
+          video.volume = volumeRef.current;
+          video.muted = mutedRef.current;
           video.play().catch(err => {
             console.error('HLS play failed:', err);
             setHasError(true);
@@ -197,8 +207,8 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
         // Safari native HLS support
         console.log('Using native HLS support');
         video.src = videoSrc;
-        video.volume = volume;
-        video.muted = isMuted;
+        video.volume = volumeRef.current;
+        video.muted = mutedRef.current;
         video.play().catch(err => {
           console.error('Native HLS play failed:', err);
           setHasError(true);
@@ -215,8 +225,8 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
       // Regular MP4 or other formats
       console.log('Using regular video source');
       video.src = videoSrc;
-      video.volume = volume;
-      video.muted = isMuted;
+      video.volume = volumeRef.current;
+      video.muted = mutedRef.current;
       video.play().catch(err => {
         console.error('Regular video play failed:', err);
         setHasError(true);
@@ -239,7 +249,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('durationchange', handleDurationChange);
     };
-  }, [videoSrc, videoRef]);
+  }, [videoSrc, videoRef]); // refs provide latest values; no need to add others
 
   // Update volume and mute state
   useEffect(() => {

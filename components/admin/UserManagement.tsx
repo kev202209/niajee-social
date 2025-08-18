@@ -4,15 +4,10 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { 
   FiSearch, 
-  FiFilter, 
-  FiMoreVertical, 
-  FiUser, 
-  FiShield, 
+  FiFilter,  
   FiUserX,
   FiCheckCircle,
   FiAlertTriangle,
-  FiEdit3,
-  FiTrash2,
   FiEye
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
@@ -32,6 +27,9 @@ interface User {
   videoCount: number;
   createdAt: string;
   lastActive: string;
+  displayName:string;
+  accountstatus: string;
+  lastLoginAt:string;
 }
 
 interface UserManagementProps {
@@ -51,13 +49,11 @@ export default function UserManagement({ userRole }: UserManagementProps) {
     status: ''
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showUserModal, setShowUserModal] = useState(false);
+  // const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  // const [showUserModal, setShowUserModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [currentPage, filters, searchTerm]);
+
 
   const fetchUsers = async () => {
     try {
@@ -83,14 +79,25 @@ export default function UserManagement({ userRole }: UserManagementProps) {
       }
 
       const data = await response.json();
-      const users = data.data.users.map((user: any) => ({
+
+      // normalize API role strings to match the User.role union
+      const normalizeRole = (r: unknown): User['role'] => {
+        if (!r) return 'user';
+        const role = String(r).toLowerCase();
+        if (role === 'super_admin' || role === 'superadmin' || role === 'super admin' || role === 'super-admin') return 'superadmin';
+        if (role === 'admin') return 'admin';
+        if (role === 'moderator' || role === 'mod') return 'moderator';
+        return 'user';
+      };
+
+      const users = data.data.users.map((user: User) => ({
         id: user.id,
         username: user.username,
         email: user.email,
-        name: user.displayName, // map displayName to name
+        name: user.displayName ?? user.name ?? user.username ?? '', // map displayName (or fallback)
         avatar: user.avatar || undefined,
-        role: user.role ? user.role.toUpperCase() : 'USER', // normalize role
-        verified: user.verified,
+        role: normalizeRole(user.role), // normalized to match local User type
+        verified: Boolean(user.verified),
         suspended: user.accountstatus === 'suspended',
         banned: user.accountstatus === 'banned',
         followerCount: user.followerCount ?? 0,
@@ -209,41 +216,41 @@ export default function UserManagement({ userRole }: UserManagementProps) {
     }
   };
 
-  const handleUpdateRole = async (userId: string, newRole: string) => {
-    if (userRole !== 'super_admin') {
-      toast.error('Insufficient permissions');
-      return;
-    }
+  // const handleUpdateRole = async (userId: string, newRole: string) => {
+  //   if (userRole !== 'super_admin') {
+  //     toast.error('Insufficient permissions');
+  //     return;
+  //   }
 
-    try {
-      setActionLoading(userId);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${userId}/role`,
-        {
-          method: 'PUT',
-          credentials: 'include',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Accept': 'application/json' 
-          },
-          body: JSON.stringify({ role: newRole })
-        }
-      );
+  //   try {
+  //     setActionLoading(userId);
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${userId}/role`,
+  //       {
+  //         method: 'PUT',
+  //         credentials: 'include',
+  //         headers: { 
+  //           'Content-Type': 'application/json',
+  //           'Accept': 'application/json' 
+  //         },
+  //         body: JSON.stringify({ role: newRole })
+  //       }
+  //     );
 
-      if (!response.ok) {
-        throw new Error('Failed to update user role');
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to update user role');
+  //     }
 
-      const data = await response.json();
-      toast.success(data.message);
-      fetchUsers();
-    } catch (error) {
-      console.error('Error updating user role:', error);
-      toast.error('Failed to update user role');
-    } finally {
-      setActionLoading(null);
-    }
-  };
+  //     const data = await response.json();
+  //     toast.success(data.message);
+  //     fetchUsers();
+  //   } catch (error) {
+  //     console.error('Error updating user role:', error);
+  //     toast.error('Failed to update user role');
+  //   } finally {
+  //     setActionLoading(null);
+  //   }
+  // };
 
   const getRoleColor = (role: string) => {
     switch (role) {
@@ -266,7 +273,10 @@ export default function UserManagement({ userRole }: UserManagementProps) {
     return 'Active';
   };
 
-  console.log('here are the total users', totalUsers)
+  useEffect(() => {
+    fetchUsers();
+  }, [currentPage, filters, , fetchUsers]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -440,8 +450,8 @@ export default function UserManagement({ userRole }: UserManagementProps) {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => {
-                            setSelectedUser(user);
-                            setShowUserModal(true);
+                            // setSelectedUser(user);
+                            // setShowUserModal(true);
                           }}
                           className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
                         >

@@ -51,7 +51,8 @@ export default function VerifyEmailPage() {
           setError(data.message || 'Verification failed.');
           setMessage(''); // Clear any previous messages
         }
-      } catch (err) {
+      } catch (err: unknown) {
+        console.error('Verification error:', err);
         setError('Server error during verification.');
         setMessage(''); // Clear any previous messages
       } finally {

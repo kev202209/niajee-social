@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -9,33 +9,42 @@ import Sidebar from '@/components/watch/Sidebar';
 import BlogComments from '@/components/blog/BlogComments';
 import RelatedBlogs from '@/components/blog/RelatedBlogs';
 import BlogActions from '@/components/blog/BlogActions';
-import BlogSkeleton from '@/components/blog/BlogSkeleton';
 import { Blog, BlogComment } from '@/types';
-import { FiClock, FiEye, FiCalendar, FiUser, FiTag, FiArrowLeft, FiShare2, FiExternalLink, FiCheck } from 'react-icons/fi';
-import { formatDistanceToNow, format } from 'date-fns';
+import { FiClock, FiEye, FiCalendar, FiTag, FiArrowLeft, FiShare2, FiExternalLink, FiCheck } from 'react-icons/fi';
+import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthenticatedImage from "@/components/Image";
 
 // Block content renderer component
 interface BlockData {
-  id: string;
+  id?: string;
   type: string;
-  data: any;
+  data?: unknown;
 }
 
+// Added helper narrow types (no logic change)
+interface ImageBlockFile { url?: string }
+interface LinkToolMetaImage { url?: string }
+interface LinkToolMeta { title?: string; description?: string; image?: LinkToolMetaImage }
+interface TableBlockData { content?: unknown[] }
+interface EditorJsLike { blocks?: BlockData[] }
+
+// Block content renderer component
 const BlockRenderer = ({ block }: { block: BlockData }) => {
   const { type, data } = block;
+  const d = data as Record<string, unknown> | undefined;
 
   switch (type) {
     case 'paragraph':
       return (
         <p className="mb-4 text-gray-800 dark:text-gray-200 leading-relaxed">
-          <span dangerouslySetInnerHTML={{ __html: data.text || '' }} />
+          <span dangerouslySetInnerHTML={{ __html: String((d?.text as string) || '') }} />
         </p>
       );
 
     case 'header':
-      const HeaderTag = `h${data.level || 2}` as keyof JSX.IntrinsicElements;
+      const level = typeof d?.level === 'number' ? d.level : 2;
+      const HeaderTag = `h${level}` as React.ElementType;
       const headerClasses = {
         1: "text-4xl font-bold mb-6 mt-8 text-gray-900 dark:text-white",
         2: "text-3xl font-bold mb-5 mt-7 text-gray-900 dark:text-white",
@@ -46,79 +55,90 @@ const BlockRenderer = ({ block }: { block: BlockData }) => {
       };
       
       return (
-        <HeaderTag className={headerClasses[data.level as keyof typeof headerClasses] || headerClasses[2]}>
-          <span dangerouslySetInnerHTML={{ __html: data.text || '' }} />
+        <HeaderTag className={headerClasses[level as keyof typeof headerClasses] || headerClasses[2]}>
+          <span dangerouslySetInnerHTML={{ __html: String((d?.text as string) || '') }} />
         </HeaderTag>
       );
 
     case 'list':
-      const ListTag = data.style === 'ordered' ? 'ol' : 'ul';
-      const listClasses = data.style === 'ordered' 
+      const style = d?.style === 'ordered' ? 'ordered' : 'unordered';
+      const ListTag = style === 'ordered' ? 'ol' : 'ul';
+      const listClasses = style === 'ordered' 
         ? "list-decimal list-inside mb-4 space-y-2 text-gray-800 dark:text-gray-200" 
         : "list-disc list-inside mb-4 space-y-2 text-gray-800 dark:text-gray-200";
-      
+      const items = Array.isArray(d?.items) ? (d?.items as unknown[]) : [];
+       
       return (
         <ListTag className={listClasses}>
-          {data.items?.map((item: any, index: number) => (
-            <li key={index} className="leading-relaxed">
-              <span dangerouslySetInnerHTML={{ __html: item.content || item }} />
-              {item.items?.length > 0 && (
-                <ListTag className={`${listClasses} mt-2 ml-4`}>
-                  {item.items.map((subItem: any, subIndex: number) => (
-                    <li key={subIndex} className="leading-relaxed">
-                      <span dangerouslySetInnerHTML={{ __html: subItem.content || subItem }} />
-                    </li>
-                  ))}
-                </ListTag>
-              )}
-            </li>
-          ))}
+          {items.map((item, index) => {
+            const it = item as Record<string, unknown>;
+            const subItems = Array.isArray(it?.items) ? (it.items as unknown[]) : [];
+            return (
+             <li key={index} className="leading-relaxed">
+              <span dangerouslySetInnerHTML={{ __html: String((it?.content as string) || item as string || '') }} />
+              {subItems.length > 0 && (
+                 <ListTag className={`${listClasses} mt-2 ml-4`}>
+                  {subItems.map((subItem, subIndex) => {
+                    const sit = subItem as Record<string, unknown>;
+                    return (
+                      <li key={subIndex} className="leading-relaxed">
+                        <span dangerouslySetInnerHTML={{ __html: String((sit?.content as string) || subItem as string || '') }} />
+                      </li>
+                    );
+                  })}
+                 </ListTag>
+               )}
+             </li>
+          );})}
         </ListTag>
       );
 
     case 'checklist':
       return (
         <div className="mb-4 space-y-2">
-          {data.items?.map((item: any, index: number) => (
+          {Array.isArray(d?.items) && (d?.items as unknown[]).map((item, index) => {
+            const it = item as Record<string, unknown>;
+            const checked = Boolean(it?.checked);
+            return (
             <div key={index} className="flex items-start space-x-3">
-              <div className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center ${
-                item.checked 
-                  ? 'bg-blue-500 border-blue-500 text-white' 
-                  : 'border-gray-300 dark:border-gray-600'
-              }`}>
-                {item.checked && <FiCheck className="w-3 h-3" />}
-              </div>
-              <span 
-                className={`flex-1 leading-relaxed ${
-                  item.checked 
-                    ? 'text-gray-500 dark:text-gray-400 line-through' 
-                    : 'text-gray-800 dark:text-gray-200'
-                }`}
-                dangerouslySetInnerHTML={{ __html: item.text || '' }}
-              />
-            </div>
-          ))}
-        </div>
-      );
-
+               <div className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                checked 
+                   ? 'bg-blue-500 border-blue-500 text-white' 
+                   : 'border-gray-300 dark:border-gray-600'
+               }`}>
+                {checked && <FiCheck className="w-3 h-3" />}
+               </div>
+               <span 
+                 className={`flex-1 leading-relaxed ${
+                  checked 
+                     ? 'text-gray-500 dark:text-gray-400 line-through' 
+                     : 'text-gray-800 dark:text-gray-200'
+                 }`}
+                dangerouslySetInnerHTML={{ __html: String((it?.text as string) || '') }}
+               />
+             </div>
+          );})}
+         </div>
+       );
+ 
     case 'code':
       return (
         <div className="mb-6">
           <pre className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 overflow-x-auto">
-            <code className="text-sm font-mono text-gray-800 dark:text-gray-200">
-              {data.code || ''}
-            </code>
-          </pre>
-        </div>
-      );
-
+             <code className="text-sm font-mono text-gray-800 dark:text-gray-200">
+              {String((d?.code as string) || '')}
+             </code>
+           </pre>
+         </div>
+       );
+ 
     case 'image':
       return (
         <div className="mb-6">
           <div className="relative rounded-lg overflow-hidden">
             <AuthenticatedImage
-              mediaKey={data.file?.url || data.url}
-              alt={data.caption || 'Blog image'}
+              mediaKey={String(((d?.file as ImageBlockFile | undefined)?.url) || d?.url || '')}
+              alt={String((d?.caption as string) || 'Blog image')}
               width={800}
               height={600}
               className="w-full h-auto"
@@ -126,54 +146,54 @@ const BlockRenderer = ({ block }: { block: BlockData }) => {
               fallbackSrc="/placeholder.png"
             />
           </div>
-          {data.caption && (
+          {typeof (d?.caption) === 'string' && (
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2 italic">
-              {data.caption}
+              {String(d?.caption)}
             </p>
           )}
         </div>
       );
-
+ 
     case 'simpleImage':
       return (
         <div className="mb-6">
           <div className="relative rounded-lg overflow-hidden">
             <Image
-              src={data.url}
-              alt={data.caption || 'Blog image'}
-              width={800}
-              height={600}
-              className="w-full h-auto"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
-              priority={false}
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = '/placeholder-image.png';
-              }}
-            />
-          </div>
-          {data.caption && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2 italic">
-              {data.caption}
-            </p>
-          )}
+              src={String(d?.url || '')}
+              alt={String((d?.caption as string) || 'Blog image')}
+               width={800}
+               height={600}
+               className="w-full h-auto"
+               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+               priority={false}
+               onError={(e) => {
+                 const target = e.target as HTMLImageElement;
+                 target.src = '/placeholder-image.png';
+               }}
+             />
+           </div>
+          {typeof d?.caption === 'string' && (
+             <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2 italic">
+              {d?.caption as string}
+             </p>
+           )}
         </div>
       );
-
+ 
     case 'linkTool':
       return (
         <div className="mb-6">
           <a
-            href={data.link}
+            href={String(d?.link || '#')}
             target="_blank"
             rel="noopener noreferrer"
             className="block border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
           >
             <div className="flex items-start space-x-4">
-              {data.meta?.image?.url && (
+              {(d?.meta as LinkToolMeta | undefined)?.image?.url && (
                 <div className="flex-shrink-0 relative">
                   <Image
-                    src={data.meta.image.url}
+                    src={String((d?.meta as LinkToolMeta | undefined)?.image?.url)}
                     alt=""
                     width={64}
                     height={64}
@@ -188,82 +208,91 @@ const BlockRenderer = ({ block }: { block: BlockData }) => {
               )}
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900 dark:text-white mb-1 flex items-center">
-                  {data.meta?.title || data.link}
+                  {String((d?.meta as LinkToolMeta | undefined)?.title || d?.link || '')}
                   <FiExternalLink className="w-4 h-4 ml-2 text-gray-400" />
                 </h3>
-                {data.meta?.description && (
+                {(d?.meta as LinkToolMeta | undefined)?.description && (
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    {data.meta.description}
+                    {String((d?.meta as LinkToolMeta | undefined)?.description)}
                   </p>
                 )}
                 <p className="text-xs text-gray-500 dark:text-gray-500">
-                  {new URL(data.link).hostname}
+                  {(() => {
+                    try {
+                      return new URL(String(d?.link || '')).hostname;
+                    } catch {
+                      return '';
+                    }
+                  })()}
                 </p>
               </div>
             </div>
           </a>
         </div>
       );
-
+ 
     case 'embed':
       return (
         <div className="mb-6">
-          <div 
-            className="embed-container"
-            dangerouslySetInnerHTML={{ __html: data.embed || '' }}
-          />
-          {data.caption && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2 italic">
-              {data.caption}
-            </p>
-          )}
-        </div>
-      );
-
+           <div 
+             className="embed-container"
+            dangerouslySetInnerHTML={{ __html: String((d?.embed as string) || '') }}
+           />
+          {typeof (d?.caption) === 'string' && (
+             <p className="text-sm text-gray-500 dark:text-gray-400 text-center mt-2 italic">
+              {String(d?.caption)}
+             </p>
+           )}
+         </div>
+       );
+ 
     case 'table':
       return (
         <div className="mb-6 overflow-x-auto">
           <table className="min-w-full border border-gray-200 dark:border-gray-700 rounded-lg">
             <tbody>
-              {data.content?.map((row: string[], rowIndex: number) => (
-                <tr key={rowIndex} className={rowIndex === 0 ? 'bg-gray-50 dark:bg-gray-800' : ''}>
-                  {row.map((cell: string, cellIndex: number) => {
-                    const CellTag = rowIndex === 0 ? 'th' : 'td';
-                    return (
-                      <CellTag
-                        key={cellIndex}
-                        className={`border border-gray-200 dark:border-gray-700 px-4 py-2 text-left ${
-                          rowIndex === 0 
-                            ? 'font-semibold text-gray-900 dark:text-white' 
-                            : 'text-gray-800 dark:text-gray-200'
-                        }`}
-                        dangerouslySetInnerHTML={{ __html: cell || '' }}
-                      />
-                    );
-                  })}
-                </tr>
-              ))}
+              {Array.isArray((d as TableBlockData | undefined)?.content) &&
+                (((d as TableBlockData)?.content as unknown[]) || []).map((row, rowIndex) => (
+                  Array.isArray(row) ? (
+                    <tr key={rowIndex} className={rowIndex === 0 ? 'bg-gray-50 dark:bg-gray-800' : ''}>
+                      {(row as unknown[]).map((cell, cellIndex) => {
+                        const CellTag = rowIndex === 0 ? 'th' : 'td';
+                        return (
+                          <CellTag
+                            key={cellIndex}
+                            className={`border border-gray-200 dark:border-gray-700 px-4 py-2 text-left ${
+                              rowIndex === 0
+                                ? 'font-semibold text-gray-900 dark:text-white'
+                                : 'text-gray-800 dark:text-gray-200'
+                            }`}
+                            dangerouslySetInnerHTML={{ __html: String(cell || '') }}
+                          />
+                        );
+                      })}
+                    </tr>
+                  ) : null
+                ))}
             </tbody>
           </table>
         </div>
       );
-
+ 
     case 'delimiter':
       return (
         <div className="my-8 text-center">
           <div className="text-gray-400 dark:text-gray-500 text-2xl tracking-widest">
-            ***
+             ***
           </div>
         </div>
-      );
-
+       );
+ 
     case 'raw':
       return (
         <div className="mb-6">
-          <div dangerouslySetInnerHTML={{ __html: data.html || '' }} />
-        </div>
-      );
-
+          <div dangerouslySetInnerHTML={{ __html: String((d?.html as string) || '') }} />
+         </div>
+       );
+ 
     default:
       // Fallback for unknown block types
       return (
@@ -280,7 +309,7 @@ const BlockRenderer = ({ block }: { block: BlockData }) => {
 };
 
 // Content renderer component
-const ContentRenderer = ({ content }: { content: any }) => {
+const ContentRenderer = ({ content }: { content: unknown }) => {
   // Handle different content formats
   if (!content) {
     return <p className="text-gray-500 dark:text-gray-400">No content available.</p>;
@@ -293,21 +322,26 @@ const ContentRenderer = ({ content }: { content: any }) => {
     try {
       const parsed = JSON.parse(content);
       blocks = Array.isArray(parsed) ? parsed : [];
-    } catch (error) {
+    } catch {
       // If parsing fails, treat as HTML
       return (
-        <div 
+        <div
           className="prose prose-lg dark:prose-invert max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }} 
+          dangerouslySetInnerHTML={{ __html: content }}
         />
       );
     }
   } else if (Array.isArray(content)) {
     // Content is already an array of blocks
     blocks = content;
-  } else if (content.blocks && Array.isArray(content.blocks)) {
+  } else if (
+    typeof content === 'object' &&
+    content !== null &&
+    'blocks' in (content as EditorJsLike) &&
+    Array.isArray((content as EditorJsLike).blocks)
+  ) {
     // Content is Editor.js format with blocks property
-    blocks = content.blocks;
+    blocks = (content as EditorJsLike).blocks || [];
   } else {
     // Unknown format, try to display as JSON
     return (
@@ -331,10 +365,11 @@ const ContentRenderer = ({ content }: { content: any }) => {
 };
 
 export default function BlogDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const { user } = useAuth();
-  const slug = params.slug as string;
+   const params = useParams();
+   const router = useRouter();
+  //  const { user } = useAuth();
+   useAuth();
+   const slug = params.slug as string;
   
   const [blog, setBlog] = useState<Blog | null>(null);
   const [comments, setComments] = useState<BlogComment[]>([]);
@@ -344,34 +379,27 @@ export default function BlogDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
 
-  useEffect(() => {
-    if (slug) {
-      fetchBlog();
-    }
-  }, [slug]);
 
-  useEffect(() => {
-    if (blog) {
-      fetchComments();
-      fetchRelatedBlogs();
-    }
-  }, [blog]);
 
-  const normalizeBlog = (blog: any) => ({
-    ...blog,
-    category: Array.isArray(blog.category)
-      ? blog.category
-      : typeof blog.category === "string"
-        ? blog.category.replace(/[{}"]/g, '').split(',').map((s: string) => s.trim()).filter(Boolean)
-        : [],
-    tags: Array.isArray(blog.tags)
-      ? blog.tags
-      : typeof blog.tags === "string"
-        ? blog.tags.split(',').map((s: string) => s.trim()).filter(Boolean)
-        : [],
-  });
+  const normalizeBlog = (raw: unknown): Blog => {
+    const b = (raw as Record<string, unknown>) || {};
+    const rawCat = b.category;
+    const rawTags = b.tags;
+    const category = Array.isArray(rawCat)
+      ? rawCat as string[]
+      : typeof rawCat === 'string'
+        ? rawCat.replace(/[{}"]/g, '').split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+    const tags = Array.isArray(rawTags)
+      ? rawTags as string[]
+      : typeof rawTags === 'string'
+        ? rawTags.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
+    // cast via unknown to satisfy TypeScript when converting a generic record to Blog
+    return { ...(b as unknown as Blog), category, tags };
+  };
 
-  const fetchBlog = async () => {
+  const fetchBlog = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -398,17 +426,16 @@ export default function BlogDetailPage() {
       } else {
         throw new Error(data.message || 'Failed to fetch blog');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching blog:', err);
-      setError(err.message || 'Failed to load blog');
+      setError(err instanceof Error ? err.message : 'Failed to load blog');
     } finally {
       setLoading(false);
     }
-  };
+  }, [slug]);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     if (!blog) return;
-    
     try {
       setCommentsLoading(true);
       
@@ -422,16 +449,15 @@ export default function BlogDetailPage() {
           setComments(data.data.comments || []);
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching comments:', err);
     } finally {
       setCommentsLoading(false);
     }
-  };
+  }, [blog]);
 
-  const fetchRelatedBlogs = async () => {
+  const fetchRelatedBlogs = useCallback(async () => {
     if (!blog) return;
-    
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs?category=${blog.category}&limit=4`, {
         credentials: 'include',
@@ -445,10 +471,10 @@ export default function BlogDetailPage() {
           setRelatedBlogs(filtered.slice(0, 3));
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching related blogs:', err);
     }
-  };
+  }, [blog]);
 
   const handleShare = async () => {
     const shareData = {
@@ -473,6 +499,19 @@ export default function BlogDetailPage() {
       }
     }
   };
+
+    useEffect(() => {
+    if (slug) {
+      fetchBlog();
+    }
+  }, [slug, fetchBlog]);
+
+  useEffect(() => {
+    if (blog) {
+      fetchComments();
+      fetchRelatedBlogs();
+    }
+  }, [blog, fetchComments, fetchRelatedBlogs]);
 
   if (loading) {
     return (
@@ -534,7 +573,7 @@ export default function BlogDetailPage() {
               </h1>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
                 {error === 'Blog not found' 
-                  ? 'The blog you\'re looking for doesn\'t exist.' 
+                  ? 'The blog you&apos;re looking for doesn&apos;t exist.' 
                   : 'We encountered an error while loading the blog.'}
               </p>
               <div className="space-x-4">
@@ -686,7 +725,7 @@ export default function BlogDetailPage() {
                   <span className="text-sm font-medium text-gray-900 dark:text-white">Tags:</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {blog.tags.map((tag) => (
+                  {blog.tags.map((tag: string) => (
                     <Link
                       key={tag}
                       href={`/blogs?tag=${tag}`}

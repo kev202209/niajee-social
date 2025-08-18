@@ -14,16 +14,9 @@ const ContactForm = () => {
     message: '',
   });
 
-  const sanitizeInput = (input: string) => {
-    // Sanitize using DOMPurify and trim whitespace
-    return DOMPurify.sanitize(input.trim());
-  };
+  const sanitizeInput = (input: string) => DOMPurify.sanitize(input.trim());
 
-  const validateEmail = (email: string) => {
-    // Basic email regex validation
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  };
+  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -32,7 +25,6 @@ const ContactForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Sanitize inputs
     const sanitizedData = {
       name: sanitizeInput(form.name),
       email: sanitizeInput(form.email),
@@ -40,17 +32,14 @@ const ContactForm = () => {
       message: sanitizeInput(form.message),
     };
 
-    // Basic validation
     if (!sanitizedData.name || !sanitizedData.email || !sanitizedData.message) {
       toast.error("⚠️ Name, Email, and Message are required.");
       return;
     }
-
     if (!validateEmail(sanitizedData.email)) {
       toast.error("📧 Please enter a valid email address.");
       return;
     }
-
     if (sanitizedData.message.length < 10) {
       toast.error("📝 Message should be at least 10 characters long.");
       return;
@@ -58,20 +47,31 @@ const ContactForm = () => {
 
     try {
       await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/contact`, sanitizedData);
-
-      toast.success(" Message was successfully Recieved.");
-
+      toast.success("Message was successfully received.");
       setForm({ name: '', email: '', subject: '', message: '' });
-
     } catch (error) {
-      toast.error("❌ Failed to send message. Please try again!")
+      console.error('Contact form submission error:', error); // use variable to avoid unused var lint
+      toast.error("❌ Failed to send message. Please try again!");
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-900 rounded-2xl shadow-xl pt-20">
-      <h2 className="text-3xl font-bold mb-6 text-blue-500 dark:text-white">Contact Us</h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <h2 className="text-3xl font-bold mb-4 text-blue-500 dark:text-white">Contact Us</h2>
+
+      <div className="mb-8">
+        <p className="text-lg font-medium text-gray-700 dark:text-gray-300">
+          Hello, what&apos;s your enquiry today?
+        </p>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+          We genuinely value your feedback, questions, and ideas. Whether you&apos;re reporting an issue,
+          suggesting a feature, or just saying hello, every message helps us shape a better experience.
+          Our team reviews all submissions and strives to respond promptly. Thank you for helping us
+          build a platform that reflects the needs of its community.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6" aria-label="Contact form">
         <div className="flex gap-4">
           <input
             type="text"
@@ -80,6 +80,7 @@ const ContactForm = () => {
             value={form.name}
             onChange={handleChange}
             required
+            aria-label="Your name"
             className="w-1/2 p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
           <input
@@ -89,6 +90,7 @@ const ContactForm = () => {
             value={form.email}
             onChange={handleChange}
             required
+            aria-label="Your email"
             className="w-1/2 p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
           />
         </div>
@@ -98,6 +100,7 @@ const ContactForm = () => {
           placeholder="Subject (optional)"
           value={form.subject}
           onChange={handleChange}
+          aria-label="Subject"
           className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
         />
         <textarea
@@ -106,6 +109,7 @@ const ContactForm = () => {
           value={form.message}
           onChange={handleChange}
           required
+          aria-label="Message"
           className="w-full p-3 h-40 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:outline-none"
         />
         <button
@@ -122,7 +126,7 @@ const ContactForm = () => {
         }
         closeButton={false}
         autoClose={7000}
-        hideProgressBar={true}
+        hideProgressBar
       />
     </div>
   );

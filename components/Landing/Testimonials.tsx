@@ -132,7 +132,7 @@ export default function Testimonials() {
                   </div>
 
                   <p className="text-xl md:text-2xl text-center font-medium text-gray-700 dark:text-gray-300 mb-8">
-                    "{testimonials[current].quote}"
+                    &quot;{testimonials[current].quote}&quot;
                   </p>
                   
                   <div className="flex items-center">

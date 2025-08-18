@@ -2,27 +2,37 @@
 import React from 'react';
 import VideoCard from '@/components/home/VideoCard';
 import ShortCard from '@/components/home/ShortCard';
+import  timeAgo  from '@/app/utils/timeAgo';
+
+interface RawHistoryChannel {
+  id?: string;
+  name?: string;
+  handle?: string;
+  avatar?: string | null;
+}
+
+interface RawHistoryBase {
+  id: string;
+  title?: string;
+  thumbnailUrl?: string | null;
+  duration?: number | null;
+  channel?: RawHistoryChannel;
+  history?: {
+    lastWatchedAt: string;
+    positionSec?: number;
+    durationSec?: number | null;
+    completed?: boolean;
+    timesWatched?: number;
+  };
+}
 
 interface HistoryVideoProps {
-  data: any; // raw video history object
+  data: RawHistoryBase; // raw video history object
 }
 interface HistoryShortProps {
-  data: any; // raw short history object
+  data: RawHistoryBase; // raw short history object
 }
 
-const timeAgo = (iso: string) => {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return 'just now';
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}d ago`;
-  const w = Math.floor(d / 7);
-  if (w < 4) return `${w}w ago`;
-  return new Date(iso).toLocaleDateString();
-};
 
 function formatDur(sec?: number) {
   if (!sec) return '';
@@ -34,11 +44,23 @@ function formatDur(sec?: number) {
 
 export const HistoryVideoCard: React.FC<HistoryVideoProps> = ({ data }) => {
   const progressPct = data.history?.durationSec
-    ? Math.min(100, (data.history.positionSec / data.history.durationSec) * 100)
+    ? Math.min(100, (data.history.positionSec ?? 0) / (data.history.durationSec ?? 1) * 100)
     : data.history?.completed ? 100 : 0;
 
   // Adapt to VideoCard expected shape (assuming videoId)
-  const adapted = { ...(data as any), videoId: data.id || data.videoId };
+    const adapted = {
+    ...data,
+    videoId: data.id,
+    thumbnail: data.thumbnailUrl ?? '',
+    title: data.title ?? '',
+    duration: data.duration ?? 0,
+    channel: {
+      id: data.channel?.id ?? '',
+      name: data.channel?.name ?? '',
+      avatar: data.channel?.avatar ?? '',
+      handle: data.channel?.handle ?? ''
+    }
+  };
 
   return (
     <div className="relative group">
@@ -67,9 +89,9 @@ export const HistoryVideoCard: React.FC<HistoryVideoProps> = ({ data }) => {
         >
           {data.channel?.name}
         </a>
-        <span>• {timeAgo(data.history.lastWatchedAt)}</span>
-        {data.history.completed && <span>• Completed</span>}
-        {!data.history.completed && progressPct > 5 && progressPct < 95 && (
+        <span>• {timeAgo(data.history?.lastWatchedAt ?? new Date().toISOString())}</span>
+        {data.history?.completed && <span>• Completed</span>}
+        {!data.history?.completed && progressPct > 5 && progressPct < 95 && (
           <span>• {progressPct.toFixed(0)}%</span>
         )}
       </div>
@@ -81,10 +103,22 @@ export const HistoryShortCard: React.FC<HistoryShortProps> = ({ data }) => {
   const pct = data.history?.completed
     ? 100
     : data.history?.positionSec && data.history?.durationSec
-      ? (data.history.positionSec / data.history.durationSec) * 100
+      ? (data.history.positionSec / (data.history.durationSec ?? 1)) * 100
       : 0;
 
-  const adapted = { ...(data as any), id: data.id };
+  const adapted = {
+    ...data,
+    id: data.id,
+    thumbnailUrl: data.thumbnailUrl ?? '',
+    title: data.title ?? '',
+    duration: data.duration ?? 0,
+    channel: {
+      id: data.channel?.id ?? '',
+      name: data.channel?.name ?? '',
+      handle: data.channel?.handle ?? '',
+      avatar: data.channel?.avatar ?? ''
+    }
+  };
 
   return (
     <div className="relative group">
@@ -106,14 +140,14 @@ export const HistoryShortCard: React.FC<HistoryShortProps> = ({ data }) => {
       <div className="mt-2 text-xs text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5">
         {data.channel?.name && (
           <a
-            href={`/channels/${data.channel.handle?.replace(/^@/,'')}`}
+            href={`/channels/${(data.channel?.handle ?? '').replace(/^@/,'')}`}
             className="hover:underline font-medium text-gray-800 dark:text-gray-200"
           >
             {data.channel.name}
           </a>
         )}
-        <span>• {timeAgo(data.history.lastWatchedAt)}</span>
-        {data.history.timesWatched > 1 && (
+        <span>• {timeAgo(data.history?.lastWatchedAt ?? new Date().toISOString())}</span>
+        {data.history?.timesWatched && data.history.timesWatched > 1 && (
           <span>• {data.history.timesWatched} views</span>
         )}
       </div>

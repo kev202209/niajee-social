@@ -1,6 +1,6 @@
 'use client';
 
-export default function Error({ error }: { error: Error }) {
+export default function Error() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">

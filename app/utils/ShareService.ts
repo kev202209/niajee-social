@@ -112,7 +112,7 @@ class ShareService {
       ]);
 
       return { success: true, userCancelled: false };
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error.name === 'AbortError') {
         // User cancelled the share
         return { success: false, userCancelled: true };

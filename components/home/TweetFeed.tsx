@@ -1,5 +1,5 @@
 import { Tweet } from "@/types";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useState, useCallback } from "react";
 import AuthenticatedImage from "@/components/Image";
 import TweetFeedSkeleton from "./TweetFeedSkeleton";
 import { FiMessageCircle, FiRepeat, FiHeart, FiBookmark, FiShare, FiRefreshCw } from "react-icons/fi";
@@ -11,53 +11,56 @@ const TweetFeed: FC = () => {
   const [error, setError] = useState<string | null>(null);
   const api_link = process.env.NEXT_PUBLIC_API_URL;
 
-  const fetchTweets = async () => {
+  const fetchTweets = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
-      console.log('-------Fetching tweets...');
       const response = await fetch(`${api_link}/posts/feed`, {
         method: "GET",
         credentials: "include",
       });
-      if (response.ok) {
-        const data = await response.json();
-        console.log('-------Fetched tweets:', data);
-        
-        // Handle the new API response structure
-        const posts = data.posts || [];
-        const transformedTweets: Tweet[] = posts.map((item: any) => ({
-          id: item.id,
-          content: item.content,
-          username: item.user?.username || "Anonymous",
-          displayName: item.user?.displayName || "@unknown", // Fixed property name
-          profilePic: item.user?.profilePic ?? "/placeholder.png",
-          createdAt: item.createdAt,
-          likeCount: item.likeCount,
-          replyCount: item.replyCount,
-          repostCount: item.repostCount,
-          saveCount: item.saveCount,
-          // These properties are missing from API response, so default to false
-          isLiked: false,
-          isSaved: false,
-          isReposted: false
-        }));
-        setTweets(transformedTweets);
-      } else {
+
+      if (!response.ok) {
         setError("Failed to load community feed");
-        console.error("Failed to fetch tweets");
+        return;
       }
-    } catch (error) {
+
+      const data = await response.json();
+      const posts = Array.isArray(data.posts) ? data.posts as unknown[] : [];
+
+      const transformedTweets: Tweet[] = posts.map((item, idx) => {
+        const rec = (item as Record<string, unknown>) ?? {};
+        const user = (rec.user as Record<string, unknown> | undefined) ?? {};
+        return {
+          id: String(rec.id ?? `post-${idx}`),
+          content: String(rec.content ?? ''),
+          username: String(user.username ?? 'anonymous'),
+          displayName: String(user.displayName ?? user.username ?? '@unknown'),
+          profilePic: String(user.profilePic ?? '/placeholder.png'),
+          createdAt: String(rec.createdAt ?? new Date().toISOString()),
+          likeCount: Number(rec.likeCount ?? 0),
+          replyCount: Number(rec.replyCount ?? 0),
+          repostCount: Number(rec.repostCount ?? 0),
+          saveCount: Number(rec.saveCount ?? 0),
+          isLiked: Boolean(rec.isLiked ?? false),
+          isSaved: Boolean(rec.isSaved ?? false),
+          isReposted: Boolean(rec.isReposted ?? false),
+        };
+      });
+
+      setTweets(transformedTweets);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error("Error fetching tweets", message);
       setError("Something went wrong while loading the feed");
-      console.error("Error fetching tweets", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [api_link]);
 
   useEffect(() => {
-    fetchTweets();
-  }, []);
+    void fetchTweets();
+  }, [fetchTweets]);
 
   const handleRetry = () => {
     fetchTweets();

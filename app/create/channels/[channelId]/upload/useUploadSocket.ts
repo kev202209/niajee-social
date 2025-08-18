@@ -22,10 +22,9 @@ export function useUploadSocket(
   useEffect(() => {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     
-    // ✅ Connect to the upload namespace with both transports
     const socket = io(`${API_URL}/upload`, {
       withCredentials: true,
-      transports: ['websocket', 'polling'], // ✅ Allow fallback to polling
+      transports: ['websocket', 'polling'],
       upgrade: true,
       rememberUpgrade: true,
       timeout: 20000,
@@ -138,7 +137,17 @@ export function useUploadSocket(
       setUploadSocket(null);
       setIsConnected(false);
     };
-  }, []);
+  }, [
+    contentType,
+    router,
+    setProcessingStep,
+    setProcessingMessage,
+    setProcessingProgress,
+    setUploading,
+    setIsProcessing,
+    setSuccess,
+    setError
+  ]);
 
   // ✅ Function to start upload tracking
   const startUploadTracking = (uploadId: string, userId?: string) => {

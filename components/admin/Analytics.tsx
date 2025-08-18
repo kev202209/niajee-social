@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { 
   FiTrendingUp, 
   FiUsers, 
   FiVideo, 
-  FiMessageSquare,
   FiEye,
   FiHeart,
   FiBarChart2,
@@ -87,13 +86,7 @@ export default function Analytics({ userRole }: AnalyticsProps) {
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<'week' | 'month' | 'year'>('month');
 
-  useEffect(() => {
-    if (userRole === 'admin' || userRole === 'super_admin') {
-      fetchAnalytics();
-    }
-  }, [period, userRole]);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch(
@@ -110,13 +103,19 @@ export default function Analytics({ userRole }: AnalyticsProps) {
 
       const data = await response.json();
       setAnalytics(data.data);
-    } catch (error) {
-      console.error('Error fetching analytics:', error);
+    } catch (err: unknown) {
+      console.error('Error fetching analytics:', err);
       toast.error('Failed to load analytics data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
+
+  useEffect(() => {
+    if (userRole === 'admin' || userRole === 'super_admin') {
+      void fetchAnalytics();
+    }
+  }, [period, userRole, fetchAnalytics]);
 
   if (userRole !== 'admin' && userRole !== 'super_admin') {
     return (
