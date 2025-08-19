@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from "next/link";
-import BlobAnimation from "@/components/Blob";
+import BlobAnimation from "../../../components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

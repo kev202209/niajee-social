@@ -4,7 +4,7 @@ import React, { useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from 'next/navigation';
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
-import BlobAnimation from "@/components/Blob";
+import BlobAnimation from "../../../components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
 import { useAuth } from "@/contexts/AuthContext";
