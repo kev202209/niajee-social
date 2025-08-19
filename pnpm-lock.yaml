@@ -32,9 +32,6 @@ importers:
       '@editorjs/raw':
         specifier: ^2.5.1
         version: 2.5.1
-      '@editorjs/simple-image':
-        specifier: ^1.6.0
-        version: 1.6.0
       '@editorjs/table':
         specifier: ^2.4.5
         version: 2.4.5
@@ -162,6 +159,9 @@ importers:
       '@editorjs/paragraph':
         specifier: ^2.11.7
         version: 2.11.7
+      '@editorjs/simple-image':
+        specifier: ^1.6.0
+        version: 1.6.0
       '@eslint/eslintrc':
         specifier: ^3
         version: 3.2.0
