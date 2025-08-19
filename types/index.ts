@@ -75,12 +75,14 @@ export interface Short {
 export interface Channel {
   id: string;
   name: string;
+  handle: string;
   avatar: string;
   verified: boolean;
   description?: string;
   subscriberCount?: number;
   videoCount?: number;
   createdAt?: string;
+  viewCount?: number;
 }
 export interface Tweet {
   id: string;

@@ -36,7 +36,7 @@ export default function CreateBlogPage() {
   
   const [formData, setFormData] = useState<CreateBlogDto>({
     title: '',
-    content: undefined, // Let Editor.js handle initialization
+    content: { blocks: [] } as OutputData, // Initialize as empty OutputData so TS is satisfied
     excerpt: '',
     category: 'Technology',
     tags: [],

@@ -1,5 +1,5 @@
 "use client";
-import { FC, useRef, useState, useEffect, useCallback, useMemo } from "react";
+import { FC, useRef, useState, useEffect, useCallback, useMemo, type RefObject } from "react";
 import Link from "next/link";
 import AuthenticatedImage from "@/components/Image";
 import DarkModeToggle from "../DarkModeToggle";
@@ -43,8 +43,9 @@ const Header: FC = () => {
   const searchRef = useRef<HTMLDivElement>(null);
   const api_link = process.env.NEXT_PUBLIC_API_URL;
 
-  useOutsideClick(profileMenuRef, () => setShowProfileMenu(false));
-  useOutsideClick(searchRef, () => setShowSuggestions(false));
+  // cast div refs to the hook-expected RefObject<HTMLElement> (safe — HTMLDivElement extends HTMLElement)
+  useOutsideClick(profileMenuRef as unknown as RefObject<HTMLElement>, () => setShowProfileMenu(false));
+  useOutsideClick(searchRef as unknown as RefObject<HTMLElement>, () => setShowSuggestions(false));
 
   const [tagline, setTagline] = useState<string>("Loading...");
 

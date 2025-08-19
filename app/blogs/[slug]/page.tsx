@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import type { JSX } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -43,22 +44,24 @@ const BlockRenderer = ({ block }: { block: BlockData }) => {
       );
 
     case 'header':
-      const level = typeof d?.level === 'number' ? d.level : 2;
-      const HeaderTag = `h${level}` as React.ElementType;
-      const headerClasses = {
-        1: "text-4xl font-bold mb-6 mt-8 text-gray-900 dark:text-white",
-        2: "text-3xl font-bold mb-5 mt-7 text-gray-900 dark:text-white",
-        3: "text-2xl font-semibold mb-4 mt-6 text-gray-900 dark:text-white",
-        4: "text-xl font-semibold mb-3 mt-5 text-gray-900 dark:text-white",
-        5: "text-lg font-medium mb-3 mt-4 text-gray-900 dark:text-white",
-        6: "text-base font-medium mb-2 mt-3 text-gray-900 dark:text-white"
-      };
-      
-      return (
-        <HeaderTag className={headerClasses[level as keyof typeof headerClasses] || headerClasses[2]}>
-          <span dangerouslySetInnerHTML={{ __html: String((d?.text as string) || '') }} />
-        </HeaderTag>
-      );
+      {
+        const level = typeof d?.level === 'number' ? d.level : 2;
+        const headerClasses = {
+          1: "text-4xl font-bold mb-6 mt-8 text-gray-900 dark:text-white",
+          2: "text-3xl font-bold mb-5 mt-7 text-gray-900 dark:text-white",
+          3: "text-2xl font-semibold mb-4 mt-6 text-gray-900 dark:text-white",
+          4: "text-xl font-semibold mb-3 mt-5 text-gray-900 dark:text-white",
+          5: "text-lg font-medium mb-3 mt-4 text-gray-900 dark:text-white",
+          6: "text-base font-medium mb-2 mt-3 text-gray-900 dark:text-white"
+        } as const;
+
+        // Use React.createElement with intrinsic tag name to avoid JSX children typing issues
+        const tagName = (`h${level}`) as keyof JSX.IntrinsicElements;
+        return React.createElement(tagName, {
+          className: headerClasses[level as keyof typeof headerClasses] || headerClasses[2],
+          dangerouslySetInnerHTML: { __html: String((d?.text as string) || '') }
+        });
+      }
 
     case 'list':
       const style = d?.style === 'ordered' ? 'ordered' : 'unordered';
@@ -718,25 +721,36 @@ export default function BlogDetailPage() {
             </div>
 
             {/* Tags */}
-            {blog.tags.length > 0 && (
-              <div className="px-6 pb-6 border-t border-gray-200 dark:border-gray-700 pt-6">
-                <div className="flex items-center space-x-2 mb-3">
-                  <FiTag className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">Tags:</span>
+            {(() => {
+              // blog.tags can be string | string[] (per types). Normalize to string[] safely.
+              const normalizedTags: string[] = Array.isArray(blog.tags)
+                ? blog.tags
+                : typeof blog.tags === 'string'
+                ? blog.tags.split(',').map(s => s.trim()).filter(Boolean)
+                : [];
+
+              if (normalizedTags.length === 0) return null;
+
+              return (
+                <div className="px-6 pb-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                  <div className="flex items-center space-x-2 mb-3">
+                    <FiTag className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Tags:</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {normalizedTags.map(tag => (
+                      <Link
+                        key={tag}
+                        href={`/blogs?tag=${encodeURIComponent(tag)}`}
+                        className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      >
+                        #{tag}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {blog.tags.map((tag: string) => (
-                    <Link
-                      key={tag}
-                      href={`/blogs?tag=${tag}`}
-                      className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                    >
-                      #{tag}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Series Navigation */}
             {blog.series && (

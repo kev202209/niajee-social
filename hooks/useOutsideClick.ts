@@ -1,17 +1,17 @@
 'use client';
-import { useEffect, RefObject } from "react";
+import { useEffect, type RefObject } from "react";
 
-// Overloaded function signatures
-function useOutsideClick(
-  refs: RefObject<HTMLElement>,
+// Generic version that accepts RefObject<T | null> or readonly array of them
+function useOutsideClick<T extends HTMLElement>(
+  refs: RefObject<T | null>,
   callback: () => void
 ): void;
-function useOutsideClick(
-  refs: ReadonlyArray<RefObject<HTMLElement>>,
+function useOutsideClick<T extends HTMLElement>(
+  refs: ReadonlyArray<RefObject<T | null>>,
   callback: () => void
 ): void;
-function useOutsideClick(
-  refs: RefObject<HTMLElement> | ReadonlyArray<RefObject<HTMLElement>>,
+function useOutsideClick<T extends HTMLElement>(
+  refs: RefObject<T | null> | ReadonlyArray<RefObject<T | null>>,
   callback: () => void
 ) {
   useEffect(() => {
@@ -23,7 +23,7 @@ function useOutsideClick(
 
       // Check if click is outside all provided refs
       const isOutside = refArray.every(ref =>
-        ref.current && !ref.current.contains(event.target as Node)
+        ref.current ? !ref.current.contains(event.target as Node) : true
       );
 
       if (isOutside) {
@@ -33,7 +33,10 @@ function useOutsideClick(
 
     document.addEventListener("mousedown", handleClickOutside, true);
     return () => document.removeEventListener("mousedown", handleClickOutside, true);
-  }, [refs, callback]);
+    // We intentionally depend only on callback because ref objects are stable.
+    // If you pass a newly created array of refs on every render, prefer calling
+    // the hook with a single ref or memoizing the refs array.
+  }, [callback]);
 }
 
 export default useOutsideClick;

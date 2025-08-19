@@ -113,7 +113,8 @@ class ShareService {
 
       return { success: true, userCancelled: false };
     } catch (error: unknown) {
-      if (error.name === 'AbortError') {
+      // Safely narrow unknown to check for AbortError
+      if ((error instanceof DOMException && error.name === 'AbortError') || (error instanceof Error && error.name === 'AbortError')) {
         // User cancelled the share
         return { success: false, userCancelled: true };
       }

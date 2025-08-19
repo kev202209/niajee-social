@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef } from 'react';
 
 interface TextAreaWithLimitProps {
   value: string;
@@ -14,7 +14,7 @@ interface TextAreaWithLimitProps {
   autoFocus?: boolean;
 }
 
-export default function TextAreaWithLimit({
+const TextAreaWithLimit = forwardRef<HTMLTextAreaElement, TextAreaWithLimitProps>(function TextAreaWithLimit({
   value,
   onChange,
   placeholder = "Type your message...",
@@ -24,10 +24,21 @@ export default function TextAreaWithLimit({
   className = "",
   disabled = false,
   autoFocus = false
-}: TextAreaWithLimitProps) {
+}: TextAreaWithLimitProps, ref) {
   const [isFocused, setIsFocused] = useState(false);
   const [rows, setRows] = useState(minRows);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const innerRef = useRef<HTMLTextAreaElement | null>(null);
+  // support forwarded ref (ref could be function or RefObject) by using innerRef
+  useEffect(() => {
+    if (!ref) return;
+    if (typeof ref === 'function') {
+      ref(innerRef.current);
+    } else {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore assign to forwarded ref
+      ref.current = innerRef.current;
+    }
+  }, [ref]);
 
   // Calculate character count
   const charCount = value.length;
@@ -35,8 +46,8 @@ export default function TextAreaWithLimit({
 
   // Auto-resize functionality
   const updateRows = () => {
-    if (textareaRef.current) {
-      const textarea = textareaRef.current;
+    if (innerRef.current) {
+      const textarea = innerRef.current;
       const lineHeight = 20; // Approximate line height in pixels
       const padding = 24; // Top and bottom padding
       
@@ -99,7 +110,7 @@ export default function TextAreaWithLimit({
       e.preventDefault();
       // You can emit a custom event or callback here for submission
       const submitEvent = new CustomEvent('submitTextArea', { detail: value });
-      textareaRef.current?.dispatchEvent(submitEvent);
+      innerRef.current?.dispatchEvent(submitEvent);
     }
   };
 
@@ -133,7 +144,7 @@ export default function TextAreaWithLimit({
   return (
     <div className="relative">
       <textarea
-        ref={textareaRef}
+        ref={innerRef}
         value={value}
         onChange={handleChange}
         onFocus={handleFocus}
@@ -196,4 +207,6 @@ export default function TextAreaWithLimit({
       )}
     </div>
   );
-}
+});
+
+export default TextAreaWithLimit;

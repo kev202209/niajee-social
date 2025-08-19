@@ -7,6 +7,12 @@ import { Blog } from '@/types';
 import { FiHeart, FiMessageCircle, FiEye, FiClock, FiBookmark, FiShare2, FiStar } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
 
+// Narrowed navigator shape for sharing/clipboard (no `any`)
+type NavigatorShare = Navigator & {
+  share?: (data: { title?: string; text?: string; url?: string }) => Promise<void>;
+  clipboard?: { writeText(text: string): Promise<void> };
+};
+
 interface BlogCardProps {
   blog: Blog;
   featured?: boolean;
@@ -14,14 +20,16 @@ interface BlogCardProps {
 
 export default function BlogCard({ blog, featured = false }: BlogCardProps) {
   const [imageError, setImageError] = useState(false);
-  const [isLiked, setIsLiked] = useState(blog.isLiked || false);
-  const [isSaved, setIsSaved] = useState(blog.isSaved || false);
-  const [likeCount, setLikeCount] = useState(blog.likes);
 
-  const handleLike = async (e: React.MouseEvent) => {
+  // use Blog fields (no `any`)
+  const [isLiked, setIsLiked] = useState<boolean>(blog.userInteraction?.liked ?? false);
+  const [isSaved, setIsSaved] = useState<boolean>(blog.userInteraction?.saved ?? false);
+  const [likeCount, setLikeCount] = useState<number>(blog.likeCount ?? 0);
+
+  const handleLike = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${blog.id}/like`, {
         method: 'POST',
@@ -29,18 +37,19 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
       });
 
       if (response.ok) {
-        setIsLiked(!isLiked);
-        setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
+        const nextLiked = !isLiked;
+        setIsLiked(nextLiked);
+        setLikeCount(prev => prev + (nextLiked ? 1 : -1));
       }
     } catch (error) {
       console.error('Error liking blog:', error);
     }
   };
 
-  const handleSave = async (e: React.MouseEvent) => {
+  const handleSave = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/${blog.id}/save`, {
         method: 'POST',
@@ -48,32 +57,50 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
       });
 
       if (response.ok) {
-        setIsSaved(!isSaved);
+        setIsSaved(prev => !prev);
       }
     } catch (error) {
-      console.error('Error saveing blog:', error);
+      console.error('Error saving blog:', error);
     }
   };
 
-  const handleShare = async (e: React.MouseEvent) => {
+  const handleShare = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (navigator.share) {
+
+    const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/blogs/${blog.slug}`;
+
+    const nav = typeof navigator !== 'undefined' ? (navigator as NavigatorShare) : undefined;
+
+    if (nav && typeof nav.share === 'function') {
       try {
-        await navigator.share({
-          title: blog.title,
-          text: blog.excerpt,
-          url: `${window.location.origin}/blogs/${blog.slug}`,
-        });
+        await nav.share({ title: blog.title, text: blog.excerpt, url: shareUrl });
       } catch (error) {
         console.error('Error sharing:', error);
       }
-    } else {
-      // Fallback to clipboard
-      navigator.clipboard.writeText(`${window.location.origin}/blogs/${blog.slug}`);
+      return;
+    }
+
+    // Fallback to clipboard if available
+    if (nav?.clipboard && typeof nav.clipboard.writeText === 'function') {
+      try {
+        await nav.clipboard.writeText(shareUrl);
+      } catch (err) {
+        console.error('Clipboard write failed', err);
+      }
     }
   };
+
+  // Normalize tags to string[]
+  const tagsArray: string[] = Array.isArray(blog.tags)
+    ? blog.tags
+    : typeof blog.tags === 'string'
+    ? blog.tags.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  const displayViews = blog.viewCount ?? 0;
+  const displayReadTime = blog.estimatedReadTime ?? blog.averageReadTime ?? 0;
+  const displayComments = blog.commentCount ?? 0;
 
   return (
     <Link href={`/blogs/${blog.slug}`}>
@@ -110,7 +137,7 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
           
           {/* Category Badge */}
           <div className="absolute top-2 right-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs font-medium">
-            {blog.category}
+            {Array.isArray(blog.category) ? (blog.category as string[])[0] : (String(blog.category ?? '') || 'General')}
           </div>
         </div>
 
@@ -155,9 +182,9 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
           </p>
 
           {/* Tags */}
-          {blog.tags.length > 0 && (
+          {tagsArray.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-3">
-              {blog.tags.slice(0, 3).map((tag) => (
+              {tagsArray.slice(0, 3).map((tag: string) => (
                 <span
                   key={tag}
                   className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs px-2 py-1 rounded"
@@ -165,9 +192,9 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
                   #{tag}
                 </span>
               ))}
-              {blog.tags.length > 3 && (
+              {tagsArray.length > 3 && (
                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                  +{blog.tags.length - 3} more
+                  +{tagsArray.length - 3} more
                 </span>
               )}
             </div>
@@ -179,11 +206,11 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-1">
                 <FiEye className="w-4 h-4" />
-                <span>{blog.views}</span>
+                <span>{displayViews}</span>
               </div>
               <div className="flex items-center space-x-1">
                 <FiClock className="w-4 h-4" />
-                <span>{blog.readTime} min</span>
+                <span>{displayReadTime} min</span>
               </div>
             </div>
 
@@ -203,7 +230,7 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
               
               <div className="flex items-center space-x-1 text-gray-400">
                 <FiMessageCircle className="w-4 h-4" />
-                <span>{blog.comments}</span>
+                <span>{displayComments}</span>
               </div>
               
               <button

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, type RefObject } from 'react';
 import {
   MessageCircle,
   Share2,
@@ -91,9 +91,12 @@ const VideoActions = ({
     setCurrentShareCount(video.shareCount);
   }, [video]); // The only dependency needed is the video object itself.
 
-  const menuRef = useRef<HTMLDivElement>(null) as React.RefObject<HTMLElement>;
+  // use a HTMLDivElement ref so it can be passed as a div ref without type errors
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
-  useOutsideClick(menuRef, () => setShowMenu(false));
+  // useOutsideClick expects RefObject<HTMLElement> (or array). Cast to that shape without using `any`.
+  // We cast via `unknown` -> `RefObject<HTMLElement>` to satisfy the hook signature safely.
+  useOutsideClick(menuRef as unknown as RefObject<HTMLElement>, () => setShowMenu(false));
 
   const handleReport = () => {
     setShowMenu(false);

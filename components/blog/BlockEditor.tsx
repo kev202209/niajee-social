@@ -2,22 +2,23 @@
 
 import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import EditorJS, { OutputData } from '@editorjs/editorjs';
+import type { ToolConstructable } from '@editorjs/editorjs';
 
 // Import Editor.js tools
 import Header from '@editorjs/header';
+import Paragraph from '@editorjs/paragraph';
 import List from '@editorjs/list';
+import Table from '@editorjs/table';
+import SimpleImage from '@editorjs/simple-image';
 import Code from '@editorjs/code';
 import LinkTool from '@editorjs/link';
 import Image from '@editorjs/image';
 import Raw from '@editorjs/raw';
 import Embed from '@editorjs/embed';
-import Paragraph from '@editorjs/paragraph';
 import Checklist from '@editorjs/checklist';
 import Marker from '@editorjs/marker';
-import Table from '@editorjs/table';
 import Delimiter from '@editorjs/delimiter';
 import InlineCode from '@editorjs/inline-code';
-import SimpleImage from '@editorjs/simple-image';
 
 interface BlockEditorProps {
   value?: OutputData;
@@ -26,7 +27,7 @@ interface BlockEditorProps {
   readOnly?: boolean;
 }
 
-const BlockEditor = forwardRef<EditorJS | null, BlockEditorProps>(({
+const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({ 
   value,
   onChange,
   placeholder = "Start writing your blog...",
@@ -37,7 +38,9 @@ const BlockEditor = forwardRef<EditorJS | null, BlockEditorProps>(({
   const isInitialized = useRef(false);
   const isMounted = useRef(true);
 
-  useImperativeHandle(ref, () => ejInstance.current);
+  // expose the EditorJS instance to parent ref (non-null assertion)
+  // parent code should guard/ref-check before usage
+  useImperativeHandle(ref, () => ejInstance.current!);
 
   // NOTE: moved initialization logic into the effect to avoid initEditor deps lint
   useEffect(() => {
@@ -84,7 +87,7 @@ const BlockEditor = forwardRef<EditorJS | null, BlockEditorProps>(({
           tools: {
             // Typography
             header: {
-              class: Header,
+              class: Header as unknown as ToolConstructable,
               inlineToolbar: ['marker', 'link'],
               config: {
                 placeholder: 'Enter a header',
@@ -93,7 +96,7 @@ const BlockEditor = forwardRef<EditorJS | null, BlockEditorProps>(({
               }
             },
             paragraph: {
-              class: Paragraph,
+              class: Paragraph as unknown as ToolConstructable,
               inlineToolbar: true,
               config: {
                 placeholder: 'Start writing...'
@@ -102,14 +105,14 @@ const BlockEditor = forwardRef<EditorJS | null, BlockEditorProps>(({
 
             // Lists
             list: {
-              class: List,
+              class: List as unknown as ToolConstructable,
               inlineToolbar: true,
               config: {
                 defaultStyle: 'unordered'
               }
             },
             checklist: {
-              class: Checklist,
+              class: Checklist as unknown as ToolConstructable,
               inlineToolbar: true,
             },
 
@@ -192,11 +195,11 @@ const BlockEditor = forwardRef<EditorJS | null, BlockEditorProps>(({
                 }
               }
             },
-            simpleImage: SimpleImage,
+            simpleImage: SimpleImage as unknown as ToolConstructable,
 
             // Code
             code: {
-              class: Code,
+              class: Code as unknown as ToolConstructable,
               config: {
                 placeholder: 'Enter code here...'
               }
@@ -208,13 +211,13 @@ const BlockEditor = forwardRef<EditorJS | null, BlockEditorProps>(({
 
             // Links & Embeds
             linkTool: {
-              class: LinkTool,
+              class: LinkTool as unknown as ToolConstructable,
               config: {
                 endpoint: `${process.env.NEXT_PUBLIC_API_URL}/api/link-preview`,
               }
             },
             embed: {
-              class: Embed,
+              class: Embed as unknown as ToolConstructable,
               config: {
                 services: {
                   youtube: true,
@@ -228,21 +231,21 @@ const BlockEditor = forwardRef<EditorJS | null, BlockEditorProps>(({
 
             // Formatting
             marker: {
-              class: Marker,
+              class: Marker as unknown as ToolConstructable,
               shortcut: 'CMD+SHIFT+H',
             },
 
             // Layout
-            delimiter: Delimiter,
+            delimiter: Delimiter as unknown as ToolConstructable,
             table: {
-              class: Table,
+              class: Table as unknown as ToolConstructable,
               inlineToolbar: true,
               config: {
                 rows: 2,
                 cols: 3,
               },
             },
-            raw: Raw,
+            raw: Raw as unknown as ToolConstructable,
           },
         });
       } catch (error) {

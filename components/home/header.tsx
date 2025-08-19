@@ -452,13 +452,16 @@ const Header: FC = () => {
 export default Header;
 
 // Debounce utility function
-function debounce<T extends (...args: unknown[]) => unknown>(
-  func: T,
+function debounce<Args extends unknown[], R>(
+  func: (...args: Args) => R | Promise<R>,
   wait: number
-): (...args: Parameters<T>) => void {
+): (...args: Args) => void {
   let timeout: ReturnType<typeof setTimeout>;
-  return (...args: Parameters<T>) => {
+  return (...args: Args) => {
     clearTimeout(timeout);
-    timeout = setTimeout(() => func(...args), wait);
+    timeout = setTimeout(() => {
+      // call and intentionally ignore returned Promise
+      void func(...args);
+    }, wait);
   };
 }

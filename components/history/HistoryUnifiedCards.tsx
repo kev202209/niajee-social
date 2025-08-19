@@ -3,6 +3,7 @@ import React from 'react';
 import VideoCard from '@/components/home/VideoCard';
 import ShortCard from '@/components/home/ShortCard';
 import  timeAgo  from '@/app/utils/timeAgo';
+import { Video, Short } from '@/types';
 
 interface RawHistoryChannel {
   id?: string;
@@ -47,20 +48,40 @@ export const HistoryVideoCard: React.FC<HistoryVideoProps> = ({ data }) => {
     ? Math.min(100, (data.history.positionSec ?? 0) / (data.history.durationSec ?? 1) * 100)
     : data.history?.completed ? 100 : 0;
 
-  // Adapt to VideoCard expected shape (assuming videoId)
-    const adapted = {
-    ...data,
-    videoId: data.id,
-    thumbnail: data.thumbnailUrl ?? '',
+  // Safely read potential runtime fields without `any`
+  const raw = data as unknown as Record<string, unknown>;
+
+  // Build an object that matches the Video type required by VideoCard.
+  // Fill missing required fields with sensible defaults.
+  const adapted = {
+    id: data.id,
+    // canonical player id/name expected by VideoCard
+    videoId: typeof raw.videoId === 'string' ? raw.videoId : data.id,
+    // video sources: prefer an object if present, otherwise use empty string placeholder
+    videoUrl:
+      typeof raw.videoUrl === 'object' && raw.videoUrl !== null
+        ? (raw.videoUrl as Record<string, string>)
+        : (typeof raw.videoUrl === 'string' ? raw.videoUrl : ''),
+    description: typeof raw.description === 'string' ? raw.description : '',
+    // display fields
     title: data.title ?? '',
+    // VideoCard expects `thumbnail` (not thumbnailUrl) and `thumbnail` should be a key for your image utility
+    thumbnail: typeof raw.thumbnail === 'string' ? raw.thumbnail : String(data.thumbnailUrl ?? ''),
+    thumbnailUrl: String(data.thumbnailUrl ?? ''),
     duration: data.duration ?? 0,
+    // numeric stats
+    views: typeof raw.views === 'number' ? raw.views : Number(raw.views ?? 0),
+    likes: typeof raw.likes === 'number' ? raw.likes : Number(raw.likes ?? 0),
+    dislikes: typeof raw.dislikes === 'number' ? raw.dislikes : 0,
+    createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString(),
+    // channel shape expected by the Video type
     channel: {
       id: data.channel?.id ?? '',
       name: data.channel?.name ?? '',
       avatar: data.channel?.avatar ?? '',
-      handle: data.channel?.handle ?? ''
-    }
-  };
+      handle: data.channel?.handle ?? '',
+    },
+  } as unknown as Video;
 
   return (
     <div className="relative group">
@@ -106,24 +127,32 @@ export const HistoryShortCard: React.FC<HistoryShortProps> = ({ data }) => {
       ? (data.history.positionSec / (data.history.durationSec ?? 1)) * 100
       : 0;
 
-  const adapted = {
-    ...data,
+  const rawShort = data as unknown as Record<string, unknown>;
+  const adaptedShort = {
     id: data.id,
-    thumbnailUrl: data.thumbnailUrl ?? '',
+    videoUrl:
+      typeof rawShort.videoUrl === 'object' && rawShort.videoUrl !== null
+        ? (rawShort.videoUrl as Record<string, string>)
+        : (typeof rawShort.videoUrl === 'string' ? rawShort.videoUrl : ''),
     title: data.title ?? '',
+    thumbnail: typeof rawShort.thumbnail === 'string' ? rawShort.thumbnail : String(data.thumbnailUrl ?? ''),
+    thumbnailUrl: String(data.thumbnailUrl ?? ''),
     duration: data.duration ?? 0,
+    views: typeof rawShort.views === 'number' ? rawShort.views : Number(rawShort.views ?? 0),
+    likes: typeof rawShort.likes === 'number' ? rawShort.likes : Number(rawShort.likes ?? 0),
+    createdAt: typeof rawShort.createdAt === 'string' ? rawShort.createdAt : new Date().toISOString(),
     channel: {
       id: data.channel?.id ?? '',
       name: data.channel?.name ?? '',
       handle: data.channel?.handle ?? '',
       avatar: data.channel?.avatar ?? ''
     }
-  };
+  } as unknown as Short;
 
   return (
     <div className="relative group">
       <div className="relative">
-        <ShortCard short={adapted} />
+        <ShortCard short={adaptedShort} />
         {/* Progress bar */}
         {pct > 0 && (
           <div className="absolute left-0 bottom-0 h-1 w-full bg-black/30">
