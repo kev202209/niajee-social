@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: process.env.NEXT_PUBLIC_IMAGE_DOMAIN_PROD || "",
+        hostname: process.env.NEXT_PUBLIC_API_URL || "",
         pathname: "/media/**",
       }
     ],
