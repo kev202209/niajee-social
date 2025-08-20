@@ -425,7 +425,7 @@ export default function BlogDetailPage() {
       if (data.success) {
         setBlog(normalizeBlog(data.data));
         // Update page title
-        document.title = `${data.data.title} | Mosaic Social`;
+        document.title = `${data.data.title} | Niajee Social`;
       } else {
         throw new Error(data.message || 'Failed to fetch blog');
       }

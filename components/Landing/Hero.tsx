@@ -66,7 +66,7 @@ export default function Hero() {
           transition={{ duration: 0.7, delay: 0.4 }}
           className="my-6 max-w-xl text-sm xs:text-base md:text-lg lg:text-xl text-gray-600 dark:text-gray-300"
         >
-          Mosaic centralizes video streaming, shorts, and community-driven content
+          Niajee centralizes video streaming, shorts, and community-driven content
           into one seamless experience.
         </motion.p>
         

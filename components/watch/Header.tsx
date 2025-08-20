@@ -276,7 +276,7 @@ const Header: FC = () => {
               className="font-extrabold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient"
               title={tagline}
             >
-              MOSAIC
+              NIAJEE
             </Link>
             {/* show tagline on md+ screens to avoid layout shift */}
             <span className="hidden md:inline-block text-sm text-gray-600 dark:text-gray-300 ml-2">

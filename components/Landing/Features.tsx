@@ -323,7 +323,7 @@ export default function Features() {
             Features
           </span>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-800 dark:text-gray-100 mb-6">
-            Why Join Mosaic
+            Why Join Niajee
           </h2>
           <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-400 text-lg md:text-xl">
             Experience a new era of social media with our innovative platform designed with your needs in mind.

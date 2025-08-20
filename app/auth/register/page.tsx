@@ -158,7 +158,7 @@ export default function RegisterPage() {
           {step === 1 && (
             <div>
               <h1 className="text-2xl font-bold mb-4 text-blue-500 dark:text-white">
-                Welcome to Mosaic
+                Welcome to Niajee
               </h1>
               <Link 
                 href={`/auth/login${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`} 

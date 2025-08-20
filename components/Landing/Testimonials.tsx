@@ -12,21 +12,21 @@ export default function Testimonials() {
 
   const testimonials = [
     {
-      quote: "Mosaic has completely transformed how I consume social media. Everything I need is in one place!",
+      quote: "Niajee has completely transformed how I consume social media. Everything I need is in one place!",
       author: "Alex Johnson",
       role: "Content Creator",
       avatar: "/avatars/avatar-1.jpg",
       rating: 5,
     },
     {
-      quote: "The seamless integration between long-form videos and shorts makes Mosaic stand out from other platforms.",
+      quote: "The seamless integration between long-form videos and shorts makes Niajee stand out from other platforms.",
       author: "Samantha Lee",
       role: "Lifestyle Influencer",
       avatar: "/avatars/avatar-2.jpg",
       rating: 5,
     },
     {
-      quote: "I've been able to grow my community faster on Mosaic than on any other platform I've used before.",
+      quote: "I've been able to grow my community faster on Niajee than on any other platform I've used before.",
       author: "Marcus Chen",
       role: "Gaming Streamer",
       avatar: "/avatars/avatar-3.jpg",
@@ -87,7 +87,7 @@ export default function Testimonials() {
             What Our Users Say
           </h2>
           <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-400 text-lg">
-            Join thousands of satisfied users who have transformed their social media experience with Mosaic.
+            Join thousands of satisfied users who have transformed their social media experience with Niajee.
           </p>
         </motion.div>
 

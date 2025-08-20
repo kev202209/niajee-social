@@ -114,7 +114,7 @@ export default function Footer() {
         <div className="pt-6 border-t border-gray-200 dark:border-white/10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              © {currentYear} Mosaic. All rights reserved.
+              © {currentYear} Niajee. All rights reserved.
             </p>
           </div>
         </div>

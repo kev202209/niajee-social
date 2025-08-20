@@ -17,22 +17,22 @@ export default function GDPRPolicy() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">1. Introduction</h2>
           <p className="mb-4">
-            This General Data Protection Regulation (GDPR) compliance statement explains how Mosaic (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) ensures compliance with the GDPR, a regulation in EU law on data protection and privacy for all individuals within the European Union and the European Economic Area. It addresses how we collect, use, protect, and share personal data of EU residents.
+            This General Data Protection Regulation (GDPR) compliance statement explains how Niajee (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) ensures compliance with the GDPR, a regulation in EU law on data protection and privacy for all individuals within the European Union and the European Economic Area. It addresses how we collect, use, protect, and share personal data of EU residents.
           </p>
         </section>
 
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">2. Data Controller Information</h2>
           <p className="mb-4">
-            Mosaic acts as a data controller for the personal information collected through our Services. As a data controller, we determine the purposes and means of processing personal data.
+            Niajee acts as a data controller for the personal information collected through our Services. As a data controller, we determine the purposes and means of processing personal data.
           </p>
           <p className="mb-4">
             Our contact details are:
           </p>
           <ul className="list-disc ml-8 mb-4">
-            <li>Company Name: Mosaic Social Media Ltd</li>
+            <li>Company Name: Niajee Social Media Ltd</li>
             <li>Address: 123 Tech Avenue, Digital City, DC1 2EF, United Kingdom</li>
-            <li>Email: dpo@mosaic-social.com</li>
+            <li>Email: dpo@niajee-social.com</li>
             <li>Phone: 07000000998847</li>
           </ul>
         </section>
@@ -44,7 +44,7 @@ export default function GDPRPolicy() {
           </p>
           <ul className="list-disc ml-8 mb-4">
             <li>Name: Data Protection Officer</li>
-            <li>Email: dpo@mosaic-social.com</li>
+            <li>Email: dpo@niajee-social.com</li>
             <li>Phone: 07000000998847</li>
             <li>Address: 123 Tech Avenue, Digital City, DC1 2EF, United Kingdom</li>
           </ul>
@@ -164,8 +164,8 @@ export default function GDPRPolicy() {
           </p>
           <ul className="list-disc ml-8 mb-4">
             <li>By phone: 07000000998847</li>
-            <li>By visiting this page on our website: <Link href="/legals/contact-us" className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">mosaic-social.com/legals/contact-us</Link></li>
-            <li>By email: dpo@mosaic-social.com</li>
+            <li>By visiting this page on our website: <Link href="/legals/contact-us" className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">niajee-social.com/legals/contact-us</Link></li>
+            <li>By email: dpo@niajee-social.com</li>
           </ul>
         </section>
 

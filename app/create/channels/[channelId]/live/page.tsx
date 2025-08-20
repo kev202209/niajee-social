@@ -55,7 +55,7 @@ const ChannelLivePage = () => {
   });
 
   const [streamKey] = useState('sk_live_' + Math.random().toString(36).substr(2, 20));
-  const [streamUrl] = useState(`rtmp://live.mosaic-social.com/live/${channelId}`);
+  const [streamUrl] = useState(`rtmp://live.niajee-social.com/live/${channelId}`);
 
   const categories = [
     'Gaming', 'Education', 'Entertainment', 'Music', 'Sports', 

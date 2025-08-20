@@ -61,7 +61,7 @@ export default function AdminSidebar({ activeTab, setActiveTab, userRole, stats 
           Admin Panel
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          Mosaic Social
+          Niajee Social
         </p>
       </div>
       

@@ -103,7 +103,7 @@ export default function Landing() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="text-5xl font-bold gradient-text">
-              <Link href="/" className=" font-extrabold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient">MOSAIC</Link>
+              <Link href="/" className=" font-extrabold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient">NIAJEE</Link>
             </div>
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-8">
@@ -225,7 +225,7 @@ export default function Landing() {
             Experience Social Media Like Never Before.
           </h1>
           <p className="my-6 max-w-xl text-base leading-relaxed md:text-lg">
-            Mosaic centralizes video streaming, shorts, and community-driven content
+            Niajee centralizes video streaming, shorts, and community-driven content
             into one seamless experience.
           </p>
           <Link href="/auth/register">
@@ -259,7 +259,7 @@ export default function Landing() {
         <section id="why-join" className="py-16 bg-gray-50 dark:bg-gray-950">
           <div className="max-w-7xl mx-auto px-4">
             <h2 className="text-3xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
-              Why Join Mosaic
+              Why Join Niajee
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {features.map((feature, index) => (
@@ -289,7 +289,7 @@ export default function Landing() {
                 Download Our App
               </h2>
               <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Experience Mosaic on your mobile device. Enjoy a unified social media
+                Experience Niajee on your mobile device. Enjoy a unified social media
                 experience at your fingertips.
               </p>
               <div className="flex space-x-4">
@@ -358,7 +358,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="text-2xl font-bold gradient-text">
-              <Link href="/">MOSAIC</Link>
+              <Link href="/">NIAJEE</Link>
             </div>
             <div className="flex space-x-6">
               <Link
@@ -388,7 +388,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="mt-4 text-center text-sm">
-            © {new Date().getFullYear()} Mosaic. All rights reserved.
+            © {new Date().getFullYear()} Niajee. All rights reserved.
           </div>
         </div>
       </footer>

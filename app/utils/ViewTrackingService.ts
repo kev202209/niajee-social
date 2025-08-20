@@ -3,7 +3,7 @@ interface ViewRecord {
 }
 
 class ViewTrackingService {
-  private static STORAGE_KEY = 'mosaic_view_records';
+  private static STORAGE_KEY = 'niajee_view_records';
   private static VIEW_RECORD_EXPIRATION = 24 * 60 * 60 * 1000; // 24 hours
 
   // Get view records from localStorage

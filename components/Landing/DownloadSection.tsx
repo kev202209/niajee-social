@@ -32,7 +32,7 @@ export default function DownloadSection() {
             Mobile Apps
           </span>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-            Take Mosaic Everywhere
+            Take Niajee Everywhere
           </h2>
           <p className="max-w-2xl mx-auto text-gray-600 dark:text-gray-400 text-lg">
             Download our mobile apps and stay connected with your community wherever you go.
@@ -116,7 +116,7 @@ export default function DownloadSection() {
             className="w-full lg:w-1/2"
           >
             <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              Experience Mosaic on your device
+              Experience Niajee on your device
             </h3>
             <p className="text-gray-600 dark:text-gray-300 mb-8">
               Our app is designed to provide the best possible experience on mobile devices.

@@ -112,7 +112,7 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
             ${isExpanded ? "opacity-100" : "opacity-0"}
           `}
         >
-          © {new Date().getFullYear()} MOSAIC
+          © {new Date().getFullYear()} NIAJEE
         </div>
       </div>
     </aside>

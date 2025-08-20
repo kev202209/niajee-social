@@ -17,7 +17,7 @@ export default function CookiePolicy() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">1. Introduction</h2>
           <p className="mb-4">
-            This Cookie Policy explains how Mosaic (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) uses cookies and similar technologies to recognize you when you visit our website, mobile applications, and other platforms (collectively, the &quot;Services&quot;). It explains what these technologies are and why we use them, as well as your rights to control our use of them.
+            This Cookie Policy explains how Niajee (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) uses cookies and similar technologies to recognize you when you visit our website, mobile applications, and other platforms (collectively, the &quot;Services&quot;). It explains what these technologies are and why we use them, as well as your rights to control our use of them.
           </p>
         </section>
 
@@ -27,7 +27,7 @@ export default function CookiePolicy() {
             Cookies are small data files that are placed on your computer or mobile device when you visit a website. Cookies are widely used by website owners to make their websites work, or to work more efficiently, as well as to provide reporting information.
           </p>
           <p className="mb-4">
-            Cookies set by the website owner (in this case, Mosaic) are called &quot;first-party cookies.&quot; Cookies set by parties other than the website owner are called &quot;third-party cookies.&quot; Third-party cookies enable third-party features or functionality to be provided on or through the website (e.g., advertising, interactive content, and analytics). The parties that set these third-party cookies can recognize your computer both when it visits the website in question and also when it visits certain other websites.
+            Cookies set by the website owner (in this case, Niajee) are called &quot;first-party cookies.&quot; Cookies set by parties other than the website owner are called &quot;third-party cookies.&quot; Third-party cookies enable third-party features or functionality to be provided on or through the website (e.g., advertising, interactive content, and analytics). The parties that set these third-party cookies can recognize your computer both when it visits the website in question and also when it visits certain other websites.
           </p>
         </section>
 
@@ -89,8 +89,8 @@ export default function CookiePolicy() {
           </p>
           <ul className="list-disc ml-8 mb-4">
             <li>By phone: 07000000998847</li>
-            <li>By visiting this page on our website: <Link href="/legals/contact-us" className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">mosaic-social.com/legals/contact-us</Link></li>
-            <li>By email: support@mosaic-social.com</li>
+            <li>By visiting this page on our website: <Link href="/legals/contact-us" className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">niajee-social.com/legals/contact-us</Link></li>
+            <li>By email: support@niajee-social.com</li>
           </ul>
         </section>
       </div>

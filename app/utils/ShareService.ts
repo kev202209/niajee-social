@@ -11,7 +11,7 @@ interface ShareRecord {
 }
 
 class ShareService {
-  private static STORAGE_KEY = 'mosaic_share_records';
+  private static STORAGE_KEY = 'niajee_share_records';
   private static MAX_SHARES_PER_PERIOD = 3;
   private static RATE_LIMIT_PERIOD = 30 * 60 * 1000; // 30 minutes in milliseconds
   private static NATIVE_SHARE_TIMEOUT = 3000; // 3 seconds to wait for native share

@@ -16,7 +16,7 @@ export default function PrivacyPolicy() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">1. Introduction</h2>
           <p className="mb-4">
-            Welcome to Mosaic (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you access or use our services, including our website, mobile applications, and other platforms (collectively, the &quot;Services&quot;). By using our Services, you agree to the collection and use of information in accordance with this policy.
+            Welcome to Niajee (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you access or use our services, including our website, mobile applications, and other platforms (collectively, the &quot;Services&quot;). By using our Services, you agree to the collection and use of information in accordance with this policy.
           </p>
         </section>
 
@@ -70,7 +70,7 @@ export default function PrivacyPolicy() {
               <strong>Business Transfers:</strong> In connection with any merger, sale of company assets, financing, or acquisition of all or a portion of our business.
             </li>
             <li>
-              <strong>Legal Requirements:</strong> When required by law, regulation, or legal process, or to protect the rights, property, or safety of Mosaic, our users, or others.
+              <strong>Legal Requirements:</strong> When required by law, regulation, or legal process, or to protect the rights, property, or safety of Niajee, our users, or others.
             </li>
           </ul>
           <p className="mb-4">
@@ -118,13 +118,13 @@ export default function PrivacyPolicy() {
           </p>
           <ul className="list-disc ml-8 mb-4">
             <li>By a call: 07000000998847</li>
-            <li>By visiting this page on our website: mosaic-social.com/legals/contact-us</li>
-            <li>By mail: support@mosaic-social.com</li>
+            <li>By visiting this page on our website: niajee-social.com/legals/contact-us</li>
+            <li>By mail: support@niajee-social.com</li>
           </ul>
         </section>
 
         <footer className="mt-12 text-center text-sm text-gray-600 dark:text-gray-400">
-          &copy; {new Date().getFullYear()} Mosaic. All rights reserved.
+          &copy; {new Date().getFullYear()} Niajee. All rights reserved.
         </footer>
       </div>    
 
