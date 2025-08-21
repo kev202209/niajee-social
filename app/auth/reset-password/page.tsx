@@ -23,7 +23,7 @@ export default function ResetPasswordPage() {
     e.preventDefault();
      setIsOtpLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/verify-reset-otp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/verify-reset-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ otp }),
@@ -51,7 +51,7 @@ export default function ResetPasswordPage() {
      }
      setIsResetLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/reset-password-otp`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/reset-password-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ otp, newPassword, confirmPassword }),
