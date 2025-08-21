@@ -6,12 +6,30 @@ import { useSearchParams, useRouter } from 'next/navigation';
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
+  const redirectQuery = searchParams.get('redirect');
   const router = useRouter();
+  
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const api_link = process.env.NEXT_PUBLIC_API_URL;
   const hasVerified = useRef(false); // Prevent duplicate requests
+
+  const isValidRedirectUrl = (url?: string) => {
+    if (!url) return false;
+    if (url.startsWith('/')) return true;
+    try {
+      const parsedUrl = new URL(url);
+      const allowedDomains = [
+        process.env.NEXT_PUBLIC_FRONTEND_A_URL,
+        process.env.NEXT_PUBLIC_FRONTEND_B_URL,
+        process.env.NEXT_PUBLIC_MAIN_URL,
+      ].filter(Boolean);
+      return allowedDomains.some(domain => parsedUrl.origin.includes(domain as string));
+    } catch {
+      return false;
+    }
+  };
 
   useEffect(() => {
     if (!token) {
@@ -36,21 +54,21 @@ export default function VerifyEmailPage() {
         if (res.ok) {
           setMessage('Email verified successfully! You can now log in.');
           setError('');
-          
-          // Check for stored redirect URL
-          const storedRedirect = sessionStorage.getItem('postVerificationRedirect');
-          if (storedRedirect) {
-            sessionStorage.removeItem('postVerificationRedirect');
-            setTimeout(() => {
-              window.location.href = `${storedRedirect}?verified=true`;
-            }, 2000);
-          } else {
-            setTimeout(() => router.push('/auth/login'), 5000);
-          }
-        } else {
-          setError(data.message || 'Verification failed.');
-          setMessage(''); // Clear any previous messages
-        }
+
+          // Always route the user to the login page and pass the original redirect (if valid)
+          // so the login page can perform the final redirect after successful sign-in.
+          const chosenRedirect = isValidRedirectUrl(redirectQuery || undefined) ? redirectQuery : null;
+          const params = new URLSearchParams();
+          if (chosenRedirect) params.set('redirect', chosenRedirect);
+          params.set('verified', 'true');
+          // short delay so user sees the success message, then go to login with redirect param
+          setTimeout(() => {
+            router.push(`/auth/login?${params.toString()}`);
+          }, 2000);
+         } else {
+           setError(data.message || 'Verification failed.');
+           setMessage(''); // Clear any previous messages
+         }
       } catch (err: unknown) {
         console.error('Verification error:', err);
         setError('Server error during verification.');

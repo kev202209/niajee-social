@@ -48,7 +48,6 @@ export default function RegisterPage() {
       const allowedDomains = [
         process.env.NEXT_PUBLIC_FRONTEND_A_URL,
         process.env.NEXT_PUBLIC_FRONTEND_B_URL,
-        process.env.NEXT_PUBLIC_MAIN_URL,
       ].filter(Boolean);
       return allowedDomains.some(domain => 
         parsedUrl.origin.includes(domain as string)
@@ -57,6 +56,9 @@ export default function RegisterPage() {
       return false;
     }
   };
+
+  // Component-scoped validated redirect that can be used in JSX and handlers
+  const safeRedirect = redirectUrl && isValidRedirectUrl(redirectUrl) ? redirectUrl : undefined;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -103,6 +105,10 @@ export default function RegisterPage() {
     setIsRegisterLoading(true);
     try {
       const deviceInfo = await getDeviceInfo();
+
+      // validate redirect before sending it to the backend
+      const safeRedirect = redirectUrl && isValidRedirectUrl(redirectUrl) ? redirectUrl : undefined;
+
       await register(
         {
           firstName: formData.firstName,
@@ -112,14 +118,13 @@ export default function RegisterPage() {
           birthday: formData.birthday,
           // username/profilePic will be auto-generated on backend
         },
-        deviceInfo
+        deviceInfo,
+        // pass validated redirect to backend so it can embed it in the verification email link
+        safeRedirect
       );
       // move to verification step
       setStep(4);
       toast.success("Registration successful! Please check your email for verification.");
-      if (redirectUrl && isValidRedirectUrl(redirectUrl)) {
-        sessionStorage.setItem('postVerificationRedirect', redirectUrl);
-      }
     } catch (err) {
       // Do NOT show raw server error to users. Log it and show a generic message.
       console.error('Registration error:', err);
@@ -130,8 +135,8 @@ export default function RegisterPage() {
   };
 
   const handleGoogleSignup = () => {
-    const googleUrl = redirectUrl 
-      ? `${api_link}/auth/google?redirect=${encodeURIComponent(redirectUrl)}`
+    const googleUrl = safeRedirect
+      ? `${api_link}/auth/google?redirect=${encodeURIComponent(safeRedirect)}`
       : `${api_link}/auth/google`;
     window.location.href = googleUrl;
   };
@@ -167,7 +172,7 @@ export default function RegisterPage() {
                 Welcome to Niajee
               </h1>
               <Link 
-                href={`/auth/login${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`} 
+                href={`/auth/login${safeRedirect ? `?redirect=${encodeURIComponent(safeRedirect)}` : ''}`} 
                 className="block text-blue-600 dark:text-white mt-2 pb-2"
               >
                 Already have an account? <span className="font-bold">Login</span>

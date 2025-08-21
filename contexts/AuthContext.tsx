@@ -15,7 +15,8 @@ interface AuthContextType {
       password: string;
       birthday: string;
     },
-    deviceInfo: any
+    deviceInfo: any,
+    redirect?: string
   ) => Promise<void>;
   logout: () => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
@@ -112,7 +113,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: string;
       birthday: string;
     },
-    deviceInfo: any
+    deviceInfo: any,
+    redirect?: string
   ) => {
     try {
       setLoading(true);
@@ -135,7 +137,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify({
           ...registerDto,
-          deviceInfo
+          deviceInfo,
+          // backend expects "redirect"
+          redirect: redirect ?? null
         }),
       });
 
