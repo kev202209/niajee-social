@@ -40,6 +40,9 @@ export default function RegisterPage() {
 
   // Security function to validate redirect URLs
   const isValidRedirectUrl = (url: string): boolean => {
+    if (!url) return false;
+    // Allow same-origin relative paths
+    if (url.startsWith('/')) return true;
     try {
       const parsedUrl = new URL(url);
       const allowedDomains = [
