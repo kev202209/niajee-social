@@ -126,19 +126,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         birthday: formData.birthday,
       };
 
-      const uploadFormData = new FormData();
-      uploadFormData.append('registerDto', JSON.stringify(registerDto));
-      uploadFormData.append('deviceInfo', JSON.stringify(deviceInfo));
-
+      // Send JSON (not multipart/form-data) — backend expects JSON for this endpoint
       const response = await fetch(`${api_link}/auth/register`, {
         method: 'POST',
-        body: uploadFormData,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...registerDto,
+          deviceInfo
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+        // preserve internal error for logging in context, but throw a generic message to caller
+        const backendMessage = data?.message;
+        setError(backendMessage || 'Registration failed');
+        throw new Error(backendMessage || 'Registration failed');
       }
 
       return data;

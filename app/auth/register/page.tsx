@@ -111,13 +111,16 @@ export default function RegisterPage() {
         },
         deviceInfo
       );
-      setStep(3);
+      // move to verification step
+      setStep(4);
       toast.success("Registration successful! Please check your email for verification.");
       if (redirectUrl && isValidRedirectUrl(redirectUrl)) {
         sessionStorage.setItem('postVerificationRedirect', redirectUrl);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Registration failed");
+      // Do NOT show raw server error to users. Log it and show a generic message.
+      console.error('Registration error:', err);
+      toast.error("Registration failed. Please try again.");
     } finally {
       setIsRegisterLoading(false);
     }
