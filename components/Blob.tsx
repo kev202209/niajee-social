@@ -84,26 +84,41 @@ const BlobAnimation = () => {
     const container = containerRef.current;
     if (!container) return;
 
-    const containerWidth = container.offsetWidth;
-    const containerHeight = container.offsetHeight;
+    // store active timeout ids so we can clear them on unmount
+    const timers: number[] = [];
 
     const animateBlob = (index: number) => {
       const mv = motionValues[index];
       const { size, margin } = blobs[index];
 
-      // Calculate a target position that accounts for the blob's size and blur margin.
-      const targetX = getRandomValueInRange(margin, containerWidth - size - margin);
-      const targetY = getRandomValueInRange(margin, containerHeight - size - margin);
+      // Re-read container size on every animation step so responsive resizes are respected
+      const containerWidth = container.offsetWidth;
+      const containerHeight = container.offsetHeight;
+
+      // If the container might be smaller than the blob, clamp target ranges
+      const minX = margin;
+      const maxX = Math.max(minX, containerWidth - size - margin);
+      const minY = margin;
+      const maxY = Math.max(minY, containerHeight - size - margin);
+
+      const targetX = getRandomValueInRange(minX, maxX);
+      const targetY = getRandomValueInRange(minY, maxY);
 
       mv.x.set(targetX);
       mv.y.set(targetY);
 
       // Schedule the next animation update between 2 and 4 seconds.
       const delay = getRandomValueInRange(2000, 4000);
-      setTimeout(() => animateBlob(index), delay);
+      const t = window.setTimeout(() => animateBlob(index), delay);
+      timers.push(t);
     };
 
     blobs.forEach((_, index) => animateBlob(index));
+
+    return () => {
+      // clear pending timeouts on unmount
+      timers.forEach(id => clearTimeout(id));
+    };
     // motionValues items and blobs are stable (hooks called in fixed order and blobs is memoized)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blobs, baseX1, baseY1, baseX2, baseY2, baseX3, baseY3, baseX4, baseY4]);
