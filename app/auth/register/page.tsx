@@ -387,7 +387,7 @@ export default function RegisterPage() {
           {step === 4 && (
             <div>
               <h1 className="text-2xl font-bold mb-4 text-blue-500 dark:text-white">Verify Your Email</h1>
-              <p className="text-blue-500 dark:text-white">Registration successful! Please check your email for verification.</p>
+              <p className="text-blue-500 dark:text-white">Registration successful! Please check your email for verification. If you can&apos;t see the email look at the SPAM folder.</p>
             </div>
           )}
         </div>
