@@ -91,7 +91,7 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
         // setHasError(false);
 
         // HTTP-only cookie sent automatically with credentials: 'include'
-        const response = await fetch(`${api_url}/media/${mediaKey}`, {
+        const response = await fetch(`${api_url}/media/raw/${mediaKey}`, {
           credentials: 'include', // This sends the HTTP-only cookie
         });
 
