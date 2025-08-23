@@ -193,7 +193,7 @@ const getVideoSource = () => {
              fill
              className="absolute inset-0 object-cover w-full h-full"
              sizes="(max-width: 640px) 100vw, 320px"
-             fallbackSrc="/placeholder-video.png"
+             fallbackSrc="/placeholder-video.jpg"
            />
           {/* Video Preview */}
           <video

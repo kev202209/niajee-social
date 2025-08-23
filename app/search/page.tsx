@@ -546,7 +546,7 @@ function SearchResultItem({ result }: { result: SearchResult }) {
                     fill
                     className="object-cover"
                     sizes="160px"
-                    fallbackSrc="/placeholder-video.png"
+                    fallbackSrc="/placeholder-video.jpg"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

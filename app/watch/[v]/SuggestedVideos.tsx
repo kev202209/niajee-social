@@ -259,7 +259,7 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
               fill
               className="object-cover"
               sizes="160px"
-              fallbackSrc="/placeholder-video.png"
+              fallbackSrc="/placeholder-video.jpg"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700">

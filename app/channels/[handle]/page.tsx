@@ -236,7 +236,7 @@ export default function ChannelPage() {
                             width={320}
                             height={180}
                             className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
-                            fallbackSrc="/placeholder-video.png"
+                            fallbackSrc="/placeholder-video.jpg"
                           />
                           {video.duration && (
                             <span className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-0.5 rounded">
@@ -278,7 +278,7 @@ export default function ChannelPage() {
                             width={180}
                             height={320}
                             className="w-full h-40 object-cover group-hover:scale-105 transition-transform"
-                            fallbackSrc="/placeholder-video.png"
+                            fallbackSrc="/placeholder-video.jpg"
                           />
                         </div>
                         <div className="p-2">

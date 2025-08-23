@@ -196,7 +196,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
             fill
             className="absolute inset-0 object-cover w-full h-full"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            fallbackSrc="/placeholder-video.png"
+            fallbackSrc="/placeholder-video.jpg"
           />
           {/* Video Preview */}
           <video

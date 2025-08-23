@@ -289,7 +289,7 @@ export default function ChannelAnalyticsPage() {
                       fill
                       className="object-cover rounded"
                       sizes="64px"
-                      fallbackSrc="/placeholder-video.png"
+                      fallbackSrc="/placeholder-video.jpg"
                     />
                   </div>
                   <div className="flex-1">

@@ -289,7 +289,7 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
                       fill
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/placeholder-video.png';
+                        (e.target as HTMLImageElement).src = '/placeholder-video.jpg';
                       }}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />

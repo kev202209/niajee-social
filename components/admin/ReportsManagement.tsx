@@ -301,12 +301,12 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
                         <div className="flex-shrink-0 h-12 w-16">
                           <Image
                             className="h-12 w-16 rounded object-cover"
-                            src={report.contentThumbnail || '/placeholder-video.png'}
+                            src={report.contentThumbnail || '/placeholder-video.jpg'}
                             alt={report.contentTitle}
                             width={64}
                             height={48}
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = '/placeholder-video.png';
+                              (e.target as HTMLImageElement).src = '/placeholder-video.jpg';
                             }}
                           />
                         </div>
