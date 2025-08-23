@@ -3,6 +3,7 @@ import { FC, useEffect, useState, useCallback } from "react";
 import AuthenticatedImage from "@/components/Image";
 import TweetFeedSkeleton from "./TweetFeedSkeleton";
 import { FiMessageCircle, FiRepeat, FiHeart, FiBookmark, FiShare, FiRefreshCw } from "react-icons/fi";
+import { RiVerifiedBadgeFill } from "react-icons/ri";
 import timeAgo from "@/app/utils/timeAgo";
 
 const TweetFeed: FC = () => {
@@ -45,6 +46,7 @@ const TweetFeed: FC = () => {
           isLiked: Boolean(rec.isLiked ?? false),
           isSaved: Boolean(rec.isSaved ?? false),
           isReposted: Boolean(rec.isReposted ?? false),
+          verified: Boolean(user.verified ?? rec.verified ?? false),
         };
       });
 
@@ -156,6 +158,12 @@ const TweetFeed: FC = () => {
                         <span className="font-semibold text-gray-900 dark:text-gray-100 truncate text-xs">
                           {tweet.displayName}
                         </span>
+                       {tweet.verified && (
+                         <RiVerifiedBadgeFill
+                           className="w-3.5 h-3.5 text-blue-500 ml-1 flex-shrink-0"
+                           title="Verified account"
+                         />
+                       )}
                         <span className="text-gray-600 dark:text-gray-400 truncate flex-shrink-0 text-xs">
                           @{tweet.username}
                         </span>

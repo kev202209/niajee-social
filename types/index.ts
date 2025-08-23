@@ -98,6 +98,7 @@ export interface Tweet {
   isLiked: boolean;
   isSaved: boolean;
   isReposted: boolean;
+  verified?: boolean; // owner account verified
 }
 
 export interface mVideo {
@@ -200,6 +201,7 @@ export interface Post {
   video?: string;
   isSensitive?: boolean;
   createdAt: string;
+  verified: boolean;
   user: {
     id: string;
     username: string;
