@@ -3,6 +3,7 @@
 import React, { FC, useState } from "react";
 import Header from "@/components/home/header";
 import Sidebar from "@/components/home/sidebar";
+import MobileBottomNav from "@/components/home/MobileBottomNav";
 import MainContent from "@/components/home/MainContent";
 import TweetFeed from "@/components/home/TweetFeed";
 import Footer from "@/components/home/Footer";
@@ -11,12 +12,12 @@ const HomePage: FC = () => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 lg:pb-0"> {/* reserve space for mobile nav */}
       <Header />
       
       {/* Main Layout Container - Flex layout */}
       <div className="flex pt-16">
-        {/* Sidebar */}
+        {/* Sidebar (desktop only) */}
         <Sidebar 
           isExpanded={isSidebarExpanded} 
           setIsExpanded={setIsSidebarExpanded} 
@@ -36,6 +37,9 @@ const HomePage: FC = () => {
       </div>
       
       <Footer />
+
+      {/* Mobile bottom navigation (fixed) */}
+      <MobileBottomNav />
     </div>
   );
 };

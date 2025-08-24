@@ -1,4 +1,6 @@
 import { FC } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Home,
   TrendingUp,
@@ -14,82 +16,61 @@ interface SidebarProps {
   setIsExpanded: (expanded: boolean) => void;
 }
 
-
 const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
+  const pathname = usePathname() || "/";
+
   const menuItems = [
     { icon: Home, label: "Home", href: "/" },
     { icon: PlusCircle, label: "Create", href: "/create" },
     { icon: Newspaper, label: "Blogs", href: "/blogs" },
-    { icon: UsersRound, label: "Community", href: `${process.env.NEXT_PUBLIC_FRONTEND_B_URL}` },
+    { icon: UsersRound, label: "Community", href: `${process.env.NEXT_PUBLIC_FRONTEND_B_URL}`, external: true },
     { icon: TrendingUp, label: "Trending", href: "/trending" },
     { icon: Component, label: "Shorts", href: "/shorts" },
     { icon: History, label: "History", href: "/history" },
   ];
 
   return (
+    // Desktop-only sidebar; mobile uses MobileBottomNav component
     <aside
       className={`
-        h-[calc(100vh-4rem)] flex-shrink-0
-        bg-white dark:bg-gray-900  
+        hidden lg:flex flex-col
+        bg-white dark:bg-gray-900
         transition-all duration-300 ease-in-out
         ${isExpanded ? "w-40" : "w-20"}
-        overflow-hidden flex flex-col
+        h-[calc(100vh-4rem)]
+        items-start justify-start overflow-hidden
       `}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
+      <nav className="w-full p-3 flex flex-col items-start justify-start overflow-y-auto scrollbar-hide" aria-label="Main navigation">
+        <ul className="flex flex-col items-start w-full space-y-2">
+          {menuItems.map(({ icon: Icon, label, href, external }) => {
+            const isActive = !external && (href === "/" ? pathname === href : pathname.startsWith(href));
+            const baseClasses = `flex items-center justify-start rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 group cursor-pointer p-3 w-full`;
+            const activeClasses = isActive ? "bg-blue-50 dark:bg-blue-900/40 ring-1 ring-blue-200 dark:ring-blue-800 text-blue-600" : "";
 
-      {/* Menu Items */}
-      <nav className="p-3 flex-1 overflow-y-auto scrollbar-hide">
-        <ul className="space-y-2">
-          {menuItems.map(({ icon: Icon, label, href }) => (
-            <li key={label}>
-              <a
-                href={href}
-                className={`
-                  flex items-center rounded-lg
-                  hover:bg-gray-100 dark:hover:bg-gray-800
-                  transition-all duration-200
-                  group cursor-pointer relative
-                  ${isExpanded ? "p-3" : "p-3 justify-center"}
-                `}
-                title={!isExpanded ? label : ""}
-              >
-                <Icon className="w-5 h-5 text-gray-700 dark:text-gray-300 flex-shrink-0" />
-                <span
-                  className={`
-                    text-gray-900 dark:text-gray-100 font-medium text-sm
-                    transition-all duration-300 whitespace-nowrap
-                    ${isExpanded 
-                      ? "opacity-100 translate-x-0 ml-3 w-auto" 
-                      : "opacity-0 translate-x-2 ml-0 w-0 overflow-hidden"
-                    }
-                  `}
-                >
-                  {label}
-                </span>
-                
-                {/* Tooltip for collapsed state */}
-                {!isExpanded && (
-                  <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                    {label}
-                  </div>
+            return (
+              <li key={label} className="w-full">
+                {external ? (
+                  <a href={href} target="_blank" rel="noopener noreferrer" className={`${baseClasses} ${activeClasses}`} title={label} aria-label={label}>
+                    <Icon className="w-5 h-5 text-gray-700 dark:text-gray-300 flex-shrink-0" />
+                    <span className={`ml-3 ${isExpanded ? "inline-block" : "hidden"}`}>{label}</span>
+                  </a>
+                ) : (
+                  <Link href={href} className={`${baseClasses} ${activeClasses}`} title={label} aria-current={isActive ? "page" : undefined}>
+                    <Icon className="w-5 h-5 text-gray-700 dark:text-gray-300 flex-shrink-0" />
+                    <span className={`ml-3 ${isExpanded ? "inline-block" : "hidden"}`}>{label}</span>
+                  </Link>
                 )}
-              </a>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       </nav>
 
-      {/* Footer Section */}
-      <div className="p-3 flex-shrink-0">
-        <div 
-          className={`
-            text-xs text-gray-500 dark:text-gray-400 text-center
-            transition-all duration-300
-            ${isExpanded ? "opacity-100" : "opacity-0"}
-          `}
-        >
+      <div className="p-3 flex-shrink-0 hidden lg:block w-full">
+        <div className={`text-xs text-gray-500 dark:text-gray-400 text-center transition-all duration-300 ${isExpanded ? "opacity-100" : "opacity-0"}`}>
           © {new Date().getFullYear()} NIAJEE
         </div>
       </div>
