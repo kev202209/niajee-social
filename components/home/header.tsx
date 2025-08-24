@@ -229,7 +229,7 @@ const Header: FC = () => {
   };
 
   return (
-    <header className="w-full fixed top-0 z-50 bg-white dark:bg-gray-900/95 backdrop-blur-md shadow-md border-b border-gray-200 dark:border-gray-700">
+    <header className="w-full fixed top-0 z-50 bg-white dark:bg-gray-900/95 backdrop-blur-md shadow-md ">
       <div className="h-16 px-4 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center min-w-0">

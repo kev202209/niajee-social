@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 const Footer: FC = () => {
   return (
-    <footer className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-6 mt-8 w-full border-t border-gray-200 dark:border-gray-700">
+    <footer className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 py-6 mt-8 w-full ">
       <div className="max-w-7xl mx-auto px-4 flex flex-col items-center justify-center">
         <p className="flex items-center mb-2">
           <span className="text-lg">© {new Date().getFullYear()}</span>
