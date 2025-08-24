@@ -2,13 +2,8 @@ import { FC } from "react";
 import {
   Home,
   TrendingUp,
-  LaptopMinimalCheck,
-  Library,
   History,
-  Download,
   Component,
-  ChevronLeft,
-  ChevronRight,
   PlusCircle,
   Newspaper,
   UsersRound
@@ -28,18 +23,14 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
     { icon: UsersRound, label: "Community", href: `${process.env.NEXT_PUBLIC_FRONTEND_B_URL}` },
     { icon: TrendingUp, label: "Trending", href: "/trending" },
     { icon: Component, label: "Shorts", href: "/shorts" },
-    { icon: LaptopMinimalCheck, label: "Subscriptions", href: "/subscriptions" },
-    { icon: Library, label: "Library", href: "/library" },
     { icon: History, label: "History", href: "/history" },
-    { icon: Download, label: "Downloads", href: "/downloads" },
   ];
 
   return (
     <aside
       className={`
         h-[calc(100vh-4rem)] flex-shrink-0
-        bg-white dark:bg-gray-900 
-        border-r border-gray-200 dark:border-gray-700
+        bg-white dark:bg-gray-900  
         transition-all duration-300 ease-in-out
         ${isExpanded ? "w-40" : "w-20"}
         overflow-hidden flex flex-col
@@ -47,19 +38,6 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
     >
-      {/* Toggle Button */}
-      <div className="flex justify-end p-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-        >
-          {isExpanded ? (
-            <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-          )}
-        </button>
-      </div>
 
       {/* Menu Items */}
       <nav className="p-3 flex-1 overflow-y-auto scrollbar-hide">
@@ -104,7 +82,7 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
       </nav>
 
       {/* Footer Section */}
-      <div className="p-3 border-t border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div className="p-3 flex-shrink-0">
         <div 
           className={`
             text-xs text-gray-500 dark:text-gray-400 text-center
