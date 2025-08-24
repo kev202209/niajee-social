@@ -154,21 +154,31 @@ const TweetFeed: FC = () => {
                   />
                   <div className="ml-2 flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-1">
-                        <span className="font-semibold text-gray-900 dark:text-gray-100 truncate text-xs">
+                      <div className="flex items-center space-x-1 min-w-0">
+                        <span
+                          className="font-semibold text-gray-900 dark:text-gray-100 truncate text-xs"
+                          title={tweet.displayName}
+                          aria-label={tweet.displayName}
+                        >
                           {tweet.displayName}
                         </span>
-                       {tweet.verified && (
-                         <RiVerifiedBadgeFill
-                           className="w-3.5 h-3.5 text-blue-500 ml-1 flex-shrink-0"
-                           title="Verified account"
-                         />
-                       )}
-                        <span className="text-gray-600 dark:text-gray-400 truncate flex-shrink-0 text-xs">
+                        {tweet.verified && (
+                          <RiVerifiedBadgeFill
+                            className="w-3.5 h-3.5 text-blue-500 ml-1 flex-shrink-0"
+                            title="Verified account"
+                          />
+                        )}
+                        {/* username should truncate and be allowed to shrink */}
+                        <span
+                          className="text-gray-600 dark:text-gray-400 truncate text-xs"
+                          title={`@${tweet.username}`}
+                          aria-label={`@${tweet.username}`}
+                        >
                           @{tweet.username}
                         </span>
                       </div>
-                      <span className="text-xs text-gray-500">
+                      {/* keep time on a single line and prevent it from wrapping/pushing layout */}
+                      <span className="text-xs text-gray-500 flex-shrink-0 ml-2 whitespace-nowrap">
                         {tweet.createdAt && timeAgo(tweet.createdAt)}
                       </span>
                     </div>
