@@ -20,6 +20,7 @@ import { ChevronRight, ChevronLeft } from "lucide-react";
 import Sidebar from "./Sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import ProfileMenu from "@/components/home/ProfileMenu"; // <-- Import the reusable ProfileMenu
 
 interface SearchSuggestion {
   id: string;
@@ -450,43 +451,12 @@ const Header: FC = () => {
                   fallbackSrc="/placeholder.png"
                 />
               </button>
-              {showProfileMenu && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50">
-                  <div className="mb-2">
-                    <p className="font-bold text-gray-900 dark:text-gray-100">
-                      {usernameText}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {emailText}
-                    </p>
-                  </div>
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-2">
-                    <ul>
-                      <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <Link href="/create" className="flex items-center w-full">
-                          <FiPlus className="mr-2" /> <span>Create</span>
-                        </Link>
-                      </li>
-                      <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <Link href="/settings" className="flex items-center w-full">
-                          <FiSettings className="mr-2" /> <span>Settings</span>
-                        </Link>
-                      </li>
-                      <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                        <Link href="/profile" className="flex items-center w-full">
-                          <FiUser className="mr-2" /> <span>Profile</span>
-                        </Link>
-                      </li>
-                      <li
-                        className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer"
-                        onClick={handleLogout}
-                      >
-                        <FiLogOut className="mr-2" /> <span>Logout</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              )}
+              {/* Use ProfileMenu component */}
+              <ProfileMenu
+                show={showProfileMenu}
+                onClose={() => setShowProfileMenu(false)}
+                anchorRef={profileMenuRef}
+              />
             </div>
           </div>
         </div>

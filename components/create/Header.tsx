@@ -2,23 +2,18 @@
 
 import { FC, useRef, useState, useEffect } from "react"
 import Link from "next/link"
-import AuthenticatedImage from "@/components/Image" // <-- Use your custom component
+import AuthenticatedImage from "@/components/Image"
 import DarkModeToggle from "../DarkModeToggle"
 import useOutsideClick from "@/hooks/useOutsideClick"
-import {
-  FiUser,
-  FiSettings,
-  FiLogOut,
-  FiPlus,
-} from "react-icons/fi"
 import { SquareChevronLeft, SquareChevronRight } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { usePathname } from 'next/navigation'
+import ProfileMenu from "@/components/home/ProfileMenu"
 
 interface CreateHeaderProps {
-    toggleSidebar?: () => void
-    isSidebarOpen?: boolean
-  }
+  toggleSidebar?: () => void
+  isSidebarOpen?: boolean
+}
 
 const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
@@ -36,11 +31,6 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
       .then((data) => setTagline(data.tagline))
       .catch(() => setTagline("Craft your digital legacy."))
   }, [api_link])
-
-  const handleLogout = async () => {
-    await logout()
-    window.location.reload()
-  }
 
   // Check if we're in a channel-specific route
   const isChannelRoute = pathname.match(/^\/create\/channels\/[^\/]+\//)
@@ -105,43 +95,12 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
                 fallbackSrc="/placeholder.png"
               />
             </button>
-            {showProfileMenu && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50">
-                <div className="mb-2">
-                  <p className="font-bold text-gray-900 dark:text-gray-100">
-                    {user ? user.username : "Username"}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {user ? user.email : "user@example.com"}
-                  </p>
-                </div>
-                <div className="pt-2">
-                  <ul>
-                    <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                      <Link href="/create" className="flex items-center w-full">
-                        <FiPlus className="mr-2" /> <span>Create</span>
-                      </Link>
-                    </li>
-                    <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                      <Link href="/settings" className="flex items-center w-full">
-                        <FiSettings className="mr-2" /> <span>Settings</span>
-                      </Link>
-                    </li>
-                    <li className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer">
-                      <Link href="/profile" className="flex items-center w-full">
-                        <FiUser className="mr-2" /> <span>Profile</span>
-                      </Link>
-                    </li>
-                    <li
-                      className="flex items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded cursor-pointer"
-                      onClick={handleLogout}
-                    >
-                      <FiLogOut className="mr-2" /> <span>Logout</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            )}
+            {/* Use ProfileMenu component */}
+            <ProfileMenu
+              show={showProfileMenu}
+              onClose={() => setShowProfileMenu(false)}
+              anchorRef={profileMenuRef}
+            />
           </div>
         </div>
       </div>
