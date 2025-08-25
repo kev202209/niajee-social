@@ -28,7 +28,7 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
     { icon: TrendingUp, label: "Trending", href: "/trending" },
     { icon: Component, label: "Shorts", href: "/shorts" },
     { icon: History, label: "History", href: "/history" },
-    { icon: Bookmark, label: "saved", href: "/saved" },
+    { icon: Bookmark, label: "Saved", href: "/saved" },
   ];
 
   return (
@@ -70,12 +70,6 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
           })}
         </ul>
       </nav>
-
-      <div className="p-3 flex-shrink-0 hidden lg:block w-full">
-        <div className={`text-xs text-gray-500 dark:text-gray-400 text-center transition-all duration-300 ${isExpanded ? "opacity-100" : "opacity-0"}`}>
-          © {new Date().getFullYear()} NIAJEE
-        </div>
-      </div>
     </aside>
   );
 };
