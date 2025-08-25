@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Header from '@/components/watch/Header';
-import Sidebar from '@/components/watch/Sidebar';
+import Header from '@/components/home/header';
+import Sidebar from '@/components/home/sidebar';
 import BlogCard from '@/components/blog/BlogCard';
 import BlogSearch from '@/components/blog/BlogSearch';
 import BlogFilters from '@/components/blog/BlogFilters';

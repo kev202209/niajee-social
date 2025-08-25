@@ -2,10 +2,10 @@
 
 import { useEffect, useState, use, useCallback } from "react";
 import VideoPlayer from "@/components/video/VideoPlayer";
-import Header from "@/components/watch/Header";
+import Header from "@/components/home/header";
 import SuggestedVideos from "./SuggestedVideos";
 import CommentsSection from "./CommentSection";
-import Sidebar from "@/components/watch/Sidebar";
+import Sidebar from "@/components/home/sidebar";
 import { mVideo as Video } from "../../../types";
 import { FiAlertCircle, FiWifi, FiRefreshCw, FiVideo } from "react-icons/fi";
 

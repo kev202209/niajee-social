@@ -2,8 +2,8 @@
 
 import { useParams } from "next/navigation";
 import { useState, useEffect, useRef, useCallback } from "react";
-import Header from "@/components/watch/Header";
-import Sidebar from "@/components/watch/Sidebar";
+import Header from "@/components/home/header";
+import Sidebar from "@/components/home/sidebar";
 import VideoPlayer from "./shortVideoPlayer";
 import ShortsSkeleton from './ShortSkeleton';
 import VideoActions from "./VideoActions";

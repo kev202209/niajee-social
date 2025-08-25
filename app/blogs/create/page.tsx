@@ -3,8 +3,8 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Header from '@/components/watch/Header';
-import Sidebar from '@/components/watch/Sidebar';
+import Header from '@/components/home/header';
+import Sidebar from '@/components/home/sidebar';
 import  Button  from "@/components/ui/CustomButton";
 import { toast } from "sonner";
 import BlockEditor from '@/components/blog/BlockEditor';
