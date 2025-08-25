@@ -9,8 +9,9 @@ import {
   toggleBlogSave
 } from '@/lib/api/saves';
 import { SaveVideo, SaveShort, SaveBlog } from './SavedCards';
-import Header from '@/components/Landing/Header';
-import Footer from '@/components/Landing/Footer';
+import Header from '@/components/home/Header';
+import Sidebar from '@/components/home/Sidebar';
+import Footer from '@/components/home/Footer';
 import type { Video, Short, Blog } from '@/types';
 
 type TabKey = 'all' | 'videos' | 'shorts' | 'blogs';
@@ -26,6 +27,7 @@ interface BaseSave {
 
 export default function SavedClient() {
   const [tab, setTab] = useState<TabKey>('all');
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const [videos, setVideos] = useState<BaseSave[]>([]);
   const [shorts, setShorts] = useState<BaseSave[]>([]);
@@ -205,77 +207,80 @@ export default function SavedClient() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-indigo-950 text-gray-900 dark:text-gray-100 flex flex-col">
       <Header />
-      <main className="flex-1 pt-24 pb-24">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <h1 className="text-3xl font-bold tracking-tight mb-6">Saved</h1>
+      <div className="flex pt-16">
+        <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
+        <main className="flex-1 min-w-0 pt-8 pb-24">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6">
+            <h1 className="text-3xl font-bold tracking-tight mb-6">Saved</h1>
 
-          <div className="flex flex-wrap gap-3 mb-8">
-            {(['all', 'videos', 'shorts', 'blogs'] as TabKey[]).map(t => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium border shadow-sm transition ${
-                  tab === t
-                    ? 'bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 text-white border-transparent'
-                    : 'bg-white/80 dark:bg-gray-900/60 backdrop-blur border-gray-200 dark:border-white/10 hover:border-indigo-400/50'
-                }`}
-              >
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
-            ))}
-          </div>
-
-          {error && (
-            <div className="mb-6 text-sm bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
-              {error}
+            <div className="flex flex-wrap gap-3 mb-8">
+              {(['all', 'videos', 'shorts', 'blogs'] as TabKey[]).map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`px-5 py-2.5 rounded-full text-sm font-medium border shadow-sm transition ${
+                    tab === t
+                      ? 'bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 text-white border-transparent'
+                      : 'bg-white/80 dark:bg-gray-900/60 backdrop-blur border-gray-200 dark:border-white/10 hover:border-indigo-400/50'
+                  }`}
+                >
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </button>
+              ))}
             </div>
-          )}
 
-          {visible.length === 0 && !loading && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">No saves yet.</p>
-          )}
+            {error && (
+              <div className="mb-6 text-sm bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
+                {error}
+              </div>
+            )}
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {visible.map(item => {
-              if (item.type === 'video')
+            {visible.length === 0 && !loading && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">No saves yet.</p>
+            )}
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {visible.map(item => {
+                if (item.type === 'video')
+                  return (
+                    <SaveVideo
+                      key={`video-${item.id}`}
+                      data={item.data as Video}
+                      onRemove={() => handleToggleVideo(item.id)}
+                    />
+                  );
+                if (item.type === 'short')
+                  return (
+                    <SaveShort
+                      key={`short-${item.id}`}
+                      data={item.data as Short}
+                      onRemove={() => handleToggleShort(item.id)}
+                    />
+                  );
                 return (
-                  <SaveVideo
-                    key={`video-${item.id}`}
-                    data={item.data as Video}
-                    onRemove={() => handleToggleVideo(item.id)}
+                  <SaveBlog
+                    key={`blog-${item.id}`}
+                    data={item.data as Blog}
+                    onRemove={() => handleToggleBlog(item.id)}
                   />
                 );
-              if (item.type === 'short')
-                return (
-                  <SaveShort
-                    key={`short-${item.id}`}
-                    data={item.data as Short}
-                    onRemove={() => handleToggleShort(item.id)}
-                  />
-                );
-              return (
-                <SaveBlog
-                  key={`blog-${item.id}`}
-                  data={item.data as Blog}
-                  onRemove={() => handleToggleBlog(item.id)}
-                />
-              );
-            })}
-          </div>
-
-          {canLoadMore && (
-            <div className="mt-12 flex justify-center">
-              <button
-                onClick={loadMore}
-                disabled={loading}
-                className="px-8 py-3 rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 bg-white/80 dark:bg-gray-900/60 backdrop-blur hover:border-indigo-400/60 dark:hover:border-indigo-400/40 transition disabled:opacity-50"
-              >
-                {loading ? 'Loading…' : 'Load More'}
-              </button>
+              })}
             </div>
-          )}
-        </div>
-      </main>
+
+            {canLoadMore && (
+              <div className="mt-12 flex justify-center">
+                <button
+                  onClick={loadMore}
+                  disabled={loading}
+                  className="px-8 py-3 rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 bg-white/80 dark:bg-gray-900/60 backdrop-blur hover:border-indigo-400/60 dark:hover:border-indigo-400/40 transition disabled:opacity-50"
+                >
+                  {loading ? 'Loading…' : 'Load More'}
+                </button>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
       <Footer />
     </div>
   );

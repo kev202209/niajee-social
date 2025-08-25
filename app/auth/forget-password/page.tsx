@@ -6,12 +6,14 @@ import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useRouter } from "next/navigation";
 
 export default function ForgetPasswordPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +33,8 @@ export default function ForgetPasswordPage() {
       if (res.ok) {
         setMessage(data.message || 'OTP sent. Check your email.');
         toast.success(data.message || 'OTP sent. Check your email.');
+        // Redirect to reset password page
+        router.push("/auth/reset-password");
       } else {
         setError(data.message || 'Failed to send OTP.');
         toast.error(data.message || 'Failed to send OTP.');
