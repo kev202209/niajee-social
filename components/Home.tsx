@@ -1,8 +1,8 @@
 "use client";
 
 import React, { FC, useState } from "react";
-import Header from "@/components/home/header";
-import Sidebar from "@/components/home/sidebar";
+import Header from "@/components/home/Header";
+import Sidebar from "@/components/home/Sidebar";
 import MobileBottomNav from "@/components/home/MobileBottomNav";
 import MainContent from "@/components/home/MainContent";
 import TweetFeed from "@/components/home/TweetFeed";

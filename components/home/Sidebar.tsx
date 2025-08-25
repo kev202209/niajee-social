@@ -8,7 +8,8 @@ import {
   Component,
   PlusCircle,
   Newspaper,
-  UsersRound
+  UsersRound,
+  Bookmark
 } from "lucide-react";
 
 interface SidebarProps {
@@ -27,6 +28,7 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
     { icon: TrendingUp, label: "Trending", href: "/trending" },
     { icon: Component, label: "Shorts", href: "/shorts" },
     { icon: History, label: "History", href: "/history" },
+    { icon: Bookmark, label: "saved", href: "/saved" },
   ];
 
   return (

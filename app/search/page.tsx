@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import Header from '@/components/home/header';
-import Sidebar from '@/components/home/sidebar';
+import Header from '@/components/home/Header';
+import Sidebar from '@/components/home/Sidebar';
 import { FiSearch, FiTrendingUp, FiUsers, FiVideo, FiPlay, FiHash, FiGrid } from 'react-icons/fi';
 import AuthenticatedImage from '@/components/Image';
 import Link from 'next/link';

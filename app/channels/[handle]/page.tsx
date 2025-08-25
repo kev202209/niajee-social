@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import AuthenticatedImage from '@/components/Image';
 import Link from 'next/link';
-import Header from '@/components/home/header';
-import Sidebar from '@/components/home/sidebar';
+import Header from '@/components/home/Header';
+import Sidebar from '@/components/home/Sidebar';
 import { FiUsers, FiVideo, FiPlay, FiBell } from 'react-icons/fi';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
