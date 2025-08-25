@@ -3,8 +3,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { fetchVideoHistory, fetchShortHistory } from '@/lib/api/history';
 import { HistoryVideoCard, HistoryShortCard } from './HistoryUnifiedCards';
-import Header from '@/components/Landing/Header';
-import Footer from '@/components/Landing/Footer';
 
 type TabKey = 'all' | 'videos' | 'shorts';
 
@@ -152,9 +150,8 @@ export default function HistoryClient() {
       : !shortDone;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-indigo-950 text-gray-900 dark:text-gray-100 flex flex-col">
-      <Header />
-      <main className="flex-1 pt-24 pb-20">
+    <div className="w-full flex flex-col">
+      <main className="flex-1 pt-8 pb-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
           <h1 className="text-3xl font-bold tracking-tight mb-6">
             Watch History
@@ -211,7 +208,6 @@ export default function HistoryClient() {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 }
