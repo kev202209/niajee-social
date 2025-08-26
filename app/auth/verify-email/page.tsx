@@ -79,7 +79,7 @@ export default function VerifyEmailPage() {
     };
 
     verifyEmail();
-  }, [token, router, api_link]);
+  }, [token, router, api_link, redirectQuery]);
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-white to-gray-200 dark:from-black dark:to-gray-800">

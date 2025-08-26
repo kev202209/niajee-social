@@ -33,7 +33,7 @@ export default function ResetPasswordPage() {
         if (!data.valid) {
           toast.error('Invalid or expired reset link.');
         }
-      } catch (err) {
+      } catch  { // eslint-disable-line no-unused-vars
         setIsTokenValid(false);
         toast.error('Connection error. Please check your internet connection or try again later.');
       }
@@ -64,7 +64,7 @@ export default function ResetPasswordPage() {
       } else {
         toast.error(data.message || 'Failed to reset password.');
       }
-    } catch (err) {
+    } catch {
       toast.error('Connection error. Please check your internet connection or try again later.');
     }
     setIsResetLoading(false);

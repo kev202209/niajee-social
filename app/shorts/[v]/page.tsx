@@ -63,6 +63,7 @@ interface ShortData {
 const ShortVideoPage = () => {
   const params = useParams();
   const initialVideoId = Array.isArray(params?.v) ? params.v[0] : params?.v;
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const [currentVideo, setCurrentVideo] = useState<ShortData | null>(null);
   const [nextVideo, setNextVideo] = useState<ShortData | null>(null);
@@ -369,7 +370,7 @@ const ShortVideoPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 relative">
-      <Sidebar isOpen={false} onClose={() => {}} />
+      <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
       <Header />
 
       <div className="pt-10">

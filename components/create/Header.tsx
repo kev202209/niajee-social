@@ -23,7 +23,7 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
   useOutsideClick([profileMenuRef], () => setShowProfileMenu(false))
 
   const [tagline, setTagline] = useState("Loading…")
-  const { user, logout } = useAuth()
+  const { user} = useAuth()
 
   useEffect(() => {
     fetch(`${api_link}/api/content/taglines`)

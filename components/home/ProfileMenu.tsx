@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
-import { FiPlus, FiUser, FiSettings, FiLogOut } from "react-icons/fi";
-import AuthenticatedImage from "@/components/Image";
+import { FiPlus, FiUser, FiLogOut } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ProfileMenuProps {
@@ -51,12 +50,6 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ show, onClose, anchorRef }) =
             <span className="text-sm">Profile</span>
           </Link>
         </li>
-        {/* <li>
-          <Link href="/settings" className="flex items-center w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-            <FiSettings className="mr-3 w-4 h-4" />
-            <span className="text-sm">Settings</span>
-          </Link>
-        </li> */}
         <li>
           <button
             onClick={handleLogout}

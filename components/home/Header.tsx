@@ -6,9 +6,6 @@ import useOutsideClick from "@/hooks/useOutsideClick";
 import {
   FiSearch,
   FiUser,
-  FiSettings,
-  FiLogOut,
-  FiPlus,
   FiTrendingUp,
   FiVideo,
   FiPlay,
@@ -59,11 +56,8 @@ const Header: FC = () => {
       .catch(() => setTagline("Craft your digital legacy."));
   }, []); // env is stable, safe to leave deps empty
 
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
-  const handleLogout = async () => {
-    await logout();
-  };
 
   // Fixed debounced search suggestions: useMemo to create debounced fn and safely narrow backend data
   const debouncedGetSuggestions = useMemo(() => {

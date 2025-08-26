@@ -33,6 +33,7 @@ export default function CreateBlogPage() {
   const router = useRouter();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   
   const [formData, setFormData] = useState<CreateBlogDto>({
     title: '',
@@ -237,7 +238,7 @@ export default function CreateBlogPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
-      <Sidebar isOpen={false} onClose={() => {}} />
+      <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
       
       <div className="pt-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
