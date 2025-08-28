@@ -1,0 +1,107 @@
+# To-Do List
+
+## Today
+
+- [X] Impliment toast on the auth pages.
+- [ ] Finish up with the landing page.
+- [ ] integrate the 3d element on the landing page
+- [X] start with the home page.
+- [X] impliment a loading state for the auh pages on the buttons where the buttons show three dots for loading.
+- [x] Finish up with the backend connection.
+- [x] Ensure everything is loaded from the backend.
+- [x] Download 50+ shorts and long videos for testing.
+- [x] create the single video page for shorts and videos.
+- [x] make the sidebar responsive with an hamburger.
+- [X] add the number of likes and others on the tweets.
+- [X] Add the middleware
+- [X] add the terms and conditions page
+- [X] make the create page, setting, profile, etc
+- [ ] create a LICENSE file showing this code is propriatory.
+- [x] Create the legals page, terms and conditions, privacy policy and contact form.
+- [ ] Change the google logo on the auth pages to a colored one.
+- [x] Finish up with the auth, sign out on the server.
+- [x] Update the auth context to handle the 'failed to fetch' error by having a message to the user to check the iternet connection.
+- [x] Change the name of the login cookie and also change the name of the token on the confirm email.
+- [x] update all the localhost:5000 addresses to use the address on the ENV
+- [ ] (on the backend) Remember to remove the tls: {rejectUnauthorized: false,} on the mails so that the mails can be secure.
+- [ ] ensure all the pages with a api call handles the failed to fetch error.
+- [ ] Fix the click outside hook
+- [x] Ensure you fix the undefined issues in the community.
+- [X] Ensure you add the header and the footer components to the legals pages laoyout layout.
+- []Ensure all the uploaded data is sanitised and protected from injection both on frontend and the backend.
+-[] Create the animated favicon of the M for niajee
+-[] Remember to move the auth logic on the second frontend here too.
+-[] Update any other header that shows user data
+-[] Fix the view count
+-[] fix the thumbnail view on the home page and the suggested videos.
+-[X] finish up on the legals pages and update the footers on landing and other pages.
+-[] ensure that teporary emails are blocked, on account creation auth
+-[] HIGH PRIORITY-- before you go live ensure you go through the legals page and update the contact information and any information that needs retrification.
+-[] Create the blog, and career page.
+-[] Add support for email submittion for newsletter.
+-[] Can you ensuer all the images used on the landing page they have been set up
+-[] the home page looks extremely ugly WORK on it to make it look good, also the look of the page is quite generic make it more unique think of a new color pallet for the site, the current lone is over saturated.
+-[] (IDEA)have the icon on home 'beta now live' have a animated border
+-[] The auth will need some major modifications to make it work as it does not send the verification email, then ensure that the username and email check is a debounce also have the password check run on the text area instead of waiting for the user to submit.
+-[] Set the emails that are not confirmed/ verified within a month deleted
+-[] Find why after login an error happens, its related to the image url creation on next_image.
+-[] Find out why there is an error on the channel creation
+-[] Also fix the watch page, the page on reload seems to crash and send endless requests
+-[] Ensure that all the textareas have a text input limit
+-[] NEW FEATURE: allow the channels to be managed by other users with other accounts but they will not have the same permissions like the owner.
+-[] can you see how you can make the links shared on the page clickable and have the redirect kind of link just like youtube
+-[] New feature idea, now on the channels i will need to ensure that the join channel this is where the user will have the c
+-[] Ensure the videocards share the same heght and width, i dont want it to vary from video to video
+-[] Ensured that the custom scroll works globally
+-[] Remove the toast on the last part of register
+-[] New idea for the homepage, we could have the hero section have a fixed possition so that it can be scrolled over by the other sections.
+-[] Remember to make the report, don't recommend this channel (change this to simply 'Uninterested) and the copy link functional also their respective endpoints will be made.
+-[] ensure the buffering is shown to when the connection to the server is cut or the video is not playing or it has paused in place
+-[X] Fix the view count
+-[] see if the caption/subtitle icon can be updated or removed. make ti functional
+-[X] Ensure that the login and register page accepts the redirect query so that after a user has used the pages they can be taken to teh original page like somethong like this : router.push('/login?redirect=/blogs/create')
+-[X] Fix blogs the data is not being rendered correctly and also there seems to be an issue with how the tags are rendered and catogory, views, read time and other details also the comment are not working on the blogs.
+
+-[X] On teusday, go fix the upload of videos and shorts and ensure everything is working as it should then make the necessary changes to the video actions and the comments of both shorts and long videos.
+-[X] also on the landing page ensure on scrill we could have the sections appear as if they are on a lower z index so that they can be on top of each other like seen on this site:https://aws.amazon.com/lightsail/, also you can have then stack on top of each other to have a 3d like feel and on the end we could hae the other layer have a large width than the other ones on top
+-[X] create skeleton load for watch
+-[] ensure that the video states the video quality is functional and it shows the available ones.
+-[] ensure that the video actions for bot video forms are functional
+-[] make the large screen short component have different border to make it look better.
+-[] ensure that the whole like animation is seen and not hidden when it moved out of the area.
+-[] When working on the home page, ensure that you remove the newsletter section, it is not needed for now.
+-[X] Ensure that the auth pages support something like this (router.push('/login?redirect=/blogs/create');) so that the user can login and register then taken to the page they were in
+-[] There is a notorious bug on the short page where the pause/play affects the comment and the header profile pic, ensure you investigate and fix.
+-[X`] Fix the auth to ensure that the user taken to register to the auth will e returned to the other auth on the completing the registration and login in
+-[] Fix the contact us from so that it does not look so simple with some statements on how we will reach out and what to expect also add the support email underneath for the users who do not what to fill the form
+-[] Add a replay at the end of the video
+-[] Ensure the /placeholder-video is removed and replaced by an icon to show something like x or just blank
+-[] have the footer with the same color has the header
+-[] Fix the links on the user card on the header
+-[] Ensure you centralise the headers and sidebars so that they are not so many.
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+
+# THINGS TO BE DONE BEFORE PRODUCTION.
+
+-[] Update the readme file
+-[] Set debug false on the hls streaming on the videosplayer.
+-[] remove all console logs
+-[] update the legal pages
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
