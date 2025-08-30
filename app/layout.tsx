@@ -4,6 +4,7 @@ import { Providers } from '@/components/Providers'
 import { AuthProvider } from '@/contexts/AuthContext'
 import type { Metadata } from 'next'
 import { Toaster } from '@/components/ui/sonner'
+import {PostHogProvider} from './providers/PHprovider'
 
 export const metadata: Metadata = {
   title: 'Niajee - Social Media Super App',
@@ -24,12 +25,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen bg-gray-100 dark:bg-gray-900 scrollbar scrollbar-dark">
-        <AuthProvider>
-          <Providers>
-            <Toaster position="top-right" richColors closeButton />
-            <main className="">{children}</main>
-          </Providers>
-        </AuthProvider>
+        <PostHogProvider>
+          <AuthProvider>
+            <Providers>
+              <Toaster position="top-right" richColors closeButton />
+              <main className="">{children}</main>
+            </Providers>
+          </AuthProvider>
+        </PostHogProvider>
       </body>
     </html>
   )
