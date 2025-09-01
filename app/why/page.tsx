@@ -27,10 +27,10 @@ export default function WhyPage() {
         <section className="mb-16">
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
-              Imagine a world where your voice isn't just heard—it's celebrated. Where your culture isn't exoticized or misunderstood, but embraced as the heartbeat of innovation and creativity. Niajee isn't just another app; it's a revolution born from the soul of Africa. It's the answer to a question we've all asked: <strong>Why should we settle for spaces built by others, when we can build our own?</strong>
+              Imagine a world where your voice isn&apos;t just heard—it&apos;s celebrated. Where your culture isn&apos;t exoticized or misunderstood, but embraced as the heartbeat of innovation and creativity. Niajee isn&apos;t just another app; it&apos;s a revolution born from the soul of Africa. It&apos;s the answer to a question we&apos;ve all asked: <strong>Why should we settle for spaces built by others, when we can build our own?</strong>
             </p>
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-              In a digital world dominated by foreign giants, Africans have been spectators in our own narrative. We've shared our stories, our struggles, and our triumphs on platforms that don't understand us. Platforms that silence our voices, amplify biases, and profit from our pain. But no more. Niajee is Africa's home on the internet—a sanctuary where we connect, create, and thrive without fear of erasure.
+              In a digital world dominated by foreign giants, Africans have been spectators in our own narrative. We&apos;ve shared our stories, our struggles, and our triumphs on platforms that don&apos;t understand us. Platforms that silence our voices, amplify biases, and profit from our pain. But no more. Niajee is Africa&apos;s home on the internet—a sanctuary where we connect, create, and thrive without fear of erasure.
             </p>
           </div>
         </section>
@@ -46,10 +46,10 @@ export default function WhyPage() {
               Think about the last time you scrolled through a foreign social media app. Did you see stories that reflected your reality? Did you feel seen, heard, or valued? For too long, Africans have navigated a digital landscape rigged against us. Algorithms that prioritize content from elsewhere, moderation policies that misunderstand our context, and cultural biases that turn our vibrant traditions into stereotypes.
             </p>
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
-              Remember the young entrepreneur in Lagos whose business idea was flagged as "spam" because it didn't fit Western norms? Or the artist in Nairobi whose cultural posts were buried under irrelevant ads? These aren't isolated incidents—they're the daily reality of being African online. We've built empires, created art that moves the world, and fostered communities that span continents. Yet, on foreign platforms, we're often reduced to hashtags or headlines.
+              Remember the young entrepreneur in Lagos whose business idea was flagged as &quot;spam&quot; because it didn&apos;t fit Western norms? Or the artist in Nairobi whose cultural posts were buried under irrelevant ads? These aren&apos;t isolated incidents—they&apos;re the daily reality of being African online. We&apos;ve built empires, created art that moves the world, and fostered communities that span continents. Yet, on foreign platforms, we&apos;re often reduced to hashtags or headlines.
             </p>
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-              It's not just frustrating—it's heartbreaking. We've watched our stories be twisted, our voices be muted, and our potential be underestimated. Africa deserves better. Africa <em>demands</em> better.
+              It&apos;s not just frustrating—it&apos;s heartbreaking. We&apos;ve watched our stories be twisted, our voices be muted, and our potential be underestimated. Africa deserves better. Africa <em>demands</em> better.
             </p>
           </div>
         </section>
@@ -62,7 +62,7 @@ export default function WhyPage() {
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
-              Niajee is more than an app—it's a movement. Built by Africans, for Africans, it reclaims our digital sovereignty. Here, your stories aren't filtered through someone else's lens. Your creativity isn't censored by outdated rules. Your community isn't overshadowed by global trends that don't resonate with us.
+              Niajee is more than an app—it&apos;s a movement. Built by Africans, for Africans, it reclaims our digital sovereignty. Here, your stories aren&apos;t filtered through someone else&apos;s lens. Your creativity isn&apos;t censored by outdated rules. Your community isn&apos;t overshadowed by global trends that don&apos;t resonate with us.
             </p>
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
               Picture this: A platform where Swahili memes go viral without explanation. Where Afrobeat playlists are the default, not the exception. Where entrepreneurs connect with investors who understand the African hustle. Where families share recipes passed down through generations, and artists showcase work that honors our heritage.
@@ -84,10 +84,10 @@ export default function WhyPage() {
               When Africans have their own platform, the impact is profound. Businesses thrive without cultural barriers. Creators gain audiences that truly appreciate their work. Communities form around shared values, not algorithms designed for profit.
             </p>
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
-              Imagine the young girl in rural Kenya who discovers her voice through Niajee, inspiring millions with her poetry. Or the tech innovator in Cape Town who finds collaborators across the continent, launching the next big startup. These aren't fantasies—they're the real possibilities when we control our narrative.
+              Imagine the young girl in rural Kenya who discovers her voice through Niajee, inspiring millions with her poetry. Or the tech innovator in Cape Town who finds collaborators across the continent, launching the next big startup. These aren&apos;t fantasies—they&apos;re the real possibilities when we control our narrative.
             </p>
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
-              By choosing Niajee, you're not just joining an app; you're investing in Africa's future. You're saying, "Our stories matter. Our voices count. Our continent deserves its place in the digital world."
+              By choosing Niajee, you&apos;re not just joining an app; you&apos;re investing in Africa&apos;s future. You&apos;re saying, &quot;Our stories matter. Our voices count. Our continent deserves its place in the digital world.&quot;
             </p>
           </div>
         </section>
@@ -98,10 +98,10 @@ export default function WhyPage() {
             <Heart className="w-12 h-12 mx-auto mb-4 text-white" />
             <h2 className="text-3xl font-bold mb-4">Join the Movement</h2>
             <p className="text-lg mb-6">
-              Niajee is Africa's call to action. It's time to build, to connect, to create—on our terms. Whether you're an entrepreneur, an artist, a dreamer, or just someone who believes in Africa's potential, this is your platform.
+              Niajee is Africa&apos;s call to action. It&apos;s time to build, to connect, to create—on our terms. Whether you&apos;re an entrepreneur, an artist, a dreamer, or just someone who believes in Africa&apos;s potential, this is your platform.
             </p>
             <p className="text-lg mb-8">
-              Share this page. Tell your friends. Download the app. Support the vision. Together, we'll show the world what Africa can achieve when we have the space to shine.
+              Share this page. Tell your friends. Download the app. Support the vision. Together, we&apos;ll show the world what Africa can achieve when we have the space to shine.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -120,7 +120,7 @@ export default function WhyPage() {
           </div>
         </section>
       </div>
-      <Footer /> {/* Add Landing Footer */}
+      <Footer />
     </div>
   );
 }
