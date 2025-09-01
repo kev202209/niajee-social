@@ -12,7 +12,7 @@ export default function Header() {
   const posthog = usePostHog(); // Initialize PostHog hook
 
   // Helper to track events
-  const trackEvent = (eventName: string, properties?: Record<string, any>) => {
+  const trackEvent = (eventName: string, properties?: Record<string, unknown>) => {
     posthog.capture(eventName, properties);
   };
 
