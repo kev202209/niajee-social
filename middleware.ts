@@ -19,6 +19,7 @@ const publicPages = [
   '/legals/gdpr',
   '/mango',
   '/pricing',
+  '/why',
   '/'
 ];
 const publicAssets = /\.(?:jpg|jpeg|gif|png|svg|ico|webp|mp4|webm)$/;
