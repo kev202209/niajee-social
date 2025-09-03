@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 import { Channel } from '@/types';
 import { FiUpload, FiLoader, FiCheck } from 'react-icons/fi';
+import { toast } from 'sonner'; // Add import for toast
 
 // Import components
 import ContentTypeSelector from '../../../../../components/upload/ContentTypeSelector';
@@ -16,15 +17,8 @@ import NavigationBlocker from '../../../../../components/upload/NavigationBlocke
 import UploadNotification from '../../../../../components/upload/UploadNotification';
 
 // Import hooks and utilities
-import { useUploadSocket } from './useUploadSocket';
 import { useUploadForm } from '../../../../../hooks/upload/useUploadForm';
 import { useFileHandlers } from '../../../../../hooks/upload/useFileHandlers';
-import { useUploadState } from '../../../../../hooks/upload/useUploadState';
-import {
-  generateUploadId,
-  calculateUploadMetrics,
-  getVideoMetadata
-} from './utils';
 
 const ChannelUploadPage = () => {
   const params = useParams();
@@ -34,28 +28,26 @@ const ChannelUploadPage = () => {
   const [loading, setLoading] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationClosed, setNotificationClosed] = useState(false);
+  const uploadIdRef = useRef<string>(''); // Added ref for upload ID
+  const [uploadedBytes, setUploadedBytes] = useState<number>(0); // Added for tracking
 
-  // Use the new upload state hook
-  const {
-    uploadState,
-    uploadStartTime,
-    setUploadStartTime,
-    uploadedBytes,
-    setUploadedBytes,
-    cancelTokenSource,
-    setCancelTokenSource,
-    setUploading,
-    setUploadProgress,
-    setUploadSpeed,
-    setEstimatedTime,
-    setIsProcessing,
-    setProcessingStep,
-    setProcessingMessage,
-    setProcessingProgress,
-    setError,
-    setSuccess,
-    resetUploadState,
-  } = useUploadState();
+  // Expanded uploadState to include all properties expected by components
+  const [uploadState, setUploadState] = useState({
+    uploading: false,
+    processing: false,
+    progress: 0,
+    status: '',
+    videoId: null as string | null,
+    error: '',
+    success: '',
+    processingStep: '', // Added
+    isProcessing: false, // Added
+    uploadProgress: 0, // Added
+    processingProgress: 0, // Added
+    processingMessage: '', // Added
+    uploadSpeed: '', // Added
+    estimatedTime: '' // Added
+  });
 
   // Custom hooks
   const {
@@ -75,32 +67,15 @@ const ChannelUploadPage = () => {
     removeMention,
   } = useUploadForm();
 
+  const [fileError, setFileError] = useState<string>('');
+
   const { handleVideoChange, handleThumbnailChange } = useFileHandlers({
     form,
     processVideoFile,
     setForm,
     setThumbnailPreview,
-    setError: (error: string | ((prevState: string) => string)) => {
-      if (typeof error === 'function') {
-        const currentError = uploadState.error || '';
-        setError(error(currentError));
-      } else {
-        setError(error);
-      }
-    }
+    setError: setFileError,
   });
-
-  // Socket hook
-  const { uploadSocket, uploadIdRef } = useUploadSocket(
-    setProcessingStep,
-    setProcessingMessage,
-    setProcessingProgress,
-    setUploading,
-    setIsProcessing,
-    setSuccess,
-    setError,
-    form.contentType
-  );
 
   const categories = [
     'Gaming', 'Education', 'Entertainment', 'Music', 'Sports', 
@@ -115,11 +90,11 @@ const ChannelUploadPage = () => {
       setChannel(response.data.channel || response.data);
     } catch (err) {
       console.error('Error fetching channel:', err);
-      setError('Failed to load channel data');
+      toast.error('Failed to load channel data');
     } finally {
       setLoading(false);
     }
-  }, [channelId, setError]);
+  }, [channelId]);
 
   // Show notification when uploading starts
   useEffect(() => {
@@ -143,15 +118,33 @@ const ChannelUploadPage = () => {
     fetchChannel();
   }, [fetchChannel]);
 
+  // Reset upload state function
+  const resetUploadState = () => {
+    setUploadState({
+      uploading: false,
+      processing: false,
+      progress: 0,
+      status: '',
+      videoId: null,
+      error: '',
+      success: '',
+      processingStep: '',
+      isProcessing: false,
+      uploadProgress: 0,
+      processingProgress: 0,
+      processingMessage: '',
+      uploadSpeed: '',
+      estimatedTime: ''
+    });
+    setUploadedBytes(0);
+    uploadIdRef.current = '';
+  };
+
   // Cancel upload function
   const cancelUpload = () => {
-    if (cancelTokenSource) {
-      cancelTokenSource.cancel('Upload cancelled by user');
-      resetUploadState();
-      uploadIdRef.current = '';
-      setShowNotification(false);
-      setNotificationClosed(true);
-    }
+    resetUploadState();
+    setShowNotification(false);
+    setNotificationClosed(true);
   };
 
   // Handle navigation when upload is in progress
@@ -167,180 +160,136 @@ const ChannelUploadPage = () => {
     }
   };
 
+  // Request presigned URL for upload
+  const requestPresignedUrl = async (file: File, channelId: string) => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/presigned-upload`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        fileName: file.name,
+        fileSize: file.size,
+        channelId,
+        contentType: form.contentType
+      })
+    });
+    if (!response.ok) throw new Error('Failed to get upload URL');
+    return await response.json();
+  };
+
+  // Upload file to R2 using presigned URL
+  const uploadToR2 = async (presignedUrl: string, file: File) => {
+    const response = await fetch(presignedUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type || 'video/mp4' }
+    });
+    if (!response.ok) throw new Error('Upload to R2 failed');
+    return response;
+  };
+
+  // In startProcessing, define a proper type for metadata:
+  interface Metadata {
+    title: string;
+    description: string;
+    channelId: string;
+    contentType: string;
+    tags: string[];
+    category: string;
+    visibility: string;
+  }
+
+  // Start processing the video after upload
+  const startProcessing = async (uploadId: string, s3Key: string, metadata: Metadata) => {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/start-processing`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        uploadId,
+        s3Key,
+        title: metadata.title,
+        description: metadata.description,
+        channelId: metadata.channelId,
+        contentType: metadata.contentType,
+        tags: metadata.tags,
+        category: metadata.category,
+        visibility: metadata.visibility
+      })
+    });
+    if (!response.ok) throw new Error('Failed to start processing');
+    return await response.json();
+  };
+
+  // Poll video status
+  const pollVideoStatus = (videoId: string) => {
+    const interval = setInterval(async () => {
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/${videoId}`, {
+          credentials: 'include'
+        });
+        const video = await response.json();
+        
+        if (video.processingStatus === 'complete') {
+          clearInterval(interval);
+          setUploadState(prev => ({ ...prev, status: 'complete', success: 'Video ready!' }));
+        } else if (video.processingStatus === 'failed') {
+          clearInterval(interval);
+          setUploadState(prev => ({ ...prev, status: 'failed', error: 'Processing failed' }));
+        } else {
+          setUploadState(prev => ({ ...prev, status: 'processing' }));
+        }
+      } catch  {
+        clearInterval(interval);
+        setUploadState(prev => ({ ...prev, status: 'failed', error: 'Status check failed' }));
+      }
+    }, 5000);
+  };
+
+  // Update the handleSubmit function:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!form.video) {
-      setError('Please select a video file');
-      return;
-    }
-    
-    if (!form.title.trim()) {
-      setError('Please enter a title');
+    if (!form.video || !form.title.trim()) {
+      setUploadState({ ...uploadState, error: 'Please select a video and enter a title' });
       return;
     }
 
-    if (!uploadSocket) {
-      setError('Upload connection not ready. Please try again.');
-      return;
-    }
-
-    // Generate unique upload ID and store in ref
-    const newUploadId = generateUploadId();
-    uploadIdRef.current = newUploadId;
-
-    // Register the upload session and join room when socket is connected
-    if (uploadSocket.connected) {
-      console.log('Registering upload session:', newUploadId);
-      uploadSocket.emit('register-upload-session', { uploadId: newUploadId });
-      uploadSocket.emit('join-upload-room', { uploadId: newUploadId });
-    } else {
-      setError('Upload socket not connected. Please try again.');
-      return;
-    }
-
-    resetUploadState();
-    setUploading(true);
-    setUploadStartTime(Date.now());
-    setNotificationClosed(false);
-
-    // Create cancel token
-    const source = axios.CancelToken.source();
-    setCancelTokenSource(source);
+    setUploadState({ ...uploadState, uploading: true, progress: 0, error: '', success: '' });
 
     try {
-      const formData = new FormData();
-      formData.append('video', form.video);
-      formData.append('title', form.title);
-      formData.append('channelId', channelId);
-      formData.append('uploadId', newUploadId);
-      formData.append('socketId', uploadSocket.id || '');
+      // Step 1: Request presigned URL
+      const { uploadId, presignedUrl, s3Key } = await requestPresignedUrl(form.video, channelId);
+      uploadIdRef.current = uploadId;
 
-      if (form.contentType === 'short') {
-        const metadata = await getVideoMetadata(form.video);
-        
-        // ✅ UPDATED: Use correct field names for shorts API
-        formData.append('caption', form.description || form.caption || ''); // ✅ Backend expects 'caption'
-        formData.append('song', form.song || ''); // ✅ New song field
-        formData.append('tags', JSON.stringify(form.tags || []));
-        formData.append('mentions', JSON.stringify(form.mentions || []));
-        formData.append('location', form.location || '');
-        formData.append('duration', metadata.duration.toString());
-        formData.append('fileSize', form.video.size.toString());
-        formData.append('resolution', metadata.resolution);
-        
-        // ✅ UPDATED: Use correct boolean field names
-        formData.append('commentsEnabled', (form.commentsEnabled ?? true).toString()); // ✅ Backend expects 'commentsEnabled'
-        formData.append('allowLikes', (form.allowLikes ?? true).toString());
-        formData.append('allowDuet', (form.allowDuet ?? true).toString());
-        formData.append('isPublic', (form.isPublic ?? true).toString());
-        formData.append('isSensitive', (form.isSensitive ?? false).toString());
+      // Step 2: Upload to R2
+      setUploadState(prev => ({ ...prev, progress: 50, uploadProgress: 50 }));
+      await uploadToR2(presignedUrl, form.video);
+      setUploadedBytes(form.video.size);
+      setUploadState(prev => ({ ...prev, progress: 100, uploadProgress: 100, uploading: false, processing: true, isProcessing: true }));
 
-        // ✅ Optional thumbnail for shorts
-        if (form.thumbnail) {
-          formData.append('thumbnail', form.thumbnail);
-        }
+      // Step 3: Start processing
+      const { videoId } = await startProcessing(uploadId, s3Key, {
+        title: form.title,
+        description: form.description,
+        channelId,
+        contentType: form.contentType,
+        tags: form.tags,
+        category: form.category,
+        visibility: form.visibility
+      });
 
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/upload`,
-          formData,
-          {
-            withCredentials: true,
-            cancelToken: source.token,
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            onUploadProgress: (progressEvent) => {
-              const percentCompleted = Math.round(
-                ((progressEvent.loaded || 0) * 100) / (progressEvent.total || 1)
-              );
-              setUploadProgress(percentCompleted);
-              
-              if (percentCompleted === 100) {
-                setIsProcessing(true);
-                setProcessingStep('received');
-                setProcessingMessage('Upload complete, starting processing...');
-                setUploadSpeed('');
-                setEstimatedTime('');
-              } else {
-                calculateUploadMetrics(
-                  progressEvent, 
-                  uploadStartTime, 
-                  setUploadSpeed, 
-                  setEstimatedTime, 
-                  setUploadedBytes
-                );
-              }
-            },
-          }
-        );
-      } else {
-        // For regular videos - ensure all values are strings
-        formData.append('description', form.description || '');
-        formData.append('category', form.category || '');
-        formData.append('visibility', form.visibility);
-        formData.append('tags', JSON.stringify(form.tags || []));
-        
-        // Only append thumbnail if it exists
-        if (form.thumbnail) {
-          formData.append('thumbnail', form.thumbnail);
-        }
-
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/videos/upload`,
-          formData,
-          {
-            withCredentials: true,
-            cancelToken: source.token,
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-            onUploadProgress: (progressEvent) => {
-              const percentCompleted = Math.round(
-                ((progressEvent.loaded || 0) * 100) / (progressEvent.total || 1)
-              );
-              setUploadProgress(percentCompleted);
-              
-              if (percentCompleted === 100) {
-                setIsProcessing(true);
-                setProcessingStep('received');
-                setProcessingMessage('Upload complete, starting processing...');
-                setUploadSpeed('');
-                setEstimatedTime('');
-              } else {
-                calculateUploadMetrics(
-                  progressEvent, 
-                  uploadStartTime, 
-                  setUploadSpeed, 
-                  setEstimatedTime, 
-                  setUploadedBytes
-                );
-              }
-            },
-          }
-        );
-      }
-    } catch (err: unknown) {
-      if (axios.isCancel(err)) {
-        setError('Upload cancelled');
-      } else if (axios.isAxiosError(err)) {
-        console.error('Upload error:', err);
-        const data: unknown = err.response?.data;
-        const msg =
-          data &&
-          typeof data === 'object' &&
-          'message' in data &&
-          typeof (data as { message?: unknown }).message === 'string'
-            ? (data as { message: string }).message
-            : 'Upload failed. Please try again.';
-        setError(msg);
-      } else {
-        console.error('Upload error:', err);
-        setError('Upload failed. Please try again.');
-      }
-      resetUploadState();
-      uploadIdRef.current = '';
-      setShowNotification(false);
+      // Show success toast and redirect to manage uploads
+      toast.success('Upload started! Your video is now being processed.');
+      
+      // Redirect to manage uploads page
+      setTimeout(() => {
+        window.location.href = `/create/channels/${channelId}/manage-uploads`;
+      }, 2000);
+      
+    } catch {
+      const errorMessage = 'Upload failed';
+      setUploadState({ ...uploadState, uploading: false, processing: false, error: errorMessage });
+      toast.error(errorMessage);
     }
   };
 
@@ -364,15 +313,15 @@ const ChannelUploadPage = () => {
     <>
       {/* Navigation Blocker */}
       <NavigationBlocker
-        when={uploadState.uploading && !uploadState.isProcessing}
+        when={uploadState.uploading}
         onBeforeUnload={handleBeforeUnload}
-        allowNavigation={() => uploadState.processingStep === 'complete'}
+        allowNavigation={() => uploadState.processingStep === 'complete'} // Fixed: Return boolean
       />
 
       {/* Upload Notification */}
       <UploadNotification
         isVisible={showNotification && uploadState.uploading}
-        uploadProgress={uploadState.uploadProgress}
+        uploadProgress={uploadState.uploadProgress} // Fixed: Use correct property
         processingProgress={uploadState.processingProgress}
         isProcessing={uploadState.isProcessing}
         processingStep={uploadState.processingStep}
@@ -383,7 +332,6 @@ const ChannelUploadPage = () => {
         }}
         onViewProgress={() => {
           setShowNotification(false);
-          // Scroll to progress section
           document.querySelector('[data-upload-progress]')?.scrollIntoView({ 
             behavior: 'smooth' 
           });
@@ -420,7 +368,7 @@ const ChannelUploadPage = () => {
                 clearVideo={clearVideo}
               />
 
-              {/* Thumbnail Upload (for both videos and shorts now) */}
+              {/* Thumbnail Upload */}
               <ThumbnailUploader
                 thumbnailPreview={thumbnailPreview}
                 handleThumbnailChange={handleThumbnailChange}
@@ -490,7 +438,7 @@ const ChannelUploadPage = () => {
             </button>
             <button
               type="submit"
-              disabled={uploadState.uploading || !form.video || !form.title.trim() || !uploadSocket}
+              disabled={uploadState.uploading || !form.video || !form.title.trim()}
               className={`flex-1 px-6 py-3 rounded-lg transition font-medium flex items-center justify-center gap-2 ${
                 uploadState.uploading 
                   ? (uploadState.isProcessing 
@@ -515,7 +463,6 @@ const ChannelUploadPage = () => {
                 <>
                   <FiUpload className="w-4 h-4" />
                   Upload {form.contentType === 'short' ? 'Short' : 'Video'}
-                  {!uploadSocket && ' (Connecting...)'}
                 </>
               )}
             </button>
