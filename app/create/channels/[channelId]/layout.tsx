@@ -16,11 +16,13 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import AuthenticatedImage from "@/components/Image";
+import { FiList } from 'react-icons/fi';
 
 const channelSidebarItems = [
   { label: 'Overview', icon: Home, href: '' },
   { label: 'Analytics', icon: BarChart, href: '/analytics' },
   { label: 'Upload', icon: Upload, href: '/upload' },
+  { label: 'Manage Uploads', icon: FiList, href: '/manage-uploads' },
   { label: 'Editor', icon: Video, href: '/editor' },
   { label: 'Live', icon: Radio, href: '/live' },
   { label: 'Branding', icon: Palette, href: '/branding' },
