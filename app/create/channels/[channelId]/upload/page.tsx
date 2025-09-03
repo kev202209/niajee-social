@@ -200,14 +200,14 @@ const ChannelUploadPage = () => {
   }
 
   // Start processing the video after upload
-  const startProcessing = async (uploadId: string, r2Key: string, metadata: Metadata) => {
+  const startProcessing = async (uploadId: string, s3Key: string, metadata: Metadata) => {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/start-processing`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
         uploadId,
-        r2Key,
+        s3Key,
         title: metadata.title,
         description: metadata.description,
         channelId: metadata.channelId,
@@ -246,6 +246,7 @@ const ChannelUploadPage = () => {
     }, 5000);
   };
 
+  // Update the handleSubmit function:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.video || !form.title.trim()) {
@@ -257,17 +258,17 @@ const ChannelUploadPage = () => {
 
     try {
       // Step 1: Request presigned URL
-      const { uploadId, presignedUrl, r2Key } = await requestPresignedUrl(form.video, channelId);
-      uploadIdRef.current = uploadId; // Set ref
+      const { uploadId, presignedUrl, s3Key } = await requestPresignedUrl(form.video, channelId);
+      uploadIdRef.current = uploadId;
 
       // Step 2: Upload to R2
       setUploadState(prev => ({ ...prev, progress: 50, uploadProgress: 50 }));
       await uploadToR2(presignedUrl, form.video);
-      setUploadedBytes(form.video.size); // Track bytes
+      setUploadedBytes(form.video.size);
       setUploadState(prev => ({ ...prev, progress: 100, uploadProgress: 100, uploading: false, processing: true, isProcessing: true }));
 
       // Step 3: Start processing
-      const { videoId } = await startProcessing(uploadId, r2Key, {
+      const { videoId } = await startProcessing(uploadId, s3Key, {
         title: form.title,
         description: form.description,
         channelId,
@@ -277,8 +278,13 @@ const ChannelUploadPage = () => {
         visibility: form.visibility
       });
 
-      // Step 4: Poll for status
-      pollVideoStatus(videoId);
+      // Show success toast and redirect to manage uploads
+      toast.success('Upload started! Your video is now being processed.');
+      
+      // Redirect to manage uploads page
+      setTimeout(() => {
+        window.location.href = `/create/channels/${channelId}/manage-uploads`;
+      }, 2000);
       
     } catch {
       const errorMessage = 'Upload failed';
