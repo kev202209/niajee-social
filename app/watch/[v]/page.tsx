@@ -175,16 +175,14 @@ const ErrorState = ({ error, onRetry }: { error: string; onRetry: () => void }) 
 
 // Loading Skeleton
 const LoadingSkeleton = () => (
-  <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pt-16">
-    <div className="max-w-7xl mx-auto p-4">
-      <div className="flex flex-col md:flex-row gap-4 ml-10">
-        <div className="md:w-2/3 space-y-4">
-          <VideoPlayerSkeleton />
-          <CommentsSkeleton />
-        </div>
-        <div className="md:w-1/3">
-          <SuggestedVideosSkeleton />
-        </div>
+  <div className="max-w-7xl mx-auto p-4">
+    <div className="flex flex-col md:flex-row gap-4">
+      <div className="md:w-2/3 space-y-4">
+        <VideoPlayerSkeleton />
+        <CommentsSkeleton />
+      </div>
+      <div className="md:w-1/3">
+        <SuggestedVideosSkeleton />
       </div>
     </div>
   </div>
@@ -238,46 +236,70 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
   // Show loading skeleton
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <Header />
-        <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
-        <LoadingSkeleton />
-      </>
+        <div className="flex pt-16">
+          <Sidebar 
+            isExpanded={isSidebarExpanded} 
+            setIsExpanded={setIsSidebarExpanded}
+            pushContent={false} // Don't push content on watch page
+          />
+          <main className="flex-1 w-full"> {/* Remove margin logic */}
+            <LoadingSkeleton />
+          </main>
+        </div>
+      </div>
     );
   }
 
   // Show error state
   if (error || !video) {
     return (
-      <>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <Header />
-        <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
-        <ErrorState 
-          error={error || "Video not found"} 
-          onRetry={fetchData} 
-        />
-      </>
+        <div className="flex pt-16">
+          <Sidebar 
+            isExpanded={isSidebarExpanded} 
+            setIsExpanded={setIsSidebarExpanded}
+            pushContent={false} // Don't push content on watch page
+          />
+          <main className="flex-1 w-full"> {/* Remove margin logic */}
+            <ErrorState 
+              error={error || "Video not found"} 
+              onRetry={fetchData} 
+            />
+          </main>
+        </div>
+      </div>
     );
   }
 
   // Show normal content
   return (
-    <>
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Header />
-      <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 pt-16">
-        <div className="max-w-7xl mx-auto p-4">
-          <div className="flex flex-col md:flex-row gap-4 ml-10">
-            <div className="md:w-2/3 space-y-4">
-              <VideoPlayer video={video} />
-              <CommentsSection videoId={videoId} allowComments={video.allowComments} />
-            </div>
-            <div className="md:w-1/3">
-              <SuggestedVideos videoId={videoId} />
+      <div className="flex pt-16">
+        <Sidebar 
+          isExpanded={isSidebarExpanded} 
+          setIsExpanded={setIsSidebarExpanded}
+          pushContent={false} // Don't push content on watch page
+        />
+        <main className="flex-1 w-full"> {/* Remove margin logic */}
+          <div className="text-gray-900 dark:text-gray-100">
+            <div className="max-w-7xl mx-auto p-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="md:w-2/3 space-y-4">
+                  <VideoPlayer video={video} />
+                  <CommentsSection videoId={videoId} allowComments={video.allowComments} />
+                </div>
+                <div className="md:w-1/3">
+                  <SuggestedVideos videoId={videoId} />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
-    </>
+    </div>
   );
 }
