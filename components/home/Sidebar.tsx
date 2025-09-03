@@ -15,9 +15,10 @@ import {
 interface SidebarProps {
   isExpanded: boolean;
   setIsExpanded: (expanded: boolean) => void;
+  pushContent?: boolean; // Add this prop
 }
 
-const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
+const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded, pushContent = true }) => {
   const pathname = usePathname() || "/";
 
   const menuItems = [
@@ -35,12 +36,13 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded }) => {
     // Desktop-only sidebar; mobile uses MobileBottomNav component
     <aside
       className={`
-        hidden lg:flex flex-col
-        bg-white dark:bg-gray-900
+        hidden lg:flex flex-col fixed left-0 top-16
+        bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
         transition-all duration-300 ease-in-out
         ${isExpanded ? "w-40" : "w-20"}
         h-[calc(100vh-4rem)]
         items-start justify-start overflow-hidden
+        ${pushContent ? '' : 'z-50'} /* Higher z-index when overlaying */
       `}
       onMouseEnter={() => setIsExpanded(true)}
       onMouseLeave={() => setIsExpanded(false)}
