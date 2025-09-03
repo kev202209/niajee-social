@@ -37,7 +37,7 @@ const Sidebar: FC<SidebarProps> = ({ isExpanded, setIsExpanded, pushContent = tr
     <aside
       className={`
         hidden lg:flex flex-col fixed left-0 top-16
-        bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800
+        bg-white dark:bg-gray-900 
         transition-all duration-300 ease-in-out
         ${isExpanded ? "w-40" : "w-20"}
         h-[calc(100vh-4rem)]

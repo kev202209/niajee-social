@@ -125,7 +125,7 @@ const TweetFeed: FC = () => {
   
   // Success state with tweets
   return (
-    <div className="h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900 border-l border-gray-200 dark:border-gray-700">
+    <div className="h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900 ">
       <div className="p-4 h-full flex flex-col">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">

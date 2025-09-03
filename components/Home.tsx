@@ -12,7 +12,7 @@ const HomePage: FC = () => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 lg:pb-0"> {/* reserve space for mobile nav */}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20 lg:pb-0">
       <Header />
       
       {/* Main Layout Container - Flex layout */}
@@ -20,11 +20,14 @@ const HomePage: FC = () => {
         {/* Sidebar (desktop only) */}
         <Sidebar 
           isExpanded={isSidebarExpanded} 
-          setIsExpanded={setIsSidebarExpanded} 
+          setIsExpanded={setIsSidebarExpanded}
+          pushContent={true} // Home page should push content
         />
         
-        {/* Main Content Area - Takes remaining space */}
-        <main className="flex-1 min-w-0">
+        {/* Main Content Area - Add proper margins for sidebar */}
+        <main className={`flex-1 min-w-0 transition-all duration-300 ${
+          isSidebarExpanded ? 'lg:ml-40' : 'lg:ml-20'
+        }`}>
           <div className="max-w-none">
             <MainContent />
           </div>

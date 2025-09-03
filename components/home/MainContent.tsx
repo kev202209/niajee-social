@@ -208,7 +208,7 @@ const MainContent: FC = () => {
   return (
     <div className="h-[calc(100vh-4rem)] overflow-y-auto">
       {/* Header with refresh button */}
-      <div className="sticky top-0 z-10 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 p-4">
+      <div className="sticky top-0 z-10 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm p-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Discover
