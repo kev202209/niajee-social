@@ -11,7 +11,7 @@ const layers = [
         headline: 'One stream. Multi‑format.',
         body: 'Short posts, threaded media, and reactive expansions coexist without forcing users into separate product silos.',
         accent: 'from-indigo-500 to-fuchsia-500',
-        loop: '/videos/1a.mp4'
+        loop: '/videos/a.mp4'
     },
     {
         id: 'channels',
@@ -20,7 +20,7 @@ const layers = [
         headline: 'Deep + quick in one identity.',
         body: 'Creators publish long form and shorts in a single channel surface—shorts become discovery gateways into full episodes.',
         accent: 'from-fuchsia-500 to-amber-400',
-        loop: '/videos/1b.mp4'
+        loop: '/videos/c.mp4'
     },
     {
         id: 'spaces',
@@ -29,7 +29,7 @@ const layers = [
         headline: 'Chat that amplifies content.',
         body: 'Topic rooms replace isolated DMs. Conversations are context-aware: media objects stay linked to origin threads.',
         accent: 'from-emerald-400 to-cyan-400',
-        loop: '/videos/d.mp4'
+        loop: '/videos/g.mp4'
     }
 ];
 

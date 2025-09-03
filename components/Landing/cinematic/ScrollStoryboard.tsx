@@ -6,12 +6,12 @@ const steps = [
 	{
 		heading: '1. Post. React. Ripple.',
 		body: 'Share a quick post and people can react. Each reply can grow into richer stuff—images, short clips, or a longer note. A tiny spark becomes a living thread without you planning it.',
-		clip: '/videos/1a.mp4',
+		clip: '/videos/a.mp4',
 	},
 	{
 		heading: '2. Elevate to Channel.',
 		body: 'When an idea needs more room you turn it into a Channel. Your shorts, long videos, and written updates sit in one clean place so people always know where to find the next thing.',
-		clip: '/videos/1b.mp4',
+		clip: '/videos/b.mp4',
 	},
 	{
 		heading: '3. Ignite Conversation.',
