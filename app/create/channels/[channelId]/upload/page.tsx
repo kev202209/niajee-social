@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 import { Channel } from '@/types';
@@ -26,7 +26,6 @@ const ChannelUploadPage = () => {
   const [loading, setLoading] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationClosed, setNotificationClosed] = useState(false);
-  const uploadIdRef = useRef<string>('');
   const [uploadedBytes, setUploadedBytes] = useState<number>(0);
 
   const [uploadState, setUploadState] = useState({
@@ -128,7 +127,6 @@ const ChannelUploadPage = () => {
       estimatedTime: ''
     });
     setUploadedBytes(0);
-    uploadIdRef.current = '';
   };
 
   const cancelUpload = () => {
@@ -140,7 +138,7 @@ const ChannelUploadPage = () => {
   const handleBeforeUnload = () => {
     if (uploadState.uploading) {
       sessionStorage.setItem('uploadInProgress', JSON.stringify({
-        uploadId: uploadIdRef.current,
+        videoId: uploadState.videoId,
         contentType: form.contentType,
         title: form.title,
         channelId
@@ -148,20 +146,24 @@ const ChannelUploadPage = () => {
     }
   };
 
-  const requestPresignedUrl = async (file: File, channelId: string) => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/presigned-upload`, {
+  interface PresignedResponse {
+    videoId: string;
+    presignedUrl: string;
+    s3Key: string;
+    originalFileName: string;
+    expectedFileName: string;
+    expiresIn: number;
+  }
+
+  const requestPresignedUrl = async (fileName: string, fileSize: number, channelId: string) => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/presigned-upload`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({
-        fileName: file.name,
-        fileSize: file.size,
-        channelId,
-        contentType: form.contentType
-      })
+      body: JSON.stringify({ fileName, fileSize, channelId })
     });
-    if (!response.ok) throw new Error('Failed to get upload URL');
-    return await response.json();
+    if (!res.ok) throw new Error('Failed to get upload URL');
+    return (await res.json()) as PresignedResponse;
   };
 
   const uploadToR2 = async (presignedUrl: string, file: File) => {
@@ -184,13 +186,13 @@ const ChannelUploadPage = () => {
     visibility: string;
   }
 
-  const startProcessing = async (uploadId: string, s3Key: string, metadata: Metadata) => {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/start-processing`, {
+  const startProcessing = async (videoId: string, s3Key: string, metadata: Metadata) => {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/start-processing`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify({
-        uploadId,
+        videoId,
         s3Key,
         title: metadata.title,
         description: metadata.description,
@@ -201,36 +203,40 @@ const ChannelUploadPage = () => {
         visibility: metadata.visibility
       })
     });
-    if (!response.ok) throw new Error('Failed to start processing');
-    return await response.json();
+    if (!res.ok) throw new Error('Failed to start processing');
+    return res.json();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.video || !form.title.trim()) {
-      setUploadState({ ...uploadState, error: 'Please select a video and enter a title' });
+      setUploadState(prev => ({ ...prev, error: 'Please select a video and enter a title' }));
       return;
     }
-
-    setUploadState({ ...uploadState, uploading: true, progress: 0, error: '', success: '' });
+    setUploadState(prev => ({ ...prev, uploading: true, error: '', success: '' }));
 
     try {
-      const { uploadId, presignedUrl, s3Key } = await requestPresignedUrl(form.video, channelId);
-      uploadIdRef.current = uploadId;
+      const presigned = await requestPresignedUrl(form.video.name, form.video.size, channelId);
+      // store videoId in state
+      setUploadState(prev => ({ ...prev, videoId: presigned.videoId }));
 
-      setUploadState(prev => ({ ...prev, progress: 50, uploadProgress: 50 }));
-      await uploadToR2(presignedUrl, form.video);
-      setUploadedBytes(form.video.size);
+      const renamedFile = new File([form.video], presigned.expectedFileName, { type: form.video.type });
+
+      console.log('Using videoId:', presigned.videoId, 'key:', presigned.s3Key, 'expected:', presigned.expectedFileName);
+
+      setUploadState(prev => ({ ...prev, uploadProgress: 50, progress: 50 }));
+      await uploadToR2(presigned.presignedUrl, renamedFile);
+      setUploadedBytes(renamedFile.size);
       setUploadState(prev => ({
         ...prev,
-        progress: 100,
         uploadProgress: 100,
+        progress: 100,
         uploading: false,
         processing: true,
         isProcessing: true
       }));
 
-      await startProcessing(uploadId, s3Key, {
+      await startProcessing(presigned.videoId, presigned.s3Key, {
         title: form.title,
         description: form.description,
         channelId,
@@ -240,16 +246,15 @@ const ChannelUploadPage = () => {
         visibility: form.visibility
       });
 
-      toast.success('Upload started! Your video is now being processed.');
-
+      toast.success('Upload started! Processing queued.');
       setTimeout(() => {
         window.location.href = `/create/channels/${channelId}/manage-uploads`;
-      }, 1500);
-      
-    } catch {
-      const errorMessage = 'Upload failed';
-      setUploadState({ ...uploadState, uploading: false, processing: false, error: errorMessage });
-      toast.error(errorMessage);
+      }, 1200);
+
+    } catch (err) {
+      console.error('Upload error:', err);
+      setUploadState(prev => ({ ...prev, uploading: false, processing: false, error: 'Upload failed' }));
+      toast.error('Upload failed');
     }
   };
 
@@ -308,7 +313,7 @@ const ChannelUploadPage = () => {
 
         <ContentTypeSelector
           contentType={form.contentType}
-            handleContentTypeChange={handleContentTypeChange}
+          handleContentTypeChange={handleContentTypeChange}
           uploading={uploadState.uploading}
         />
 
@@ -343,7 +348,7 @@ const ChannelUploadPage = () => {
             />
           </div>
 
-            <div data-upload-progress>
+          <div data-upload-progress>
             <UploadProgress
               uploading={uploadState.uploading}
               isProcessing={uploadState.isProcessing}
@@ -371,7 +376,7 @@ const ChannelUploadPage = () => {
             </div>
           )}
 
-          {uploadState.error && (
+            {uploadState.error && (
             <div className="p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
               <p className="text-red-800 dark:text-red-200 text-sm">
                 {uploadState.error}
