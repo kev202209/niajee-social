@@ -57,37 +57,34 @@ export default function VideoPlayer({ video }: VideoProps) {
       return;
     }
 
-    // Clear any existing src to prevent conflicts
-    videoElement.src = '';
-    videoElement.removeAttribute('src');
-
-    // Destroy existing HLS instance
+    // Clean up previous HLS instance once per streamUrl change
     if (hlsInstance) {
       hlsInstance.destroy();
     }
 
+    // Avoid gratuitously clearing src unless switching transport
+    videoElement.removeAttribute('src');
+
     if (Hls.isSupported()) {
       const hls = new Hls({
-        debug: false, // Enable debug for troubleshooting
+        debug: false,
         enableWorker: true,
         capLevelToPlayerSize: true,
         maxLoadingDelay: 4,
         maxBufferLength: 30,
         maxBufferSize: 60 * 1000 * 1000,
-        xhrSetup: function(xhr) {
-          xhr.withCredentials = true;
-        }
+        xhrSetup: xhr => { xhr.withCredentials = true; }
       });
 
-      // Manifest parsed -> stop buffering
+      if (setBuffering) setBuffering(true);
+
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         if (setBuffering) setBuffering(false);
       });
 
-      // Keep a couple of event handlers for diagnostics (use underscore names for unused params)
       hls.on(Hls.Events.ERROR, (_event, data) => {
         console.error('HLS Error:', _event, data);
-     if (data && data.fatal) {
+        if (data?.fatal) {
           switch (data.type) {
             case Hls.ErrorTypes.NETWORK_ERROR:
               hls.startLoad();
@@ -97,22 +94,16 @@ export default function VideoPlayer({ video }: VideoProps) {
               break;
             default:
               hls.destroy();
-              // Fallback to direct video source
-              videoElement.src = streamUrl;
-              break;
+              videoElement.src = streamUrl; // fallback
           }
         }
       });
 
-      // Set buffering state
-      if (setBuffering) setBuffering(true);
-
       try {
         hls.loadSource(streamUrl);
         hls.attachMedia(videoElement);
-      } catch (error) {
-        console.error('Error loading HLS source:', error);
-        // Fallback to direct video source
+      } catch (err) {
+        console.error('Error loading HLS source:', err);
         videoElement.src = streamUrl;
       }
 
@@ -122,12 +113,13 @@ export default function VideoPlayer({ video }: VideoProps) {
         hls.destroy();
       };
     } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-      // For Safari/iOS native HLS support
       videoElement.src = streamUrl;
     } else {
       console.error('HLS not supported and no native support');
     }
-  }, [streamUrl, setBuffering, hlsInstance, setHlsInstance]);
+  // Intentionally ONLY depend on streamUrl to prevent destroy/recreate loop
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streamUrl]);
 
   // Add event listeners to video element for debugging
   useEffect(() => {
