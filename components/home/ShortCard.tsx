@@ -1,5 +1,5 @@
 import { Short } from "@/types"; 
-import { FC, useEffect, useRef, useState } from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiVolume, FiVolumeX, FiXCircle, FiUser } from "react-icons/fi";
 import DropdownMenuPortal from "./DropDownMenu";
 import Link from "next/link";
@@ -18,8 +18,8 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const [videoReady, setVideoReady] = useState<boolean>(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Helper to get video source URL from key
-  const getVideoSource = () => {
+  // Memoize the video source to avoid recalculating on every render
+  const videoSource = useMemo(() => {
     // Use videoUrl.master or fallback to 360p
     if (short.videoUrl.master) {
       return getFullUrl(short.videoUrl.master);
@@ -33,14 +33,13 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
       }
     }
     return "";
-  };
+  }, [short.videoUrl]);
 
   // Setup HLS and video source
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement) return;
 
-    const videoSource = getVideoSource();
     if (!videoSource) return;
 
     // Clean up previous HLS instance
@@ -96,7 +95,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
         hlsRef.current = null;
       }
     };
-  }, [short.videoUrl, volume]);
+  }, [videoSource, volume]); // Use memoized videoSource in dependency
  
    const handleMouseEnter = async () => {
      if (!videoReady || !videoRef.current) return;
@@ -209,7 +208,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
           <video
             ref={videoRef}
             poster="" // Remove poster, since thumbnail is handled above
-            src={getVideoSource()}
+            src={videoSource}
             muted={isMuted}
             loop
             playsInline
