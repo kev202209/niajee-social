@@ -47,18 +47,21 @@ export interface Video {
 export interface Short {
   id: string;
   title: string;
-  videoUrl: string; // Shorts might still use a single URL
+  videoUrl: {
+    [quality: string]: string; // e.g., "240p", "360p", "master"
+  };
   thumbnailUrl?: string;
-  duration: number;
+  duration?: number; // Made optional since it's missing from your data
   views: number;
   likes: number;
   createdAt: string;
   channel: {
-    id: string;
+    id?: string; // Made optional
     name: string;
-    avatar: string;
+    avatar: string | null;
     verified: boolean;
-    handle: string;
+    monetized?: boolean; // Added for your data
+    handle?: string; // Made optional since it's missing from your data
   };
   // Additional short-specific fields
   caption?: string;
@@ -70,6 +73,7 @@ export interface Short {
   allowDuet?: boolean;
   isPublic?: boolean;
   isSensitive?: boolean;
+  age?: string; // Added for your data
 }
 
 export interface Channel {
