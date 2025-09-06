@@ -19,17 +19,29 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   // Helper to get video source URL from key
-const getVideoSource = () => {
-  if (short.videoUrl) {
-    return getFullUrl(short.videoUrl);
-  }
-  return "";
-};
+  const getVideoSource = () => {
+    // Use videoUrl.master or fallback to 360p
+    if (short.videoUrl.master) {
+      return getFullUrl(short.videoUrl.master);
+    } else if (short.videoUrl['360p']) {
+      return getFullUrl(short.videoUrl['360p']);
+    } else {
+      // Fallback to first available quality
+      const qualities = Object.keys(short.videoUrl);
+      if (qualities.length > 0) {
+        return getFullUrl(short.videoUrl[qualities[0]]);
+      }
+    }
+    return "";
+  };
 
   // Setup HLS and video source
   useEffect(() => {
     const videoElement = videoRef.current;
-    if (!videoElement || !short.videoUrl) return;
+    if (!videoElement) return;
+
+    const videoSource = getVideoSource();
+    if (!videoSource) return;
 
     // Clean up previous HLS instance
     if (hlsRef.current) {
@@ -38,7 +50,7 @@ const getVideoSource = () => {
     }
 
     // Check if it's an HLS stream
-    if (short.videoUrl.includes('.m3u8')) {
+    if (videoSource.includes('.m3u8')) {
       if (Hls.isSupported()) {
         const hls = new Hls({
           debug: false,
@@ -46,7 +58,7 @@ const getVideoSource = () => {
           autoStartLoad: false,
         });
 
-        hls.loadSource(short.videoUrl);
+        hls.loadSource(videoSource);
         hls.attachMedia(videoElement);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -65,14 +77,14 @@ const getVideoSource = () => {
         hlsRef.current = hls;
       } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
         // Safari native HLS support
-        videoElement.src = short.videoUrl;
+        videoElement.src = videoSource;
         videoElement.volume = volume;
         videoElement.muted = true;
         setVideoReady(true);
       }
     } else {
       // Regular MP4 or other formats
-      videoElement.src = short.videoUrl;
+      videoElement.src = videoSource;
       videoElement.volume = volume;
       videoElement.muted = true;
       setVideoReady(true);
@@ -177,10 +189,8 @@ const getVideoSource = () => {
 
    return (
      <Link href={`/shorts/${short.id}`}>
-      <div
-        className="bg-inherit rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer relative w-40 flex-shrink-0"
-      >
-         {/* Short Video Container with 9:16 Aspect Ratio */}
+      <div className="bg-inherit rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer relative w-40 flex-shrink-0">
+        {/* Short Video Container with 9:16 Aspect Ratio */}
         <div
           className="relative group rounded-t-xl overflow-hidden aspect-[9/16]"
           onMouseEnter={handleMouseEnter}
@@ -226,19 +236,27 @@ const getVideoSource = () => {
             />
           </div>
 
-          {/* Duration badge */}
-          {typeof short.duration === 'number' && (
+          {/* Duration badge - Made optional */}
+          {short.duration && (
             <span className="absolute top-2 right-2 z-10 bg-black/70 text-white text-[10px] px-2 py-0.5 rounded">
               {formatDuration(short.duration)}
             </span>
           )}
-         </div>
+        </div>
         
         {/* Details Section */}
         <div className="p-3 relative">
           <div className="flex items-start gap-2 mb-2">
-            {/* Channel Avatar */}
-            <Link href={`/channels/${short.channel.handle}`}>
+            {/* Channel Avatar - Use name as fallback for handle */}
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const handle = short.channel.handle || short.channel.name;
+                window.location.href = `/channels/${handle}`;
+              }}
+              className="flex-shrink-0"
+            >
               {short.channel.avatar ? (
                 <AuthenticatedImage
                   mediaKey={short.channel.avatar}
@@ -253,7 +271,7 @@ const getVideoSource = () => {
                   <FiUser className="w-3 h-3 text-gray-600 dark:text-gray-400" />
                 </div>
               )}
-            </Link>
+            </button>
             
             {/* Title and Options */}
             <div className="flex-1 min-w-0">
