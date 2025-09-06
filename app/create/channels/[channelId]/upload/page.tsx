@@ -147,7 +147,9 @@ const ChannelUploadPage = () => {
   };
 
   interface PresignedResponse {
-    videoId: string;
+    // Make it flexible for both videoId and shortId
+    videoId?: string;
+    shortId?: string;
     presignedUrl: string;
     s3Key: string;
     originalFileName: string;
@@ -155,8 +157,9 @@ const ChannelUploadPage = () => {
     expiresIn: number;
   }
 
-  const requestPresignedUrl = async (fileName: string, fileSize: number, channelId: string) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/presigned-upload`, {
+  const requestPresignedUrl = async (fileName: string, fileSize: number, channelId: string, contentType: 'video' | 'short') => {
+    const endpoint = contentType === 'short' ? '/api/shorts/presigned-upload' : '/api/videos/presigned-upload';
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -186,22 +189,29 @@ const ChannelUploadPage = () => {
     visibility: string;
   }
 
-  const startProcessing = async (videoId: string, s3Key: string, metadata: Metadata) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/videos/start-processing`, {
+  const startProcessing = async (contentId: string, s3Key: string, metadata: Metadata) => {
+    const endpoint = metadata.contentType === 'short' ? '/api/shorts/start-processing' : '/api/videos/start-processing';
+    
+    // Use the correct field name
+    const idField = metadata.contentType === 'short' ? 'shortId' : 'videoId';
+    
+    const requestBody = {
+      [idField]: contentId,
+      s3Key,
+      title: metadata.title,
+      description: metadata.description,
+      channelId: metadata.channelId,
+      contentType: metadata.contentType,
+      tags: metadata.tags,
+      category: metadata.category,
+      visibility: metadata.visibility
+    };
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({
-        videoId,
-        s3Key,
-        title: metadata.title,
-        description: metadata.description,
-        channelId: metadata.channelId,
-        contentType: metadata.contentType,
-        tags: metadata.tags,
-        category: metadata.category,
-        visibility: metadata.visibility
-      })
+      body: JSON.stringify(requestBody)
     });
     if (!res.ok) throw new Error('Failed to start processing');
     return res.json();
@@ -216,9 +226,14 @@ const ChannelUploadPage = () => {
     setUploadState(prev => ({ ...prev, uploading: true, error: '', success: '' }));
 
     try {
-      const presigned = await requestPresignedUrl(form.video.name, form.video.size, channelId);
-      // store videoId in state
-      setUploadState(prev => ({ ...prev, videoId: presigned.videoId }));
+      const presigned = await requestPresignedUrl(form.video.name, form.video.size, channelId, form.contentType);
+      
+      // Use the correct ID from response
+      const contentId = presigned.shortId || presigned.videoId;
+      if (!contentId) throw new Error('No content ID received from backend');
+      
+      // Store the ID in state
+      setUploadState(prev => ({ ...prev, videoId: contentId }));
 
       const renamedFile = new File([form.video], presigned.expectedFileName, { type: form.video.type });
 
@@ -236,7 +251,7 @@ const ChannelUploadPage = () => {
         isProcessing: true
       }));
 
-      await startProcessing(presigned.videoId, presigned.s3Key, {
+      await startProcessing(contentId, presigned.s3Key, {
         title: form.title,
         description: form.description,
         channelId,
