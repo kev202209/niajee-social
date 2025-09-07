@@ -38,15 +38,23 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
   // Setup HLS and video source
   useEffect(() => {
     const videoElement = videoRef.current;
-    if (!videoElement) return;
-
-    if (!videoSource) return;
+    if (!videoElement || !videoSource) return;
 
     // Clean up previous HLS instance
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
     }
+
+    // Reset video ready state
+    setVideoReady(false);
+
+    // Helper to set video ready and properties
+    const setVideoProperties = () => {
+      videoElement.volume = volume;
+      videoElement.muted = true;
+      setVideoReady(true);
+    };
 
     // Check if it's an HLS stream
     if (videoSource.includes('.m3u8')) {
@@ -61,9 +69,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
         hls.attachMedia(videoElement);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          setVideoReady(true);
-          videoElement.volume = volume;
-          videoElement.muted = true;
+          setVideoProperties();
         });
 
         hls.on(Hls.Events.ERROR, (event, data) => {
@@ -77,16 +83,12 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
       } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
         // Safari native HLS support
         videoElement.src = videoSource;
-        videoElement.volume = volume;
-        videoElement.muted = true;
-        setVideoReady(true);
+        setVideoProperties();
       }
     } else {
       // Regular MP4 or other formats
       videoElement.src = videoSource;
-      videoElement.volume = volume;
-      videoElement.muted = true;
-      setVideoReady(true);
+      setVideoProperties();
     }
 
     return () => {
@@ -95,16 +97,16 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
         hlsRef.current = null;
       }
     };
-  }, [videoSource, volume]); // Use memoized videoSource in dependency
- 
+  }, [videoSource, volume]);
+
    const handleMouseEnter = async () => {
      if (!videoReady || !videoRef.current) return;
      
      try {
-       if (hlsRef.current && !hlsRef.current.loadLevel) {
+       if (hlsRef.current) {
+         // With autoStartLoad: false, explicitly start loading on hover
          hlsRef.current.startLoad();
        }
-       
        await videoRef.current.play();
        setIsPlaying(true);
      } catch (error) {
@@ -186,8 +188,8 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
      return () => window.removeEventListener("click", handleClickOutside);
    }, [showOptions]);
 
-   return (
-     <Link href={`/shorts/${short.id}`}>
+  return (
+    <Link href={`/shorts/${short.id}`}>
       <div className="bg-inherit rounded-xl shadow hover:shadow-lg transition-shadow cursor-pointer relative w-40 flex-shrink-0">
         {/* Short Video Container with 9:16 Aspect Ratio */}
         <div
@@ -207,8 +209,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
           {/* Video Preview */}
           <video
             ref={videoRef}
-            poster="" // Remove poster, since thumbnail is handled above
-            src={videoSource}
+            // Remove src from JSX to prevent conflicts with HLS
             muted={isMuted}
             loop
             playsInline
