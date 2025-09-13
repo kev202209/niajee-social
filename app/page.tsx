@@ -1,7 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import Home from '@/components/Home';
+import Home from '@/components/home/Index';
 import Landing from '@/components/Landing/index';
 import Loading from './watch/[v]/loading';
 

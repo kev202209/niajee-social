@@ -1,12 +1,12 @@
 "use client";
 
 import React, { FC, useState } from "react";
-import Header from "@/components/home/Header";
-import Sidebar from "@/components/home/Sidebar";
-import MobileBottomNav from "@/components/home/MobileBottomNav";
-import MainContent from "@/components/home/MainContent";
-import TweetFeed from "@/components/home/TweetFeed";
-import Footer from "@/components/home/Footer";
+import Header from "./Header";
+import Sidebar from "./Sidebar";
+import MobileBottomNav from "./MobileBottomNav";
+import MainContent from "./MainContent";
+import TweetFeed from "./TweetFeed";
+import Footer from "./Footer";
 
 const HomePage: FC = () => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
