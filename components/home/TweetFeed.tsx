@@ -1,19 +1,19 @@
-import { Tweet } from "@/types";
+import { Post, PostUser } from "@/types/post.types";
 import { FC, useEffect, useState, useCallback } from "react";
 import AuthenticatedImage from "@/components/Image";
 import TweetFeedSkeleton from "./TweetFeedSkeleton";
-import { FiMessageCircle, FiRepeat, FiHeart, FiBookmark, FiShare, FiRefreshCw } from "react-icons/fi";
+import { FiMessageCircle, FiRepeat, FiHeart, FiBookmark, FiShare, FiRefreshCw, FiImage, FiPlay, FiBarChart } from "react-icons/fi";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
 import timeAgo from "@/app/utils/timeAgo";
 import { getImageSrc } from '@/app/utils/imageUtils';
 
 const TweetFeed: FC = () => {
-  const [tweets, setTweets] = useState<Tweet[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const api_link = process.env.NEXT_PUBLIC_API_URL;
 
-  const fetchTweets = useCallback(async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -28,33 +28,12 @@ const TweetFeed: FC = () => {
       }
 
       const data = await response.json();
-      const posts = Array.isArray(data.posts) ? data.posts as unknown[] : [];
+      const posts = Array.isArray(data.posts) ? data.posts as Post[] : [];
 
-      const transformedTweets: Tweet[] = posts.map((item, idx) => {
-        const rec = (item as Record<string, unknown>) ?? {};
-        const user = (rec.user as Record<string, unknown> | undefined) ?? {};
-        return {
-          id: String(rec.id ?? `post-${idx}`),
-          content: String(rec.content ?? ''),
-          username: String(user.username ?? 'anonymous'),
-          displayName: String(user.displayName ?? user.username ?? '@unknown'),
-          profilePic: String(user.profilePic ?? '/placeholder.png'),
-          createdAt: String(rec.createdAt ?? new Date().toISOString()),
-          likeCount: Number(rec.likeCount ?? 0),
-          replyCount: Number(rec.replyCount ?? 0),
-          repostCount: Number(rec.repostCount ?? 0),
-          saveCount: Number(rec.saveCount ?? 0),
-          isLiked: Boolean(rec.isLiked ?? false),
-          isSaved: Boolean(rec.isSaved ?? false),
-          isReposted: Boolean(rec.isReposted ?? false),
-          verified: Boolean(user.verified ?? rec.verified ?? false),
-        };
-      });
-
-      setTweets(transformedTweets);
+      setPosts(posts);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      console.error("Error fetching tweets", message);
+      console.error("Error fetching posts", message);
       setError("Something went wrong while loading the feed");
     } finally {
       setIsLoading(false);
@@ -62,11 +41,26 @@ const TweetFeed: FC = () => {
   }, [api_link]);
 
   useEffect(() => {
-    void fetchTweets();
-  }, [fetchTweets]);
+    void fetchPosts();
+  }, [fetchPosts]);
 
   const handleRetry = () => {
-    fetchTweets();
+    fetchPosts();
+  };
+
+  // Helper function to get media icon
+  const getMediaIcon = (post: Post) => {
+    if (!post.media || post.media.length === 0) return null;
+    
+    const firstMedia = post.media[0];
+    switch (firstMedia.type) {
+      case 'video':
+        return <FiPlay className="w-3 h-3" />;
+      case 'image':
+        return <FiImage className="w-3 h-3" />;
+      default:
+        return <FiImage className="w-3 h-3" />;
+    }
   };
 
   // Loading state
@@ -100,7 +94,7 @@ const TweetFeed: FC = () => {
   }
 
   // Empty state
-  if (tweets.length === 0) {
+  if (posts.length === 0) {
     return (
       <aside className="w-80 bg-gray-100 dark:bg-gray-900 h-screen pt-16 fixed right-0 top-0 p-4">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 truncate">
@@ -124,7 +118,7 @@ const TweetFeed: FC = () => {
     );
   }
   
-  // Success state with tweets
+  // Success state with posts
   return (
     <div className="h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900 ">
       <div className="p-4 h-full flex flex-col">
@@ -142,12 +136,12 @@ const TweetFeed: FC = () => {
         </div>
         <div className="flex-1 overflow-y-auto">
           <ul className="space-y-3">
-            {tweets.map((tweet) => (
-              <li key={tweet.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 hover:shadow-md transition-shadow">
+            {posts.map((post) => (
+              <li key={post.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 hover:shadow-md transition-shadow">
                 <div className="flex">
                   <AuthenticatedImage
-                    mediaKey={tweet.user.profilePic ? getImageSrc(tweet.user.profilePic, '480w') : ""}
-                    alt={tweet.user.username}
+                    mediaKey={post.user.profilePic ? getImageSrc(post.user.profilePic, '480w') : ""}
+                    alt={post.user.username}
                     width={32}
                     height={32}
                     className="rounded-full h-8 w-8 flex-shrink-0"
@@ -158,75 +152,104 @@ const TweetFeed: FC = () => {
                       <div className="flex items-center space-x-1 min-w-0">
                         <span
                           className="font-semibold text-gray-900 dark:text-gray-100 truncate text-xs"
-                          title={tweet.displayName}
-                          aria-label={tweet.displayName}
+                          title={post.user.displayName}
+                          aria-label={post.user.displayName}
                         >
-                          {tweet.displayName}
+                          {post.user.displayName}
                         </span>
-                        {tweet.verified && (
+                        {post.user.verified && (
                           <RiVerifiedBadgeFill
                             className="w-3.5 h-3.5 text-blue-500 ml-1 flex-shrink-0"
                             title="Verified account"
                           />
                         )}
-                        {/* username should truncate and be allowed to shrink */}
                         <span
                           className="text-gray-600 dark:text-gray-400 truncate text-xs"
-                          title={`@${tweet.username}`}
-                          aria-label={`@${tweet.username}`}
+                          title={`@${post.user.username}`}
+                          aria-label={`@${post.user.username}`}
                         >
-                          @{tweet.username}
+                          @{post.user.username}
                         </span>
                       </div>
-                      {/* keep time on a single line and prevent it from wrapping/pushing layout */}
                       <span className="text-xs text-gray-500 flex-shrink-0 ml-2 whitespace-nowrap">
-                        {tweet.createdAt && timeAgo(tweet.createdAt)}
+                        {timeAgo(post.createdAt)}
                       </span>
                     </div>
+                    
                     <a
-                      href={`${process.env.NEXT_PUBLIC_FRONTEND_B_URL}/${tweet.username}/status/${tweet.id}`}
+                      href={`${process.env.NEXT_PUBLIC_FRONTEND_B_URL}/${post.user.username}/status/${post.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       <p className="text-gray-900 dark:text-gray-100 text-xs mt-1 line-clamp-2">
-                        {tweet.content}
+                        {post.content}
                       </p>
                     </a>
+
+                    {/* Media indicator - just show icon and count */}
+                    {post.media && post.media.length > 0 && (
+                      <div className="mt-1 flex items-center gap-1">
+                        <span className="text-gray-500 dark:text-gray-400 text-xs flex items-center gap-1">
+                          {getMediaIcon(post)}
+                          {post.media.length > 1 ? `${post.media.length} items` : '1 item'}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Poll indicator */}
+                    {post.poll && (
+                      <div className="mt-1">
+                        <span className="text-xs text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                          <FiBarChart className="w-3 h-3" />
+                          Poll • {post.poll.totalVotes} votes
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Community badge */}
+                    {post.community && (
+                      <div className="mt-1 inline-block">
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded-full">
+                          {post.community.name}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="flex items-center justify-between mt-2 gap-1">
                       <button 
-                        className={`flex items-center gap-1 ${tweet.replyCount > 0 ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'}`} 
+                        className={`flex items-center gap-1 ${post.replyCount > 0 ? 'text-blue-500' : 'text-gray-500 dark:text-gray-400 hover:text-blue-500'}`} 
                         title="Comment"
                       >
                         <FiMessageCircle className="w-3 h-3" />
-                        {tweet.replyCount > 0 && (
-                          <span className="text-xs">{tweet.replyCount}</span>
+                        {post.replyCount > 0 && (
+                          <span className="text-xs">{post.replyCount}</span>
                         )}
                       </button>
                       <button 
-                        className={`flex items-center gap-1 ${tweet.isReposted ? 'text-green-500' : 'text-gray-500 dark:text-gray-400 hover:text-green-500'}`} 
-                        title="Retweet"
+                        className={`flex items-center gap-1 ${post.isReposted ? 'text-green-500' : 'text-gray-500 dark:text-gray-400 hover:text-green-500'}`} 
+                        title="Repost"
                       >
                         <FiRepeat className="w-3 h-3" />
-                        {tweet.repostCount > 0 && (
-                          <span className="text-xs">{tweet.repostCount}</span>
+                        {post.repostCount > 0 && (
+                          <span className="text-xs">{post.repostCount}</span>
                         )}
                       </button>
                       <button 
-                        className={`flex items-center gap-1 ${tweet.isLiked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400 hover:text-red-500'}`} 
+                        className={`flex items-center gap-1 ${post.isLiked ? 'text-red-500' : 'text-gray-500 dark:text-gray-400 hover:text-red-500'}`} 
                         title="Like"
                       >
                         <FiHeart className="w-3 h-3" />
-                        {tweet.likeCount > 0 && (
-                          <span className="text-xs">{tweet.likeCount}</span>
+                        {post.likeCount > 0 && (
+                          <span className="text-xs">{post.likeCount}</span>
                         )}
                       </button>
                       <button 
-                        className={`flex items-center gap-1 ${tweet.isSaved ? 'text-yellow-500' : 'text-gray-500 dark:text-gray-400 hover:text-yellow-500'}`}
+                        className={`flex items-center gap-1 ${post.isSaved ? 'text-yellow-500' : 'text-gray-500 dark:text-gray-400 hover:text-yellow-500'}`}
                         title="Save"
                       >
                         <FiBookmark className="w-3 h-3" />
-                        {tweet.saveCount > 0 && (
-                          <span className="text-xs">{tweet.saveCount}</span>
+                        {post.saveCount > 0 && (
+                          <span className="text-xs">{post.saveCount}</span>
                         )}
                       </button>
                       <button className="flex items-center text-gray-500 dark:text-gray-400 hover:text-blue-500" title="Share">
