@@ -1,4 +1,4 @@
-import type { OutputData } from "@editorjs/editorjs";
+import { Post } from './post.types'
 
 export interface User {
   id: string;
@@ -9,8 +9,8 @@ export interface User {
   location: string | null;
   job: string | null;
   website: string | null;
-  profilePic: string | null;
-  bannerPic: string | null;
+  profilePic: ProcessedImage | null;
+  bannerPic: ProcessedImage | null;
   role: string;
   createdAt: Date;
   updatedAt: Date;
@@ -27,7 +27,7 @@ export interface Video {
   videoUrl: {
     [quality: string]: string; // e.g., "360p", "720p", "1080p"
   };
-  thumbnail: string;
+  thumbnail: ProcessedImage;
   title: string;
   description: string;
   duration: number;
@@ -38,7 +38,7 @@ export interface Video {
   channel: {
     id: string;
     name: string;
-    avatar: string;
+    avatar: ProcessedImage;
     verified: boolean;
     handle: string;
   };
@@ -50,7 +50,7 @@ export interface Short {
   videoUrl: {
     [quality: string]: string; // e.g., "240p", "360p", "master"
   };
-  thumbnailUrl?: string;
+  thumbnailUrl?: ProcessedImage;
   duration?: number; // Made optional since it's missing from your data
   views: number;
   likes: number;
@@ -58,7 +58,7 @@ export interface Short {
   channel: {
     id?: string; // Made optional
     name: string;
-    avatar: string | null;
+    avatar: ProcessedImage | null;
     verified: boolean;
     monetized?: boolean; // Added for your data
     handle?: string; // Made optional since it's missing from your data
@@ -80,7 +80,7 @@ export interface Channel {
   id: string;
   name: string;
   handle: string;
-  avatar: string;
+  avatar: ProcessedImage | string; // Allow both types for compatibility
   verified: boolean;
   description?: string;
   subscriberCount?: number;
@@ -88,21 +88,87 @@ export interface Channel {
   createdAt?: string;
   viewCount?: number;
 }
-export interface Tweet {
+
+// Add new interfaces that were inline
+export interface ChannelStats {
+  subscriberCount?: number;
+  videoCount?: number;
+  shortCount?: number;
+  isSubscribed?: boolean;
+}
+
+export interface MediaItem {
   id: string;
-  content: string;
-  username: string;
-  displayName: string;
-  profilePic: string;
-  createdAt?: string;
-  likeCount: number;
-  replyCount: number;
-  repostCount: number;
-  saveCount: number;
-  isLiked: boolean;
-  isSaved: boolean;
-  isReposted: boolean;
-  verified?: boolean; // owner account verified
+  thumbnail: ProcessedImage | string; // Allow both types
+  title: string;
+  views?: number;
+  publishedAt?: string;
+  duration?: string; // videos only
+}
+
+export interface ChannelOverview {
+  stats?: ChannelStats;
+  videos?: MediaItem[];
+  shorts?: MediaItem[];
+}
+
+export interface UploadItem {
+  id: string;
+  uploadId: string;
+  title: string;
+  description: string;
+  contentType: 'video' | 'short';
+  processingStatus: 'processing' | 'complete' | 'failed' | 'queued';
+  processingProgress: number;
+  thumbnail?: ProcessedImage | string; // Allow both types
+  duration?: number;
+  fileSize: number;
+  createdAt: string;
+  updatedAt: string;
+  r2Key?: string;
+  videoId?: string;
+  shortId?: string;
+  errorMessage?: string;
+}
+
+export interface AnalyticsData {
+  totalViews: number;
+  totalSubscribers: number;
+  totalVideos: number;
+  averageViewDuration: number;
+  topVideos: Array<{
+    id: string;
+    title: string;
+    views: number;
+    thumbnail: ProcessedImage | string; // Allow both types
+  }>;
+  recentActivity: Array<{
+    date: string;
+    views: number;
+    subscribers: number;
+  }>;
+}
+
+export interface RawAnalyticsResponse {
+  success?: boolean;
+  data?: {
+    totalViews?: number;
+    totalSubscribers?: number;
+    totalVideos?: number;
+    averageViewDuration?: number;
+    topVideos?: Array<{
+      id: string;
+      title: string;
+      views: number;
+      thumbnail: string;
+    }>;
+    recentActivity?: Array<{
+      date: string;
+      views: number;
+      subscribers: number;
+    }>;
+  };
+  message?: string;
 }
 
 export interface mVideo {
@@ -120,7 +186,7 @@ export interface mVideo {
     [key: string]: string;
   };
   videoSrc?: string; // For backward compatibility
-  thumbnailUrl: string;
+  thumbnailUrl: ProcessedImage;
   duration: number;
   fileSize: number;
   resolution: string;
@@ -148,7 +214,7 @@ export interface mVideo {
   channel: {
     id: string;
     name: string;
-    avatar: string;
+    avatar: ProcessedImage;
     verified: boolean;
     monetized: boolean;
     followerCount: number;
@@ -161,12 +227,12 @@ export interface mVideo {
 export interface SuggestedVideo extends Omit<mVideo, 'videoUrl'> {
   videoSrc: string;
   channelName: string;
-  channelAvatar: string;
+  channelAvatar: ProcessedImage;
   likes: number;
   views: string;
   uploadDate: string;
   duration: number;
-  thumbnailUrl: string;
+  thumbnailUrl: ProcessedImage;
   age: string
 }
 
@@ -179,7 +245,7 @@ export interface Comment {
     id: string;
     username: string;
     displayName?: string;
-    profilePic?: string;
+    profilePic?: ProcessedImage;
   };
   likeCount: number;
   dislikeCount: number;
@@ -197,32 +263,15 @@ export interface CreateCommentDto {
   parentId?: string;
 }
 
-export interface Post {
-  id: string ;
-  desc: string;
-  img?: string;
-  imgHeight?: number;
-  video?: string;
-  isSensitive?: boolean;
-  createdAt: string;
-  verified: boolean;
-  user: {
-    id: string;
-    username: string;
-    displayName: string;
-    img?: string;
-  };
-  _count?: {
-    likes: number;
-    rePosts: number;
-    comments: number;
-  };
-  likes?: { id: number }[];
-  rePosts?: { id: number }[];
-  saves?: { id: number }[];
-  rePost?: Post | null;
-  rePostId?: string | null;
+export interface Follow {
+  id: number;
+  createdAt: Date;
+  followerId: string;
+  followingId: string;
+  follower: User;
+  following: User;
 }
+
 
 export interface Like {
   id: number;
@@ -242,17 +291,6 @@ export interface SavedPosts {
   post: Post;
 }
 
-export interface Follow {
-  id: number;
-  createdAt: Date;
-  followerId: string;
-  followingId: string;
-  follower: User;
-  following: User;
-}
-
-
-
 export interface DetailedChannel {
   id: string;
   name: string;
@@ -261,8 +299,8 @@ export interface DetailedChannel {
   ownerId: string; // New field
   
   // Channel branding
-  avatar: string | null; // Changed from logoUrl
-  banner: string | null; // Changed from bannerUrl
+  avatar: ProcessedImage | null; // Changed from logoUrl
+  banner: ProcessedImage | null; // Changed from bannerUrl
   theme?: {
     primaryColor?: string;
     secondaryColor?: string;
@@ -336,118 +374,38 @@ interface BlockData {
   };
 }
 
-// Update the Blog interface
-export interface Blog {
-  id: string;
-  title: string;
-  subtitle?: string | null;
-  slug: string;
-  excerpt: string;
-  content: any[]; // Editor.js blocks array or [] (as in your response)
-  featuredImage?: string | null;
-  status: 'draft' | 'published' | 'archived';
-  publishedAt?: string | null;
-  viewCount: number;
-  uniqueViewCount?: number;
-  likeCount: number;
-  commentCount: number;
-  shareCount?: number;
-  saveCount?: number;
-  estimatedReadTime?: number;
-  averageReadTime?: number;
-  allowComments?: boolean;
-  allowHighlighting?: boolean;
-  allowResponses?: boolean;
-  isMonetized?: boolean;
-  isFeatured?: boolean;
-  isPremium?: boolean;
-  category: string | string[]; // Can be a stringified array or array
-  tags: string | string[];     // Can be a string or array
-  topics?: string[];           // Array of topics
-  seoMetadata?: Record<string, any> | null;
-  customCSS?: string | null;
-  isSensitive?: boolean;
-  contentWarning?: string | null;
-  analytics?: any;
-  version?: number;
-  lastEditedAt?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  author: {
-    id: string;
-    username: string;
-    displayName: string;
-    profilePic?: string | null;
-    verified: boolean;
-    bio?: string | null;
+// New type for processed images
+export interface ProcessedImage {
+  width: number;
+  height: number;
+  format: string;
+  variants: {
+    '480w': string;
+    '720w': string;
+    '1080w': string;
   };
-    series?: {
-    id: string;
-    title: string;
-    order: number;
-  };
-  channel?: any | null;
-  userInteraction?: {
-    liked: boolean;
-    saved: boolean;
-  };
+  originalKey: string;
+  processedAt: string;
+  thumbnailKey: string;
 }
 
-// Update CreateBlogDto to use ContentData instead of OutputData
-export interface CreateBlogDto {
-  title: string;
-  subtitle?: string;
-  slug?: string;
-  excerpt?: string;
-  content: OutputData;
-  featuredImage?: File | string;
-  channelId?: string;
-  status?: 'draft' | 'published';
-  allowComments?: boolean;
-  allowHighlighting?: boolean;
-  allowResponses?: boolean;
-  isMonetized?: boolean;
-  isPremium?: boolean;
-  category?: string;
-  tags?: string[];
-  topics?: string[];
-  seoMetadata?: Record<string, any> | null;
-  customCSS?: string | null;
-  isSensitive?: boolean;
-  contentWarning?: string | null;
-}
+// Utility function to safely get image src
+export const getImageSrcSafe = (
+  image: ProcessedImage | string | null | undefined,
+  variant: '480w' | '720w' | '1080w' = '480w'
+): string => {
+  if (!image) return '';
+  
+  if (typeof image === 'string') {
+    return image;
+  }
+  
+  if (typeof image === 'object' && image.variants) {
+    return image.variants[variant] || image.originalKey || '';
+  }
+  
+  return '';
+};
 
-export interface UpdateBlogDto extends Partial<CreateBlogDto> {}
-
-export interface CreateBlogCommentDto {
-  content: string;
-  parentId?: string;
-}
-
-export interface BlogFilterDto {
-  category?: string;
-  tags?: string[];
-  search?: string;
-  sortBy?: 'latest' | 'popular' | 'trending';
-  page?: number;
-  limit?: number;
-}
-
-export interface BlogComment {
-  id: string;
-  content: string;
-  highlightedText: string | null;
-  highlightStartIndex: number | null;
-  highlightEndIndex: number | null;
-  likeCount: number;
-  parentId: string | null;
-  createdAt: string;
-  user: {
-    id: string;
-    username: string;
-    displayName: string;
-    profilePic?: string | null;
-    verified: boolean;
-  };
-  replies: BlogComment[];
-}
+export * from './blog.types';
+export * from './post.types';
