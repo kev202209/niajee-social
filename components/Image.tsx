@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
+import { ProcessedImage } from '@/types';
 
 interface AuthenticatedImageProps {
-  mediaKey: string;
+  mediaKey: ProcessedImage | string | null | undefined;
   alt: string;
   width?: number;
   height?: number;

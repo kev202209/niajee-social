@@ -6,6 +6,7 @@ import { Channel } from '@/types';
 import { FiBookmark, FiTrash2, FiUpload, FiLoader } from 'react-icons/fi';
 import Image from 'next/image';
 import AuthenticatedImage from "@/components/Image";
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 const ChannelSettingsPage: FC = () => {
   const params = useParams();
@@ -262,7 +263,7 @@ const ChannelSettingsPage: FC = () => {
                 ) : (
                   // Existing avatar from backend
                   <AuthenticatedImage
-                    mediaKey={channel?.avatar || ""}
+                    mediaKey={channel?.avatar ? getImageSrc(channel.avatar, '480w'): undefined}
                     alt="Channel avatar"
                     fill
                     className="object-cover"

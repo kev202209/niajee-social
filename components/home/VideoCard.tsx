@@ -6,6 +6,7 @@ import timeAgo from "../../app/utils/timeAgo";
 import Hls from 'hls.js';
 import AuthenticatedImage from "@/components/Image";
 import { getFullUrl } from "@/app/utils/videourl";
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 function useOutsideClick(
   ref: React.RefObject<HTMLElement | null>,
@@ -191,7 +192,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
         >
           {/* Thumbnail */}
           <AuthenticatedImage
-            mediaKey={video.thumbnail}
+            mediaKey={getImageSrc(video.thumbnail, '480w')}
             alt={video.title}
             fill
             className="absolute inset-0 object-cover w-full h-full"
@@ -242,7 +243,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
             <Link href={`/channels/${video.channel.handle}`}>
               {video.channel.avatar ? (
                 <AuthenticatedImage
-                  mediaKey={video.channel.avatar}
+                  mediaKey={getImageSrc(video.channel.avatar, '480w')}
                   alt={video.channel.name}
                   width={36}
                   height={36}

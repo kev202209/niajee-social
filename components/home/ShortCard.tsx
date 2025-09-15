@@ -6,6 +6,7 @@ import Link from "next/link";
 import AuthenticatedImage from "@/components/Image";
 import Hls from 'hls.js';
 import { getFullUrl } from "@/app/utils/videourl";
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -199,7 +200,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
         >
            {/* Thumbnail */}
            <AuthenticatedImage
-             mediaKey={short.thumbnailUrl ?? ""}
+             mediaKey={getImageSrc(short.thumbnailUrl, '480w')}
              alt={short.title}
              fill
              className="absolute inset-0 object-cover w-full h-full"
@@ -259,7 +260,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
             >
               {short.channel.avatar ? (
                 <AuthenticatedImage
-                  mediaKey={short.channel.avatar}
+                  mediaKey={getImageSrc(short.channel.avatar, '480w')}
                   alt={short.channel.name}
                   width={24}
                   height={24}

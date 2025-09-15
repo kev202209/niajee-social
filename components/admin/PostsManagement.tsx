@@ -15,6 +15,7 @@ import {
   FiAlertTriangle,
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface Post {
   id: string;
@@ -278,7 +279,7 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
               <div className="grid grid-cols-2 gap-2">
                 {post.images.map((image, index) => (
                   <Image
-                    key={index}
+                    key={getImageSrc(index , '480w')}
                     src={image}
                     alt={`Post image ${index + 1}`}
                     width={400}
@@ -295,7 +296,7 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
               <h5 className="font-medium text-gray-900 dark:text-white mb-2">Author</h5>
               <div className="flex items-center gap-2">
                 <Image
-                  src={post.author.avatar || '/placeholder.png'}
+                  src={getImageSrc(post.author.avatar, '480w') || '/placeholder.png'}
                   alt={post.author.name}
                   width={32}
                   height={32}
@@ -477,7 +478,7 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
             <div key={post.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
               {post.images && post.images.length > 0 && (
                 <Image
-                  src={post.images[0]}
+                  src={getImageSrc(post.images[0], '480w')}
                   alt={post.title}
                   width={600}
                   height={192}
@@ -509,7 +510,7 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
                 
                 <div className="flex items-center gap-2 mb-4">
                   <Image
-                    src={post.author.avatar || '/placeholder.png'}
+                    src={getImageSrc( post.author.avatar, '480w') || '/placeholder.png'}
                     alt={post.author.name}
                     width={32}
                     height={32}

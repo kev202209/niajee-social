@@ -14,6 +14,7 @@ import {
   FiMessageCircle,
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface ContentItem {
   id: string;
@@ -322,7 +323,7 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
                     
                     <div className="flex items-center gap-2 mb-3">
                       <Image
-                        src={item.author.avatar || '/placeholder.png'}
+                        src={getImageSrc(item.author.avatar, '480w') || '/placeholder.png'}
                         alt={item.author.name}
                         width={24}
                         height={24}

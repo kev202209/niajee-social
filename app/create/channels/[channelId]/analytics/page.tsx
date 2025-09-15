@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Channel } from '@/types';
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiCalendar, FiLoader } from 'react-icons/fi';
 import AuthenticatedImage from "@/components/Image";
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface AnalyticsData {
   totalViews: number;
@@ -284,7 +285,7 @@ export default function ChannelAnalyticsPage() {
                   </span>
                   <div className="relative w-16 h-12">
                     <AuthenticatedImage
-                      mediaKey={video.thumbnail}
+                      mediaKey={ getImageSrc(video.thumbnail, '480w')}
                       alt={video.title}
                       fill
                       className="object-cover rounded"

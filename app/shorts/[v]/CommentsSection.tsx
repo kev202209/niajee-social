@@ -11,6 +11,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import AuthenticatedImage from "@/components/Image";
 import timeAgo from '@/app/utils/timeAgo';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface Comment {
   id: string;
@@ -276,7 +277,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
     return (
       <div className="flex space-x-3 relative">
         <AuthenticatedImage
-          mediaKey={comment.user.profilePic || ""}
+          mediaKey={getImageSrc(comment.user.profilePic, '480w') || ""}
           alt={comment.user.username}
           width={32}
           height={32}
@@ -489,7 +490,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
             <div className="p-2">
               <div className="flex items-center space-x-2">
                 <AuthenticatedImage
-                  mediaKey={user?.profilePic || ""}
+                  mediaKey={getImageSrc(user?.profilePic, '480w') || ""}
                   alt="User"
                   width={24}
                   height={24}
@@ -628,7 +629,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
             <div className="p-3">
               <div className="flex items-center space-x-2">
                 <AuthenticatedImage
-                  mediaKey={user?.profilePic || ""}
+                  mediaKey={getImageSrc(user?.profilePic, '480w') || ""}
                   alt="User"
                   width={24}
                   height={24}

@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
 import Image from 'next/image';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface User {
   id: string;
@@ -403,7 +404,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
                         <div className="flex-shrink-0 h-12 w-12">
                           <Image
                             className="h-12 w-12 rounded-full object-cover"
-                            src={user.avatar || '/placeholder.png'}
+                            src={getImageSrc(user.avatar, '480w') || '/placeholder.png'}
                             alt={user.name}
                             width={48}
                             height={48}

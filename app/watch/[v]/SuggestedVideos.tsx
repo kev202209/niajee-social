@@ -6,6 +6,7 @@ import { SuggestedVideo } from "../../../types";
 import AuthenticatedImage from "@/components/Image";
 import Link from "next/link";
 import timeAgo from "@/app/utils/timeAgo";
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface SuggestedVideosProps {
   videoId: string;
@@ -254,7 +255,7 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
         <div className="relative w-40 h-24 flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
           {video.thumbnailUrl ? (
             <AuthenticatedImage
-              mediaKey={video.thumbnailUrl}
+              mediaKey={getImageSrc(video.thumbnailUrl, '480w')}
               alt={video.title}
               fill
               className="object-cover"

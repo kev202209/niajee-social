@@ -8,6 +8,7 @@ import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiClock, FiPlay, FiCalendar, FiS
 import ChannelOverviewSkeleton from './ChannelOverviewSkeleton'
 import AuthenticatedImage from "@/components/Image"; // Add this import at the top
 import timeAgo from '@/app/utils/timeAgo';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface ChannelStats {
   totalViews: number | null;
@@ -281,7 +282,7 @@ export default function ChannelOverview() {
           <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
             {channel.avatar ? (
               <AuthenticatedImage
-                mediaKey={channel.avatar}
+                mediaKey={getImageSrc(channel.avatar, '480w')}
                 alt={channel.name}
                 width={64}
                 height={64}

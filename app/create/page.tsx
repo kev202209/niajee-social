@@ -5,6 +5,7 @@ import { Channel } from '@/types';
 import { FiUsers, FiVideo, FiEye, FiPlus, FiTrendingUp, FiUpload, FiPlayCircle } from 'react-icons/fi';
 import Link from 'next/link';
 import Image from 'next/image';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface DashboardStats {
   totalViews: number;
@@ -192,7 +193,7 @@ const CreateDashboard: FC = () => {
                     <div className="relative w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
                       {channel.avatar ? (
                         <Image 
-                          src={channel.avatar} 
+                          src={ getImageSrc(channel.avatar, '480w') } 
                           alt={channel.name} 
                           width={48}
                           height={48}

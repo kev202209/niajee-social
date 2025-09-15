@@ -9,6 +9,7 @@ import { SquareChevronLeft, SquareChevronRight } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { usePathname } from 'next/navigation'
 import ProfileMenu from "@/components/home/ProfileMenu"
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface CreateHeaderProps {
   toggleSidebar?: () => void
@@ -87,7 +88,7 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
               className="focus:outline-none"
             >
               <AuthenticatedImage
-                mediaKey={typeof user?.profilePic === "string" && user.profilePic ? user.profilePic : ""}
+                mediaKey={user!.profilePic ? getImageSrc(user!.profilePic, '480w') : ""}
                 alt="Profile"
                 width={36}
                 height={36}

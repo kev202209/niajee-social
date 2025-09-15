@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Blog } from '@/types';
 import { FiHeart, FiMessageCircle, FiEye, FiClock, FiBookmark, FiShare2, FiStar } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 // Narrowed navigator shape for sharing/clipboard (no `any`)
 type NavigatorShare = Navigator & {
@@ -119,7 +120,7 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
         <div className="relative aspect-video bg-gray-200 dark:bg-gray-700">
           {blog.featuredImage && !imageError ? (
             <Image
-              src={blog.featuredImage}
+              src={getImageSrc(blog.featuredImage, '1080w')}
               alt={blog.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-200"
@@ -147,7 +148,7 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
           <div className="flex items-center space-x-2 mb-3">
             <div className="relative">
               <Image
-                src={blog.author.profilePic || '/default-avatar.png'}
+                src={getImageSrc(blog.author.profilePic, '480w') || '/default-avatar.png'}
                 alt={blog.author.displayName}
                 width={24}
                 height={24}

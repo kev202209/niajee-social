@@ -5,6 +5,7 @@ import AuthenticatedImage from "@/components/Image";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import timeAgo from '@/app/utils/timeAgo';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface BlogCommentsProps {
   blogId: string;
@@ -151,7 +152,7 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
     return (
       <div className={`flex gap-3 ${isReply ? "ml-12" : ""} relative`}>
       <AuthenticatedImage
-        mediaKey={c.user?.profilePic || ""}
+        mediaKey={getImageSrc(c.user?.profilePic, '480w') || ""}
         alt={c.user?.displayName || c.user?.username || "User"}
         width={40}
         height={40}
@@ -293,7 +294,7 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
       {user ? (
         <form onSubmit={handleSubmit} className="mb-6 flex gap-3 items-start">
         <AuthenticatedImage
-          mediaKey={user?.profilePic || ""}
+          mediaKey={getImageSrc(user?.profilePic, '480w') || ""}
           width={40}
           height={40}
           alt="You"

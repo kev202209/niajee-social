@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import AuthenticatedImage from "@/components/Image";
 import { FiList } from 'react-icons/fi';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 const channelSidebarItems = [
   { label: 'Overview', icon: Home, href: '' },
@@ -109,7 +110,7 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
               {channel?.avatar ? (
                 <AuthenticatedImage
-                  mediaKey={channel.avatar}
+                  mediaKey={getImageSrc(channel.avatar, '480w')}
                   alt={channel.name}
                   width={40}
                   height={40}

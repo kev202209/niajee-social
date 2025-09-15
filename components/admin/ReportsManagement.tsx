@@ -10,6 +10,7 @@ import {
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
 import Image from 'next/image';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface Report {
   id: string;
@@ -301,7 +302,7 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
                         <div className="flex-shrink-0 h-12 w-16">
                           <Image
                             className="h-12 w-16 rounded object-cover"
-                            src={report.contentThumbnail || '/placeholder-video.jpg'}
+                            src={getImageSrc(report.contentThumbnail, '480w') || '/placeholder-video.jpg'}
                             alt={report.contentTitle}
                             width={64}
                             height={48}
@@ -325,7 +326,7 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
                         <div className="flex-shrink-0 h-8 w-8">
                           <Image
                             className="h-8 w-8 rounded-full object-cover"
-                            src={report.reporter.avatar || '/placeholder.png'}
+                            src={getImageSrc(report.reporter.avatar, '480w') || '/placeholder.png'}
                             alt={report.reporter.name}
                             width={32}
                             height={32}

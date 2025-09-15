@@ -5,6 +5,7 @@ import TweetFeedSkeleton from "./TweetFeedSkeleton";
 import { FiMessageCircle, FiRepeat, FiHeart, FiBookmark, FiShare, FiRefreshCw } from "react-icons/fi";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
 import timeAgo from "@/app/utils/timeAgo";
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 const TweetFeed: FC = () => {
   const [tweets, setTweets] = useState<Tweet[]>([]);
@@ -145,8 +146,8 @@ const TweetFeed: FC = () => {
               <li key={tweet.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 hover:shadow-md transition-shadow">
                 <div className="flex">
                   <AuthenticatedImage
-                    mediaKey={tweet.profilePic || ""}
-                    alt={tweet.username}
+                    mediaKey={tweet.user.profilePic ? getImageSrc(tweet.user.profilePic, '480w') : ""}
+                    alt={tweet.user.username}
                     width={32}
                     height={32}
                     className="rounded-full h-8 w-8 flex-shrink-0"

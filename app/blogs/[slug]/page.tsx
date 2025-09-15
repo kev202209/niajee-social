@@ -15,6 +15,7 @@ import { FiClock, FiEye, FiCalendar, FiTag, FiArrowLeft, FiShare2, FiExternalLin
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthenticatedImage from "@/components/Image";
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 // Block content renderer component
 interface BlockData {
@@ -645,7 +646,7 @@ export default function BlogDetailPage() {
                 <div className="flex items-center space-x-2">
                   <div className="relative">
                     <AuthenticatedImage
-                      mediaKey={blog.author.profilePic || ""}
+                      mediaKey={getImageSrc(blog.author.profilePic, '480w') || ""}
                       alt={blog.author.displayName}
                       width={32}
                       height={32}
@@ -703,7 +704,7 @@ export default function BlogDetailPage() {
               <div className="px-6 mb-6">
                 <div className="relative aspect-video rounded-lg overflow-hidden">
                   <AuthenticatedImage
-                    mediaKey={blog.featuredImage}
+                    mediaKey={getImage(blog.featuredImage, '1080w')}
                     alt={blog.title}
                     fill
                     className="object-cover"

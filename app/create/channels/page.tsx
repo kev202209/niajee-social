@@ -4,6 +4,7 @@ import React, { useEffect, useState, FC } from 'react';
 import AuthenticatedImage from "@/components/Image";
 import { DetailedChannel as Channel } from '@/types';
 import { FiSettings, FiUsers, FiVideo, FiEye, FiPlus, FiRefreshCw } from 'react-icons/fi';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 const ChannelsPage: FC = () => {
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -173,7 +174,7 @@ const ChannelsPage: FC = () => {
                   {ch.banner ? (
                     <div className="relative w-full h-full">
                       <AuthenticatedImage
-                        mediaKey={ch.banner}
+                        mediaKey={getImageSrc(ch.banner, '1080w')}
                         alt={`${ch.name} banner`}
                         fill
                         className="object-cover"
@@ -189,7 +190,7 @@ const ChannelsPage: FC = () => {
                       {ch.avatar ? (
                         <div className="relative w-full h-full">
                           <AuthenticatedImage
-                            mediaKey={ch.avatar}
+                            mediaKey={getImageSrc(ch.avatar, '480w')}
                             alt={ch.name}
                             fill
                             className="object-cover"

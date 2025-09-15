@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Header from '@/components/home/Header';
 import Sidebar from '@/components/home/Sidebar';
 import { FiUsers, FiVideo, FiPlay, FiBell } from 'react-icons/fi';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -139,7 +140,7 @@ export default function ChannelPage() {
             {/* Avatar overlaps banner */}
             <div className="absolute left-8 bottom-[-48px] z-10">
               <AuthenticatedImage
-                mediaKey={channel.avatar}
+                mediaKey={getImageSrc(channel.avatar, '480w')}
                 alt={channel.name}
                 width={96}
                 height={96}
@@ -231,7 +232,7 @@ export default function ChannelPage() {
                       <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition overflow-hidden group">
                         <div className="relative">
                           <AuthenticatedImage
-                            mediaKey={video.thumbnail}
+                            mediaKey={getImageSrc(video.thumbnail, '480w')}
                             alt={video.title}
                             width={320}
                             height={180}
@@ -273,7 +274,7 @@ export default function ChannelPage() {
                       <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition overflow-hidden group">
                         <div className="relative">
                           <AuthenticatedImage
-                            mediaKey={short.thumbnail}
+                            mediaKey={getImageSrc(short.thumbnail, '480w')}
                             alt={short.title}
                             width={180}
                             height={320}

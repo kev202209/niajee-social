@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import AuthenticatedImage from '@/components/Image';
 import timeAgo from '@/app/utils/timeAgo';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface UploadItem {
   id: string;
@@ -246,7 +247,7 @@ const ManageUploadsPage = () => {
                   <div className="w-32 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center">
                     {upload.thumbnail ? (
                       <AuthenticatedImage
-                        mediaKey={upload.thumbnail}
+                        mediaKey={getImageSrc(upload.thumbnail, '480w')}
                         alt={upload.title}
                         width={128}
                         height={80}

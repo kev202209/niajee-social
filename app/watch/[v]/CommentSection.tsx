@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import TextAreaWithLimit from '@/components/ui/TextAreaWithLimit';
 import timeAgo from '@/app/utils/timeAgo';
 import AuthenticatedImage from "@/components/Image";
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface CommentsSectionProps {
   videoId: string;
@@ -382,7 +383,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
     return (
       <div className={`flex gap-3 ${isReply ? 'ml-12' : ''} relative`}>
         <AuthenticatedImage
-          mediaKey={comment.user.profilePic || "/placeholder.png"}
+          mediaKey={getImageSrc(comment.user.profilePic, '480w') || "/placeholder.png"}
           alt={comment.user.username}
           width={40}
           height={40}
@@ -514,7 +515,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
             <div className="mt-3">
               <div className="flex gap-3">
                 <AuthenticatedImage
-                  mediaKey={user?.profilePic || "/placeholder.png"}
+                  mediaKey={getImageSrc(user?.profilePic, '480w') || "/placeholder.png"}
                   alt="You"
                   width={32}
                   height={32}
@@ -628,7 +629,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
         <form onSubmit={handleSubmitComment} className="space-y-4">
           <div className="flex gap-3">
             <AuthenticatedImage
-              mediaKey={user?.profilePic || "/placeholder.png"}
+              mediaKey={getImageSrc(user?.profilePic, '480w') || "/placeholder.png"}
               alt="You"
               width={40}
               height={40}

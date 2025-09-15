@@ -17,99 +17,13 @@ import {
   FiUser
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
+import { getImageSrc } from '@/app/utils/imageUtils';
+import { Blog, BlogReport, RawBlog, RawReport } from '@/types';
 
 const BLOG_IMAGES_BASE_URL = 'http://localhost:5000/uploads/blogs/';
 const PROFILE_IMAGES_BASE_URL = 'http://localhost:5000/uploads/profiles/';
 
-interface Blog {
-  id: string;
-  title: string;
-  content: string;
-  excerpt: string;
-  featuredImage?: string;
-  author: {
-    id: string;
-    name: string;
-    username: string;
-    avatar: string;
-  };
-  category: {
-    id: string;
-    name: string;
-    slug: string;
-  };
-  tags: string[];
-  likes: number;
-  comments: number;
-  shares: number;
-  views: number;
-  readTime: number;
-  status: 'draft' | 'published' | 'archived';
-  featured: boolean;
-  sensitive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string;
-}
-interface RawBlog {
-  id: string;
-  title?: string;
-  content?: string;
-  excerpt?: string;
-  featuredImage?: string | null;
-  authorId?: string;
-  authorUsername?: string;
-  authorAvatar?: string | null;
-  categoryId?: string;
-  categoryName?: string;
-  categorySlug?: string;
-  tags?: string[];
-  likeCount?: number;
-  commentCount?: number;
-  shareCount?: number;
-  viewCount?: number;
-  readTime?: number;
-  status?: string;
-  isFeatured?: boolean;
-  isSensitive?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-  publishedAt?: string;
-}
 
-interface RawReport {
-  id: string;
-  blogId?: string;
-  blogTitle?: string;
-  blogAuthorName?: string;
-  blogAuthorUsername?: string;
-  reporterUsername?: string;
-  reason?: string;
-  description?: string;
-  status?: 'pending' | 'reviewed' | 'resolved';
-  reviewNotes?: string;
-  createdAt?: string;
-  reviewedAt?: string;
-}
-interface BlogReport {
-  id: string;
-  blog: Blog;
-  reporter: {
-    id: string;
-    name: string;
-    username: string;
-  };
-  reason: string;
-  description: string;
-  status: 'pending' | 'reviewed' | 'resolved';
-  reviewNotes?: string;
-  createdAt: string;
-  reviewedAt?: string;
-}
-
-interface BlogsManagementProps {
-  userRole: string;
-}
 
 export default function BlogsManagement({ userRole }: BlogsManagementProps) {
   const [activeTab, setActiveTab] = useState<'blogs' | 'reports'>('blogs');
@@ -466,7 +380,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
           {blog.featuredImage && (
             <div className="relative w-full h-64">
               <Image
-                src={blog.featuredImage}
+                src={ getImageSrc(blog.featuredImage, '480w')}
                 alt={blog.title}
                 fill
                 className="object-cover rounded-lg"
@@ -502,7 +416,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                 <div className="relative w-10 h-10">
                   {blog.author.avatar ? (
                     <Image
-                      src={blog.author.avatar}
+                      src={getImageSrc(blog.author.avatar, '480w')}
                       alt={blog.author.name}
                       width={40}
                       height={40}
@@ -901,7 +815,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                 {blog.featuredImage && (
                   <div className="relative w-full h-48">
                     <Image
-                      src={blog.featuredImage}
+                      src={getImageSrc(blog.featuredImage, '480w')}
                       alt={blog.title}
                       fill
                       className="object-cover"
@@ -934,7 +848,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                     <div className="relative w-8 h-8">
                       {blog.author.avatar ? (
                         <Image
-                          src={blog.author.avatar}
+                          src={getImageSrc(blog.author.avatar, '480w')}
                           alt={blog.author.name}
                           width={32}
                           height={32}

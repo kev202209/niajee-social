@@ -21,6 +21,7 @@ import useOutsideClick from '@/hooks/useOutsideClick';
 import { formatCount } from '@/app/utils/formatCount';
 import ShareService from '@/app/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 interface VideoMetaProps {
   video: Video;
@@ -338,7 +339,7 @@ useEffect(() => {
           <div className="flex items-center gap-3">
             <Link href={`/channels/${video.channel.handle}`}>
               <AuthenticatedImage
-                mediaKey={video.channel.avatar || ""}
+                mediaKey={video.channel.avatar ? getImageSrc(video.channel.avatar, '480w') : ""}
                 alt={video.channel.name}
                 width={48}
                 height={48}

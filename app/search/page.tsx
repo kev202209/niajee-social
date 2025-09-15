@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import timeAgo from '@/app/utils/timeAgo';
 import { formatCount } from '@/app/utils/formatCount';
 import type { User, Channel, mVideo, Short, Blog, Post } from '@/types';
+import { getImageSrc } from '../utils/imageUtils';
 
 // ---- Strongly Typed Search Result Models ----
 interface UserResult {
@@ -541,7 +542,7 @@ function SearchResultItem({ result }: { result: SearchResult }) {
               <div className="relative w-40 h-24 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
                 {result.thumbnail ? (
                   <AuthenticatedImage
-                    mediaKey={result.thumbnail}
+                    mediaKey={getImageSrc(result.thumbnail, '480w')}
                     alt={label}
                     fill
                     className="object-cover"
@@ -563,7 +564,7 @@ function SearchResultItem({ result }: { result: SearchResult }) {
               <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
                 {resultAvatar(result) ? (
                   <AuthenticatedImage
-                    mediaKey={resultAvatar(result) as string}
+                    mediaKey={getImageSrc(resultAvatar(result), '480w')}
                     alt={label}
                     width={48}
                     height={48}

@@ -16,6 +16,7 @@ import { formatCount } from '@/app/utils/formatCount';
 import ShareModal from '@/components/video/ShareModal';
 import ShareService from '@/app/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";
+import { getImageSrc } from '@/app/utils/imageUtils';
 
 // Define the video data structure here or import it from a shared types file
 interface ShortData {
@@ -301,7 +302,7 @@ const VideoActions = ({
           <div className="relative">
             <Link href={`/channels/${video.channel.handle}`}>
               <AuthenticatedImage
-                mediaKey={channel.avatar || ""}
+                mediaKey={getImageSrc(channel.avatar, '480w') || ""}
                 alt={channel.name}
                 width={48}
                 height={48}
