@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/home/Header';
 import Sidebar from '@/components/home/Sidebar';
-import  Button  from "@/components/ui/CustomButton";
+import Button from "@/components/ui/CustomButton";
 import { toast } from "sonner";
 import BlockEditor from '@/components/blog/BlockEditor';
 import type { OutputData } from "@editorjs/editorjs";
 import { CreateBlogDto } from '@/types';
-import { FiBookmark, FiEye, FiUpload, FiX, FiArrowLeft } from 'react-icons/fi';
+import { FiBookmark, FiEye, FiUpload, FiX, FiArrowLeft, FiLoader } from 'react-icons/fi';
 import { useAuth } from '@/contexts/AuthContext';
 
 const CATEGORIES = [
@@ -46,17 +46,12 @@ export default function CreateBlogPage() {
   
   const [featuredImage, setFeaturedImage] = useState<File | null>(null);
   const [featuredImagePreview, setFeaturedImagePreview] = useState<string>('');
+  const [featuredImageUploading, setFeaturedImageUploading] = useState(false);
+  const [featuredImageS3Key, setFeaturedImageS3Key] = useState<string>('');
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPreview, setShowPreview] = useState(false);
-
-  // Redirect if not authenticated
-  // useEffect(() => {
-  //   if (!user) {
-  //     router.push('/login?redirect=/blogs/create');
-  //   }
-  // }, [user, router]);
 
   const handleInputChange = <K extends keyof CreateBlogDto>(field: K, value: CreateBlogDto[K]) => {
     setFormData(prev => ({ ...prev, [field]: value } as CreateBlogDto));
@@ -66,7 +61,7 @@ export default function CreateBlogPage() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -83,6 +78,7 @@ export default function CreateBlogPage() {
     }
 
     setFeaturedImage(file);
+    setFeaturedImageUploading(true);
     
     // Create preview
     const reader = new FileReader();
@@ -90,14 +86,63 @@ export default function CreateBlogPage() {
       setFeaturedImagePreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
-    
-    // Clear error
-    setErrors(prev => ({ ...prev, featuredImage: '' }));
+
+    try {
+      // Step 1: Get presigned URL
+      const presignedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/presigned-upload`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'featured',
+          fileName: file.name,
+          // blogId will be provided when blog is created
+        })
+      });
+
+      if (!presignedResponse.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+
+      const { presignedUrl, s3Key } = await presignedResponse.json();
+
+      // Step 2: Upload to S3
+      const uploadResponse = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        }
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      setFeaturedImageS3Key(s3Key);
+      
+      // Clear error
+      setErrors(prev => ({ ...prev, featuredImage: '' }));
+      toast.success('Featured image uploaded successfully!');
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      setErrors(prev => ({ 
+        ...prev, 
+        featuredImage: error instanceof Error ? error.message : 'Upload failed' 
+      }));
+      toast.error('Failed to upload image');
+      // Keep the preview but clear the uploaded state
+      setFeaturedImageS3Key('');
+    } finally {
+      setFeaturedImageUploading(false);
+    }
   };
 
   const removeImage = () => {
     setFeaturedImage(null);
     setFeaturedImagePreview('');
+    setFeaturedImageS3Key('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -160,60 +205,82 @@ export default function CreateBlogPage() {
     setIsSubmitting(true);
 
     try {
-      const submitData = new FormData();
-      submitData.append('title', formData.title);
-      submitData.append('content', JSON.stringify(formData.content?.blocks ?? []));
-      submitData.append('excerpt', formData.excerpt || '');
-      submitData.append('category', formData.category || '');
+      // Step 1: Create the blog with basic data (JSON, not FormData)
+      const blogData = {
+        title: formData.title,
+        content: JSON.stringify(formData.content?.blocks ?? []),
+        excerpt: formData.excerpt || '',
+        category: formData.category || '',
+        tags: formData.tags ?? [],
+        status,
+        // Optional fields
+        subtitle: formData.subtitle || '',
+        slug: formData.slug || '',
+        channelId: formData.channelId || '',
+        allowComments: formData.allowComments ?? true,
+        allowHighlighting: formData.allowHighlighting ?? true,
+        allowResponses: formData.allowResponses ?? true,
+        isMonetized: formData.isMonetized ?? false,
+        isPremium: formData.isPremium ?? false,
+        topics: formData.topics || [],
+        seoMetadata: formData.seoMetadata ? JSON.stringify(formData.seoMetadata) : undefined,
+        customCSS: formData.customCSS || '',
+        isSensitive: formData.isSensitive ?? false,
+        contentWarning: formData.contentWarning || '',
+      };
 
-      // Send tags as array (tags[])
-      (formData.tags ?? []).forEach(tag => submitData.append('tags', tag));
-
-      submitData.append('status', status);
-
-      // Optional fields with defaults
-      submitData.append('subtitle', formData.subtitle || '');
-      submitData.append('slug', formData.slug || '');
-      submitData.append('channelId', formData.channelId || '');
-      submitData.append('allowComments', String(formData.allowComments ?? true));
-      submitData.append('allowHighlighting', String(formData.allowHighlighting ?? true));
-      submitData.append('allowResponses', String(formData.allowResponses ?? true));
-      submitData.append('isMonetized', String(formData.isMonetized ?? false));
-      submitData.append('isPremium', String(formData.isPremium ?? false));
-      // topics, seoMetadata, customCSS, isSensitive, contentWarning
-      (formData.topics || []).forEach(topic => submitData.append('topics', topic));
-      if (formData.seoMetadata) submitData.append('seoMetadata', JSON.stringify(formData.seoMetadata));
-      if (formData.customCSS) submitData.append('customCSS', formData.customCSS);
-      submitData.append('isSensitive', String(formData.isSensitive ?? false));
-      if (formData.contentWarning) submitData.append('contentWarning', formData.contentWarning);
-
-      if (featuredImage) {
-        submitData.append('featuredImage', featuredImage);
-      }
-      
-      console.log('---------Submitting data:', submitData);
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs`, {
         method: 'POST',
         credentials: 'include',
-        body: submitData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(blogData),
       });
 
       const data = await response.json();
 
-      if (data.success) {
-        toast.success(`Blog ${status === 'published' ? 'published' : 'saved'} successfully!`);
-        router.push(`/blogs/${data.data.slug}`);
-      } else {
-        toast.error(data.message || 'Failed to create blog');
-        setErrors({ submit: data.message || 'Failed to create blog' });
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to create blog');
       }
+
+      const createdBlog = data.data;
+      
+      // Step 2: If there's a featured image, start processing
+      if (featuredImageS3Key && createdBlog.id) {
+        try {
+          // Update the S3 key to use the actual blog ID instead of 'temp'
+          const actualS3Key = featuredImageS3Key.replace('uploads/blogs/temp/', `uploads/blogs/${createdBlog.id}/`);
+          
+          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/start-image-processing`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              blogId: createdBlog.id,
+              type: 'featured',
+              s3Key: actualS3Key,
+            })
+          });
+          
+          toast.success('Featured image is being processed...');
+        } catch (imageError) {
+          console.error('Image processing error:', imageError);
+          // Don't fail the whole operation if image processing fails
+          toast.warning('Blog created but image processing failed');
+        }
+      }
+
+      toast.success(`Blog ${status === 'published' ? 'published' : 'saved'} successfully!`);
+      router.push(`/blogs/${createdBlog.slug}`);
+      
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to create blog';
       toast.error(message);
       setErrors({ submit: message });
-     } finally {
-       setIsSubmitting(false);
-     }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Simple, safe preview renderer — avoids using `any` and prevents XSS by escaping HTML.
@@ -364,14 +431,25 @@ export default function CreateBlogPage() {
                       accept="image/*"
                       onChange={handleImageUpload}
                       className="hidden"
+                      disabled={featuredImageUploading}
                     />
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-full flex items-center justify-center px-4 py-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+                      disabled={featuredImageUploading}
+                      className="w-full flex items-center justify-center px-4 py-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50"
                     >
-                      <FiUpload className="w-5 h-5 mr-2" />
-                      Upload Image
+                      {featuredImageUploading ? (
+                        <>
+                          <FiLoader className="w-5 h-5 mr-2 animate-spin" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <FiUpload className="w-5 h-5 mr-2" />
+                          Upload Image
+                        </>
+                      )}
                     </button>
                     {errors.featuredImage && (
                       <p className="text-sm text-red-600 dark:text-red-400">{errors.featuredImage}</p>
@@ -390,10 +468,19 @@ export default function CreateBlogPage() {
                       fill
                       className="object-cover"
                     />
+                    {featuredImageUploading && (
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="text-white text-sm flex items-center space-x-2">
+                          <FiLoader className="w-4 h-4 animate-spin" />
+                          <span>Uploading...</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={removeImage}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                    disabled={featuredImageUploading}
+                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors disabled:opacity-50"
                   >
                     <FiX className="w-4 h-4" />
                   </button>
