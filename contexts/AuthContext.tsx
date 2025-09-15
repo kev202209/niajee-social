@@ -165,7 +165,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const verifyEmail = async (token: string) => {
     try {
       const response = await fetch(`${api_link}/auth/verify-email/${token}`, {
-        method: 'POST'
+        method: 'POST',
+        credentials: 'include',
       });
 
       if (!response.ok) {
