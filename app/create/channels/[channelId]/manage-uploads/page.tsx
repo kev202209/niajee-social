@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { Channel } from '@/types';
+import { Channel, UploadItem, getImageSrcSafe } from '@/types';
 import { 
   FiUpload, 
   FiLoader, 
@@ -20,26 +20,6 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import AuthenticatedImage from '@/components/Image';
 import timeAgo from '@/app/utils/timeAgo';
-import { getImageSrc } from '@/app/utils/imageUtils';
-
-interface UploadItem {
-  id: string;
-  uploadId: string;
-  title: string;
-  description: string;
-  contentType: 'video' | 'short';
-  processingStatus: 'processing' | 'complete' | 'failed' | 'queued';
-  processingProgress: number;
-  thumbnail?: string;
-  duration?: number;
-  fileSize: number;
-  createdAt: string;
-  updatedAt: string;
-  r2Key?: string;
-  videoId?: string;
-  shortId?: string;
-  errorMessage?: string;
-}
 
 const ManageUploadsPage = () => {
   const params = useParams();
@@ -247,7 +227,7 @@ const ManageUploadsPage = () => {
                   <div className="w-32 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center">
                     {upload.thumbnail ? (
                       <AuthenticatedImage
-                        mediaKey={getImageSrc(upload.thumbnail, '480w')}
+                        mediaKey={getImageSrcSafe(upload.thumbnail, '480w')}
                         alt={upload.title}
                         width={128}
                         height={80}

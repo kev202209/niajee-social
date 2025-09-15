@@ -5,7 +5,7 @@ import { Channel } from '@/types';
 import { FiUsers, FiVideo, FiEye, FiPlus, FiTrendingUp, FiUpload, FiPlayCircle } from 'react-icons/fi';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '../utils/imageUtils';
 
 interface DashboardStats {
   totalViews: number;
@@ -182,53 +182,58 @@ const CreateDashboard: FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {channels.slice(0, 6).map((channel) => (
-              <Link
-                key={channel.id}
-                href={`/create/channels/${channel.id}`}
-                className="block bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
-              >
-                <div className="p-4">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="relative w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
-                      {channel.avatar ? (
-                        <Image 
-                          src={ getImageSrc(channel.avatar, '480w') } 
-                          alt={channel.name} 
-                          width={48}
-                          height={48}
-                          className="w-full h-full rounded-full object-cover" 
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = '/placeholder.png';
-                          }}
-                        />
-                      ) : (
-                        <FiVideo className="w-6 h-6 text-white" />
-                      )}
+            {channels.slice(0, 6).map((channel) => {
+              // Get the image source safely
+              const avatarSrc = getImageSrc(channel.avatar, '480w');
+              
+              return (
+                <Link
+                  key={channel.id}
+                  href={`/create/channels/${channel.id}`}
+                  className="block bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow"
+                >
+                  <div className="p-4">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="relative w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
+                        {avatarSrc ? (
+                          <Image 
+                            src={avatarSrc} 
+                            alt={channel.name} 
+                            width={48}
+                            height={48}
+                            className="w-full h-full rounded-full object-cover" 
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = '/placeholder.png';
+                            }}
+                          />
+                        ) : (
+                          <FiVideo className="w-6 h-6 text-white" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">{channel.name}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">@{channel.handle}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">{channel.name}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">@{channel.handle}</p>
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <p className="text-lg font-semibold text-gray-900 dark:text-white">{channel.subscriberCount || 0}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Subscribers</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-gray-900 dark:text-white">{channel.videoCount || 0}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Videos</p>
+                      </div>
+                      <div>
+                        <p className="text-lg font-semibold text-gray-900 dark:text-white">{channel.viewCount || 0}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Views</p>
+                      </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{channel.subscriberCount || 0}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Subscribers</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{channel.videoCount || 0}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Videos</p>
-                    </div>
-                    <div>
-                      <p className="text-lg font-semibold text-gray-900 dark:text-white">{channel.viewCount || 0}</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Views</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

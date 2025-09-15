@@ -7,11 +7,15 @@ import { ProcessedImage } from '@/types';
  * @returns The image URL string or undefined if no image
  */
 export const getImageSrc = (
-  image: ProcessedImage | null | undefined, 
+  image: ProcessedImage | string | null | undefined, 
   preferredSize: '480w' | '720w' | '1080w' = '720w'
 ): string | undefined => {
   if (!image) return undefined;
   
+  if (typeof image === 'string') {
+    // Legacy format or S3 key - return as is
+    return image;
+  }
   
   // New format - return the preferred variant or fall back to originalKey
   return image.variants?.[preferredSize] || image.originalKey;

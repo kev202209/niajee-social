@@ -7,40 +7,10 @@ import Link from 'next/link';
 import Header from '@/components/home/Header';
 import Sidebar from '@/components/home/Sidebar';
 import { FiUsers, FiVideo, FiPlay, FiBell } from 'react-icons/fi';
+import { Channel, ChannelStats, MediaItem, ChannelOverview, getImageSrcSafe } from '@/types';
 import { getImageSrc } from '@/app/utils/imageUtils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// Added minimal interfaces for typing (only the fields actually used in this component)
-interface Channel {
-  id: string;
-  avatar: string;
-  name: string;
-  handle: string;
-  description?: string;
-}
-
-interface ChannelStats {
-  subscriberCount?: number;
-  videoCount?: number;
-  shortCount?: number;
-  isSubscribed?: boolean;
-}
-
-interface MediaItem {
-  id: string;
-  thumbnail: string;
-  title: string;
-  views?: number;
-  publishedAt?: string;
-  duration?: string; // videos only
-}
-
-interface ChannelOverview {
-  stats?: ChannelStats;
-  videos?: MediaItem[];
-  shorts?: MediaItem[];
-}
 
 export default function ChannelPage() {
   const { handle } = useParams<{ handle: string }>();
@@ -140,7 +110,7 @@ export default function ChannelPage() {
             {/* Avatar overlaps banner */}
             <div className="absolute left-8 bottom-[-48px] z-10">
               <AuthenticatedImage
-                mediaKey={getImageSrc(channel.avatar, '480w')}
+                mediaKey={getImageSrcSafe(channel.avatar, '480w')}
                 alt={channel.name}
                 width={96}
                 height={96}
@@ -274,7 +244,7 @@ export default function ChannelPage() {
                       <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition overflow-hidden group">
                         <div className="relative">
                           <AuthenticatedImage
-                            mediaKey={getImageSrc(short.thumbnail, '480w')}
+                            mediaKey={getImageSrcSafe(short.thumbnail, '480w')}
                             alt={short.title}
                             width={180}
                             height={320}

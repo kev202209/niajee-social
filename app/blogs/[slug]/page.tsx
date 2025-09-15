@@ -704,7 +704,7 @@ export default function BlogDetailPage() {
               <div className="px-6 mb-6">
                 <div className="relative aspect-video rounded-lg overflow-hidden">
                   <AuthenticatedImage
-                    mediaKey={getImage(blog.featuredImage, '1080w')}
+                    mediaKey={getImageSrc(blog.featuredImage, '1080w')}
                     alt={blog.title}
                     fill
                     className="object-cover"

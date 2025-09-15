@@ -13,9 +13,10 @@ import {
   FiStar,
   FiHeart,
   FiAlertTriangle,
+  FiX,
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrcSafe } from '@/types';
 
 interface Post {
   id: string;
@@ -67,8 +68,6 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [showPostModal, setShowPostModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-
 
   // wrap fetchPosts so its identity is stable for useEffect deps
   const fetchPosts = useCallback(async () => {
@@ -258,7 +257,7 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
               onClick={onClose}
               className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
-              ×
+              <FiX className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -277,16 +276,27 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
             <div>
               <h5 className="font-medium text-gray-900 dark:text-white mb-2">Images</h5>
               <div className="grid grid-cols-2 gap-2">
-                {post.images.map((image, index) => (
-                  <Image
-                    key={getImageSrc(index , '480w')}
-                    src={image}
-                    alt={`Post image ${index + 1}`}
-                    width={400}
-                    height={200}
-                    className="w-full h-32 object-cover rounded-lg"
-                  />
-                ))}
+                {post.images.map((image, index) => {
+                  const imageSrc = getImageSrcSafe(image, '480w');
+                  return imageSrc ? (
+                    <Image
+                      key={`post-image-${index}`}
+                      src={imageSrc}
+                      alt={`Post image ${index + 1}`}
+                      width={400}
+                      height={200}
+                      className="w-full h-32 object-cover rounded-lg"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder-image.png';
+                      }}
+                    />
+                  ) : (
+                    <div key={`post-image-placeholder-${index}`} className="w-full h-32 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-400 text-sm">No image</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -296,11 +306,15 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
               <h5 className="font-medium text-gray-900 dark:text-white mb-2">Author</h5>
               <div className="flex items-center gap-2">
                 <Image
-                  src={getImageSrc(post.author.avatar, '480w') || '/placeholder.png'}
+                  src={getImageSrcSafe(post.author.avatar, '480w') || '/placeholder.png'}
                   alt={post.author.name}
                   width={32}
                   height={32}
                   className="w-8 h-8 rounded-full"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder.png';
+                  }}
                 />
                 <div>
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -474,139 +488,152 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
             </div>
           ))
         ) : (
-          posts.map((post) => (
-            <div key={post.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-              {post.images && post.images.length > 0 && (
-                <Image
-                  src={getImageSrc(post.images[0], '480w')}
-                  alt={post.title}
-                  width={600}
-                  height={192}
-                  className="w-full h-48 object-cover"
-                />
-              )}
-              
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">
-                    {post.title}
-                  </h3>
-                  <div className="flex items-center gap-1">
-                    {post.featured && (
-                      <FiStar className="w-4 h-4 text-yellow-500" />
-                    )}
-                    {post.sensitive && (
-                      <FiAlertTriangle className="w-4 h-4 text-red-500" />
-                    )}
-                    {post.flagged && (
-                      <FiFlag className="w-4 h-4 text-red-500" />
-                    )}
-                  </div>
-                </div>
-                
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
-                  {post.content}
-                </p>
-                
-                <div className="flex items-center gap-2 mb-4">
+          posts.map((post) => {
+            const firstImageSrc = post.images && post.images.length > 0 ? getImageSrcSafe(post.images[0], '480w') : null;
+            const authorAvatarSrc = getImageSrcSafe(post.author.avatar, '480w') || '/placeholder.png';
+            
+            return (
+              <div key={post.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
+                {firstImageSrc && (
                   <Image
-                    src={getImageSrc( post.author.avatar, '480w') || '/placeholder.png'}
-                    alt={post.author.name}
-                    width={32}
-                    height={32}
-                    className="w-8 h-8 rounded-full"
+                    src={firstImageSrc}
+                    alt={post.title}
+                    width={600}
+                    height={192}
+                    className="w-full h-48 object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder-image.png';
+                    }}
                   />
-                  <div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {post.author.name}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {post.community.name}
-                    </div>
-                  </div>
-                </div>
+                )}
                 
-                <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-4">
-                  <div className="flex items-center gap-4">
+                <div className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">
+                      {post.title}
+                    </h3>
                     <div className="flex items-center gap-1">
-                      <FiHeart className="w-4 h-4" />
-                      {formatCount(post.likes)}
+                      {post.featured && (
+                        <FiStar className="w-4 h-4 text-yellow-500" />
+                      )}
+                      {post.sensitive && (
+                        <FiAlertTriangle className="w-4 h-4 text-red-500" />
+                      )}
+                      {post.flagged && (
+                        <FiFlag className="w-4 h-4 text-red-500" />
+                      )}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <FiMessageSquare className="w-4 h-4" />
-                      {formatCount(post.comments)}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <FiEye className="w-4 h-4" />
-                      {formatCount(post.views)}
-                    </div>
-                  </div>
-                  <div className="text-xs">
-                    {new Date(post.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      post.published 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
-                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                    }`}>
-                      {post.published ? 'Published' : 'Draft'}
-                    </span>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedPost(post);
-                        setShowPostModal(true);
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">
+                    {post.content}
+                  </p>
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                    <Image
+                      src={authorAvatarSrc}
+                      alt={post.author.name}
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder.png';
                       }}
-                      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                    >
-                      <FiEye className="w-4 h-4" />
-                    </button>
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {post.author.name}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {post.community.name}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1">
+                        <FiHeart className="w-4 h-4" />
+                        {formatCount(post.likes)}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <FiMessageSquare className="w-4 h-4" />
+                        {formatCount(post.comments)}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <FiEye className="w-4 h-4" />
+                        {formatCount(post.views)}
+                      </div>
+                    </div>
+                    <div className="text-xs">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        post.published 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+                          : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                      }`}>
+                        {post.published ? 'Published' : 'Draft'}
+                      </span>
+                    </div>
                     
-                    <button
-                      onClick={() => {
-                        const reason = prompt('Enter flag reason:');
-                        if (reason) handleFlagPost(post.id, reason);
-                      }}
-                      disabled={actionLoading === post.id}
-                      className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 disabled:opacity-50"
-                    >
-                      <FiFlag className="w-4 h-4" />
-                    </button>
-                    
-                    {['ADMIN', 'SUPER_ADMIN'].includes(userRole) && (
-                      <>
-                        <button
-                          onClick={() => post.featured ? handleUnfeaturePost(post.id) : handleFeaturePost(post.id)}
-                          disabled={actionLoading === post.id}
-                          className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 disabled:opacity-50"
-                        >
-                          <FiStar className="w-4 h-4" />
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                            if (confirm('Are you sure you want to remove this post?')) {
-                              handleRemovePost(post.id);
-                            }
-                          }}
-                          disabled={actionLoading === post.id}
-                          className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
-                        >
-                          <FiTrash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedPost(post);
+                          setShowPostModal(true);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                      >
+                        <FiEye className="w-4 h-4" />
+                      </button>
+                      
+                      <button
+                        onClick={() => {
+                          const reason = prompt('Enter flag reason:');
+                          if (reason) handleFlagPost(post.id, reason);
+                        }}
+                        disabled={actionLoading === post.id}
+                        className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 disabled:opacity-50"
+                      >
+                        <FiFlag className="w-4 h-4" />
+                      </button>
+                      
+                      {['ADMIN', 'SUPER_ADMIN'].includes(userRole) && (
+                        <>
+                          <button
+                            onClick={() => post.featured ? handleUnfeaturePost(post.id) : handleFeaturePost(post.id)}
+                            disabled={actionLoading === post.id}
+                            className="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 disabled:opacity-50"
+                          >
+                            <FiStar className="w-4 h-4" />
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              if (confirm('Are you sure you want to remove this post?')) {
+                                handleRemovePost(post.id);
+                              }
+                            }}
+                            disabled={actionLoading === post.id}
+                            className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 disabled:opacity-50"
+                          >
+                            <FiTrash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

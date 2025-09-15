@@ -10,16 +10,16 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import timeAgo from '@/app/utils/timeAgo';
 import { formatCount } from '@/app/utils/formatCount';
-import type { User, Channel, mVideo, Short, Blog, Post } from '@/types';
-import { getImageSrc } from '../utils/imageUtils';
+import type { User, Channel, mVideo, Short, Blog, Post, ProcessedImage } from '@/types';
+import { getImageSrc } from '@/app/utils/imageUtils';
 
-// ---- Strongly Typed Search Result Models ----
+// ---- Updated Search Result Models with proper typing ----
 interface UserResult {
   id: string;
   type: 'user';
   username?: string;
   displayName?: string | null;
-  avatar?: string | null;
+  avatar?: ProcessedImage | string | null; // Updated to match ProcessedImage type
   verified?: boolean;
   followerCount?: number;
   createdAt?: string;
@@ -31,7 +31,7 @@ interface ChannelResult {
   handle?: string;
   title?: string;
   displayName?: string;
-  avatar?: string | null;
+  avatar?: ProcessedImage | string | null; // Updated to match ProcessedImage type
   verified?: boolean;
   followerCount?: number;
   videoCount?: number;
@@ -43,7 +43,7 @@ interface VideoResult {
   type: 'video';
   title?: string;
   description?: string;
-  thumbnail?: string;
+  thumbnail?: ProcessedImage | string | null; // Updated to match ProcessedImage type
   views?: number;
   duration?: string | number;
   createdAt?: string;
@@ -56,7 +56,7 @@ interface ShortResult {
   type: 'short';
   title?: string;
   description?: string;
-  thumbnail?: string;
+  thumbnail?: ProcessedImage | string | null; // Updated to match ProcessedImage type
   views?: number;
   createdAt?: string;
   channelName?: string;
@@ -72,7 +72,7 @@ interface PostResult {
   description?: string;
   username?: string;
   displayName?: string;
-  avatar?: string;
+  avatar?: ProcessedImage | string | null; // Updated to match ProcessedImage type
   verified?: boolean;
   createdAt?: string;
 }
@@ -85,7 +85,7 @@ interface BlogResult {
   createdAt?: string;
   username?: string;
   displayName?: string;
-  avatar?: string;
+  avatar?: ProcessedImage | string | null; // Updated to match ProcessedImage type
   verified?: boolean;
 }
 
@@ -104,7 +104,7 @@ interface TrendingItem {
   category?: string;
 }
 
-// Raw (partial) API shapes derived from existing global types
+// Raw API types remain the same...
 type RawUser = Partial<Pick<User, 'id' | 'username' | 'displayName' | 'profilePic'>> & {
   verified?: boolean;
   followerCount?: number;
@@ -120,7 +120,7 @@ type RawVideo = Partial<
   Pick<mVideo, 'id' | 'title' | 'description' | 'thumbnailUrl' | 'duration' | 'createdAt'>
 > & {
   videoId?: string;
-  thumbnail?: string;
+  thumbnail?: ProcessedImage | string;
   views?: number;
   viewCount?: number;
   channelName?: string;
@@ -131,7 +131,7 @@ type RawShort = Partial<
   Pick<Short, 'id' | 'title' | 'thumbnailUrl' | 'duration' | 'views' | 'createdAt' | 'caption'>
 > & {
   viewCount?: number;
-  thumbnail?: string;
+  thumbnail?: ProcessedImage | string;
   description?: string;
   channelName?: string;
   channel?: { name?: string; verified?: boolean };
@@ -142,15 +142,15 @@ type RawPost = Partial<
     title?: string;
     content?: string;
     desc?: string;
-    user?: { username?: string; displayName?: string; profilePic?: string; verified?: boolean };
-    author?: { username?: string; displayName?: string; profilePic?: string; verified?: boolean };
+    user?: { username?: string; displayName?: string; profilePic?: ProcessedImage | string; verified?: boolean };
+    author?: { username?: string; displayName?: string; profilePic?: ProcessedImage | string; verified?: boolean };
   }
 >;
 type RawBlog = Partial<
   Pick<Blog, 'id' | 'title' | 'excerpt' | 'subtitle' | 'publishedAt'> & {
     authorUsername?: string;
     authorDisplayName?: string;
-    authorProfilePic?: string;
+    authorProfilePic?: ProcessedImage | string;
     authorVerified?: boolean;
   }
 >;
@@ -169,7 +169,7 @@ const SEARCH_TYPES = [
 export default function SearchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  useAuth(); // ensure auth context
+  useAuth();
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const query = searchParams.get('q') || '';
@@ -181,7 +181,7 @@ export default function SearchPage() {
   const [error, setError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // ---- Format helpers (fully typed) ----
+  // ---- Updated format helpers to properly handle ProcessedImage ----
   const formatUsers = (users: RawUser[]): UserResult[] =>
     users
       .filter(u => !!u && typeof u.id === 'string')
@@ -190,7 +190,7 @@ export default function SearchPage() {
         type: 'user',
         username: u.username,
         displayName: u.displayName ?? u.username,
-        avatar: u.profilePic,
+        avatar: u.profilePic, // Now properly typed as ProcessedImage | string | null
         verified: u.verified,
         followerCount: u.followerCount,
         createdAt: u.createdAt,
@@ -205,7 +205,7 @@ export default function SearchPage() {
         handle: c.handle,
         title: c.name,
         displayName: c.name,
-        avatar: c.avatar,
+        avatar: c.avatar, // Now properly typed as ProcessedImage | string | null
         verified: c.verified,
         followerCount: c.followerCount,
         videoCount: c.videoCount,
@@ -220,7 +220,7 @@ export default function SearchPage() {
         type: 'video',
         title: v.title,
         description: v.description,
-        thumbnail: (v.thumbnail as string) || (v.thumbnailUrl as string),
+        thumbnail: v.thumbnail || v.thumbnailUrl, // Now properly typed
         views: v.views ?? v.viewCount,
         duration: v.duration,
         createdAt: v.createdAt || v.publishedAt,
@@ -236,7 +236,7 @@ export default function SearchPage() {
         type: 'short',
         title: s.title,
         description: s.caption || s.description,
-        thumbnail: s.thumbnailUrl || s.thumbnail,
+        thumbnail: s.thumbnailUrl || s.thumbnail, // Now properly typed
         views: s.views ?? s.viewCount,
         createdAt: s.createdAt || s.publishedAt,
         channelName: s.channel?.name || s.channelName,
@@ -259,7 +259,7 @@ export default function SearchPage() {
           createdAt: p.createdAt,
           username: author.username,
           displayName: author.displayName,
-          avatar: author.profilePic,
+          avatar: author.profilePic, // Now properly typed
           verified: author.verified,
         };
       });
@@ -275,7 +275,7 @@ export default function SearchPage() {
         createdAt: b.publishedAt ?? undefined,
         username: b.authorUsername ?? undefined,
         displayName: b.authorDisplayName ?? undefined,
-        avatar: b.authorProfilePic ?? undefined,
+        avatar: b.authorProfilePic ?? undefined, // Now properly typed
         verified: b.authorVerified ?? undefined,
       }));
 
@@ -295,7 +295,7 @@ export default function SearchPage() {
       case 'blogs':
         return formatBlogs(raw as RawBlog[]);
       default:
-        return formatPosts(raw as RawPost[]); // fallback
+        return formatPosts(raw as RawPost[]);
     }
   }, []);
 
@@ -772,7 +772,7 @@ function resultUsername(r: SearchResult): string | undefined {
   return undefined;
 }
 
-function resultAvatar(r: SearchResult): string | null | undefined {
+function resultAvatar(r: SearchResult): ProcessedImage | string | null | undefined {
   if (isVideo(r) || isShort(r)) return undefined;
   return (r as UserResult | ChannelResult | PostResult | BlogResult).avatar;
 }

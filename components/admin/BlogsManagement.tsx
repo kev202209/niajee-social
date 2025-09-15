@@ -18,12 +18,48 @@ import {
 } from 'react-icons/fi';
 import { formatCount } from '@/app/utils/formatCount';
 import { getImageSrc } from '@/app/utils/imageUtils';
-import { Blog, BlogReport, RawBlog, RawReport } from '@/types';
+import { Blog, BlogReport, RawBlog, RawReport, ProcessedImage } from '@/types';
 
 const BLOG_IMAGES_BASE_URL = 'http://localhost:5000/uploads/blogs/';
 const PROFILE_IMAGES_BASE_URL = 'http://localhost:5000/uploads/profiles/';
 
+interface BlogsManagementProps {
+  userRole: string;
+}
 
+// Helper function to safely convert string to ProcessedImage
+const stringToProcessedImage = (url: string | null | undefined): ProcessedImage | null => {
+  if (!url) return null;
+  
+  return {
+    width: 0,
+    height: 0,
+    format: 'jpg',
+    variants: {
+      '480w': url,
+      '720w': url,
+      '1080w': url
+    },
+    originalKey: url,
+    processedAt: new Date().toISOString(),
+    thumbnailKey: url
+  };
+};
+
+// Helper function to safely get array from string or array
+const ensureArray = (value: string | string[] | undefined): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [value];
+    } catch {
+      return [value];
+    }
+  }
+  return [];
+};
 
 export default function BlogsManagement({ userRole }: BlogsManagementProps) {
   const [activeTab, setActiveTab] = useState<'blogs' | 'reports'>('blogs');
@@ -48,8 +84,6 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
   const [showBlogModal, setShowBlogModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-
 
   const fetchBlogs = async () => {
     try {
@@ -81,32 +115,43 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
           ? b.status as Blog['status']
           : 'draft';
 
+        // Parse content - handle both string and array formats
+        let contentBlocks: any[] = [];
+        if (typeof b.content === 'string') {
+          try {
+            contentBlocks = JSON.parse(b.content);
+          } catch {
+            contentBlocks = [];
+          }
+        } else if (Array.isArray(b.content)) {
+          contentBlocks = b.content;
+        }
+
         return {
           id: b.id,
           title: b.title ?? '',
-          content: b.content ?? '',
+          slug: b.id, // Using ID as slug fallback
           excerpt: b.excerpt ?? '',
-          featuredImage: b.featuredImage ? `${BLOG_IMAGES_BASE_URL}${b.featuredImage}` : undefined,
+          content: contentBlocks,
+          featuredImage: stringToProcessedImage(b.featuredImage ? `${BLOG_IMAGES_BASE_URL}${b.featuredImage}` : undefined),
           author: {
             id: b.authorId ?? '',
-            name: b.authorUsername ?? '',
             username: b.authorUsername ?? '',
-            avatar: b.authorAvatar ? `${PROFILE_IMAGES_BASE_URL}${b.authorAvatar}` : '',
+            displayName: b.authorUsername ?? '',
+            profilePic: stringToProcessedImage(b.authorAvatar ? `${PROFILE_IMAGES_BASE_URL}${b.authorAvatar}` : undefined),
+            verified: false,
+            bio: null,
           },
-          category: {
-            id: b.categoryId ?? '',
-            name: b.categoryName ?? 'Uncategorized',
-            slug: b.categorySlug ?? '',
-          },
-          tags: b.tags ?? [],
-          likes: b.likeCount ?? 0,
-          comments: b.commentCount ?? 0,
-          shares: b.shareCount ?? 0,
-          views: b.viewCount ?? 0,
-          readTime: b.readTime ?? 0,
+          category: ensureArray([b.categoryName ?? 'Uncategorized']),
+          tags: ensureArray(b.tags),
+          viewCount: b.viewCount ?? 0,
+          likeCount: b.likeCount ?? 0,
+          commentCount: b.commentCount ?? 0,
+          shareCount: b.shareCount ?? 0,
+          estimatedReadTime: b.readTime ?? 0,
           status: statusValue,
-          featured: b.isFeatured ?? false,
-          sensitive: b.isSensitive ?? false,
+          isFeatured: b.isFeatured ?? false,
+          isSensitive: b.isSensitive ?? false,
           createdAt: b.createdAt ?? '',
           updatedAt: b.updatedAt ?? '',
           publishedAt: b.publishedAt ?? '',
@@ -148,50 +193,53 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       const data = await response.json();
       
       // Map the backend response to your frontend structure
-            const mappedReports = (data?.data?.reports as RawReport[]|undefined ?? []).map((r: RawReport): BlogReport => ({
-              id: r.id,
-              blog: {
-                id: r.blogId ?? '',
-                title: r.blogTitle ?? '',
-                content: '', // Not provided by backend
-                excerpt: '', // Not provided by backend
-                featuredImage: undefined, // Not provided by backend
-                author: {
-                  id: '',
-                  name: r.blogAuthorName ?? 'Unknown Author',
-                  username: r.blogAuthorUsername ?? 'unknown',
-                  avatar: '',
-                },
-                category: { id: '', name: 'Uncategorized', slug: '' },
-                tags: [],
-                likes: 0,
-                comments: 0,
-                shares: 0,
-                views: 0,
-                readTime: 0,
-                status: 'published',
-                featured: false,
-                sensitive: false,
-                createdAt: r.createdAt ?? '',
-                updatedAt: '',
-                publishedAt: '',
-              },
-              reporter: {
-                id: '',
-                name: r.reporterUsername ?? '',
-                username: r.reporterUsername ?? '',
-              },
-              reason: r.reason ?? '',
-              description: r.description ?? '',
-              status: (r.status === 'pending' || r.status === 'reviewed' || r.status === 'resolved') ? r.status : 'pending',
-              reviewNotes: r.reviewNotes,
-              createdAt: r.createdAt ?? '',
-              reviewedAt: r.reviewedAt,
-            }));
-            
-            setReports(mappedReports);
-            setTotalPages(data.data.pagination.totalPages ?? 1);
-            setTotalItems(data.data.pagination.total ?? mappedReports.length);
+      const mappedReports = (data?.data?.reports as RawReport[]|undefined ?? []).map((r: RawReport): BlogReport => ({
+        id: r.id,
+        blog: {
+          id: r.blogId ?? '',
+          title: r.blogTitle ?? '',
+          slug: r.blogId ?? '',
+          content: [],
+          excerpt: '',
+          featuredImage: null,
+          author: {
+            id: '',
+            username: r.blogAuthorUsername ?? 'unknown',
+            displayName: r.blogAuthorName ?? 'Unknown Author',
+            profilePic: null,
+            verified: false,
+            bio: null,
+          },
+          category: ['Uncategorized'],
+          tags: [],
+          viewCount: 0,
+          likeCount: 0,
+          commentCount: 0,
+          shareCount: 0,
+          estimatedReadTime: 0,
+          status: 'published',
+          isFeatured: false,
+          isSensitive: false,
+          createdAt: r.createdAt ?? '',
+          updatedAt: '',
+          publishedAt: '',
+        },
+        reporter: {
+          id: '',
+          name: r.reporterUsername ?? '',
+          username: r.reporterUsername ?? '',
+        },
+        reason: r.reason ?? '',
+        description: r.description ?? '',
+        status: (r.status === 'pending' || r.status === 'reviewed' || r.status === 'resolved') ? r.status : 'pending',
+        reviewNotes: r.reviewNotes,
+        createdAt: r.createdAt ?? '',
+        reviewedAt: r.reviewedAt,
+      }));
+      
+      setReports(mappedReports);
+      setTotalPages(data.data.pagination.totalPages ?? 1);
+      setTotalItems(data.data.pagination.total ?? mappedReports.length);
     } catch (error) {
       console.error('Error fetching blog reports:', error);
       toast.error('Failed to load blog reports');
@@ -360,14 +408,20 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
     }
   };
 
+  // Helper function to safely get image source
+  const getSafeImageSrc = (image: ProcessedImage | null | undefined, fallback: string = '/placeholder.png'): string => {
+    if (!image) return fallback;
+    if (typeof image === 'string') return image;
+    return image.variants?.['480w'] || image.originalKey || fallback;
+  };
+
   useEffect(() => {
     if (activeTab === 'blogs') {
       fetchBlogs();
     } else {
       fetchReports();
     }
-  }, [activeTab, currentPage, filters, reportFilters, searchTerm, fetchBlogs, fetchReports]);
-
+  }, [activeTab, currentPage, filters, reportFilters, searchTerm]);
 
   const BlogModal = ({ blog, onClose }: { blog: Blog; onClose: () => void }) => (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -380,7 +434,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
           {blog.featuredImage && (
             <div className="relative w-full h-64">
               <Image
-                src={ getImageSrc(blog.featuredImage, '480w')}
+                src={getSafeImageSrc(blog.featuredImage)}
                 alt={blog.title}
                 fill
                 className="object-cover rounded-lg"
@@ -402,9 +456,9 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                 {blog.excerpt}
               </p>
             )}
-            {blog.content && (
+            {blog.content && Array.isArray(blog.content) && blog.content.length > 0 && (
               <div className="prose dark:prose-invert max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: blog.content }} />
+                <div>Content blocks: {blog.content.length}</div>
               </div>
             )}
           </div>
@@ -414,10 +468,10 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
               <h5 className="font-medium text-gray-900 dark:text-white mb-3">Author</h5>
               <div className="flex items-center gap-3">
                 <div className="relative w-10 h-10">
-                  {blog.author.avatar ? (
+                  {blog.author.profilePic ? (
                     <Image
-                      src={getImageSrc(blog.author.avatar, '480w')}
-                      alt={blog.author.name}
+                      src={getSafeImageSrc(blog.author.profilePic)}
+                      alt={blog.author.displayName}
                       width={40}
                       height={40}
                       className="rounded-full object-cover"
@@ -434,7 +488,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                 </div>
                 <div>
                   <div className="font-medium text-gray-900 dark:text-white">
-                    {blog.author.name}
+                    {blog.author.displayName}
                   </div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
                     @{blog.author.username}
@@ -446,7 +500,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
             <div>
               <h5 className="font-medium text-gray-900 dark:text-white mb-3">Category</h5>
               <div className="text-gray-600 dark:text-gray-400">
-                {blog.category.name}
+                {Array.isArray(blog.category) ? blog.category.join(', ') : blog.category}
               </div>
             </div>
           </div>
@@ -457,20 +511,20 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Views:</span>
-                  <span className="text-gray-900 dark:text-white">{formatCount(blog.views)}</span>
+                  <span className="text-gray-900 dark:text-white">{formatCount(blog.viewCount)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Likes:</span>
-                  <span className="text-gray-900 dark:text-white">{formatCount(blog.likes)}</span>
+                  <span className="text-gray-900 dark:text-white">{formatCount(blog.likeCount)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600 dark:text-gray-400">Comments:</span>
-                  <span className="text-gray-900 dark:text-white">{formatCount(blog.comments)}</span>
+                  <span className="text-gray-900 dark:text-white">{formatCount(blog.commentCount)}</span>
                 </div>
-                {blog.readTime > 0 && (
+                {blog.estimatedReadTime && blog.estimatedReadTime > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Read Time:</span>
-                    <span className="text-gray-900 dark:text-white">{blog.readTime} min</span>
+                    <span className="text-gray-900 dark:text-white">{blog.estimatedReadTime} min</span>
                   </div>
                 )}
               </div>
@@ -479,7 +533,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
             <div>
               <h5 className="font-medium text-gray-900 dark:text-white mb-3">Tags</h5>
               <div className="flex flex-wrap gap-2">
-                {blog.tags.length > 0 ? (
+                {Array.isArray(blog.tags) && blog.tags.length > 0 ? (
                   blog.tags.map((tag, index) => (
                     <span
                       key={index}
@@ -524,11 +578,11 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                 </button>
                 
                 <button
-                  onClick={() => handleFeatureBlog(blog.id, !blog.featured)}
+                  onClick={() => handleFeatureBlog(blog.id, !blog.isFeatured)}
                   className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   <FiStar className="w-4 h-4" />
-                  {blog.featured ? 'Unfeature' : 'Feature'} Blog
+                  {blog.isFeatured ? 'Unfeature' : 'Feature'} Blog
                 </button>
                 
                 <button
@@ -567,7 +621,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                   {report.blog.title}
                 </h5>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  by {report.blog.author.name}
+                  by {report.blog.author.displayName}
                 </p>
               </div>
             </div>
@@ -815,7 +869,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                 {blog.featuredImage && (
                   <div className="relative w-full h-48">
                     <Image
-                      src={getImageSrc(blog.featuredImage, '480w')}
+                      src={getSafeImageSrc(blog.featuredImage)}
                       alt={blog.title}
                       fill
                       className="object-cover"
@@ -846,10 +900,10 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                   
                   <div className="flex items-center gap-2 mb-4">
                     <div className="relative w-8 h-8">
-                      {blog.author.avatar ? (
+                      {blog.author.profilePic ? (
                         <Image
-                          src={getImageSrc(blog.author.avatar, '480w')}
-                          alt={blog.author.name}
+                          src={getSafeImageSrc(blog.author.profilePic)}
+                          alt={blog.author.displayName}
                           width={32}
                           height={32}
                           className="rounded-full object-cover"
@@ -866,10 +920,10 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                     </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {blog.author.name}
+                        {blog.author.displayName}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {blog.category.name}
+                        {Array.isArray(blog.category) ? blog.category.join(', ') : blog.category}
                       </div>
                     </div>
                   </div>
@@ -878,16 +932,16 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-1">
                         <FiEye className="w-4 h-4" />
-                        {formatCount(blog.views)}
+                        {formatCount(blog.viewCount)}
                       </div>
                       <div className="flex items-center gap-1">
                         <FiHeart className="w-4 h-4" />
-                        {formatCount(blog.likes)}
+                        {formatCount(blog.likeCount)}
                       </div>
-                      {blog.readTime > 0 && (
+                      {blog.estimatedReadTime && blog.estimatedReadTime > 0 && (
                         <div className="flex items-center gap-1">
                           <FiClock className="w-4 h-4" />
-                          {blog.readTime}m
+                          {blog.estimatedReadTime}m
                         </div>
                       )}
                     </div>
@@ -898,12 +952,12 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {blog.featured && (
+                      {blog.isFeatured && (
                         <span className="px-2 py-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400 rounded-full">
                           Featured
                         </span>
                       )}
-                      {blog.sensitive && (
+                      {blog.isSensitive && (
                         <span className="px-2 py-1 text-xs bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400 rounded-full">
                           Sensitive
                         </span>
