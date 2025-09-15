@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, FC } from 'react';
+import React, { useState, useRef, useEffect, FC } from 'react';
 import { useRouter } from 'next/navigation';
 import { FiUpload, FiCheck, FiX, FiLoader } from 'react-icons/fi';
 import Image from 'next/image';
@@ -13,14 +13,6 @@ interface CreateChannelForm {
   isPublic: boolean;
   allowComments: boolean;
   avatar?: File;
-  // NEW FIELDS
-  teamEnabled?: boolean;
-  maxTeamMembers?: number;
-  membershipEnabled?: boolean;
-  membershipType?: 'free' | 'paid' | 'tiered';
-  membershipPrice?: number;
-  membershipCurrency?: string;
-  membershipDescription?: string;
 }
 
 const CreateChannelPage: FC = () => {
@@ -32,12 +24,6 @@ const CreateChannelPage: FC = () => {
     category: '',
     isPublic: true,
     allowComments: true,
-    // NEW DEFAULTS
-    teamEnabled: false,
-    maxTeamMembers: 10,
-    membershipEnabled: false,
-    membershipType: 'free',
-    membershipCurrency: 'USD',
   });
   
   const [avatarPreview, setAvatarPreview] = useState<string>('');
@@ -45,11 +31,24 @@ const CreateChannelPage: FC = () => {
   const [error, setError] = useState<string>('');
   const [handleChecking, setHandleChecking] = useState(false);
   const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null);
+  const [isHandleManuallyEdited, setIsHandleManuallyEdited] = useState(false);
+  
+  // Use ref to manage timeout for debouncing
+  const handleCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const categories = [
     'Gaming', 'Education', 'Entertainment', 'Music', 'Sports', 
     'Technology', 'Comedy', 'News', 'Lifestyle', 'Travel', 'Other'
   ];
+
+  // Generate handle from name
+  const generateHandleFromName = (name: string): string => {
+    return name
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]/g, '') // Remove spaces and special characters
+      .substring(0, 20); // Limit to 20 characters
+  };
 
   const checkHandleAvailability = async (handle: string) => {
     if (!handle || handle.length < 3) {
@@ -59,10 +58,9 @@ const CreateChannelPage: FC = () => {
 
     setHandleChecking(true);
     try {
-      // UPDATED: Handle formatting to include @
       const formattedHandle = handle.startsWith('@') ? handle : `@${handle}`;
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/channels/check-handle/${formattedHandle}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/channels/check-handle/${encodeURIComponent(formattedHandle)}`,
         { credentials: 'include' }
       );
       const data = await response.json();
@@ -75,30 +73,58 @@ const CreateChannelPage: FC = () => {
     }
   };
 
+  // Debounced handle checking
+  const debouncedCheckHandle = (handle: string) => {
+    // Clear existing timeout
+    if (handleCheckTimeoutRef.current) {
+      clearTimeout(handleCheckTimeoutRef.current);
+    }
+
+    // Set new timeout
+    handleCheckTimeoutRef.current = setTimeout(() => {
+      checkHandleAvailability(handle);
+    }, 500);
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setForm(prev => ({ ...prev, [name]: checked }));
-    } else if (type === 'number') {
-      const numValue = parseInt(value) || 0;
-      setForm(prev => ({ ...prev, [name]: numValue }));
     } else {
-      setForm(prev => ({ ...prev, [name]: value }));
-      
-      // Auto-generate handle from name if handle is empty
-      if (name === 'name' && !form.handle) {
-        const generatedHandle = value.toLowerCase()
-          .replace(/[^a-z0-9]/g, '')
-          .substring(0, 20);
-        setForm(prev => ({ ...prev, handle: generatedHandle }));
-      }
-      
-      // Check handle availability
-      if (name === 'handle') {
-        const timeoutId = setTimeout(() => checkHandleAvailability(value), 500);
-        return () => clearTimeout(timeoutId);
+      if (name === 'name') {
+        // Update the name
+        setForm(prev => ({ ...prev, [name]: value }));
+        
+        // Auto-generate handle from name only if handle hasn't been manually edited
+        if (!isHandleManuallyEdited) {
+          const generatedHandle = generateHandleFromName(value);
+          setForm(prev => ({ ...prev, handle: generatedHandle }));
+          
+          // Check availability of generated handle if it's long enough
+          if (generatedHandle.length >= 3) {
+            debouncedCheckHandle(generatedHandle);
+          } else {
+            setHandleAvailable(null);
+          }
+        }
+      } else if (name === 'handle') {
+        // Mark handle as manually edited
+        setIsHandleManuallyEdited(true);
+        
+        // Update handle
+        setForm(prev => ({ ...prev, [name]: value }));
+        
+        // Check availability when handle is manually changed
+        if (value.length >= 3) {
+          debouncedCheckHandle(value);
+        } else {
+          setHandleAvailable(null);
+        }
+      } else {
+        // For other fields
+        setForm(prev => ({ ...prev, [name]: value }));
       }
     }
   };
@@ -110,6 +136,63 @@ const CreateChannelPage: FC = () => {
       const reader = new FileReader();
       reader.onload = (e) => setAvatarPreview(e.target?.result as string);
       reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle avatar upload using presigned URL
+  const uploadAvatar = async (channelId: string, file: File): Promise<boolean> => {
+    try {
+      // 1. Get presigned URL
+      const presignedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/presigned-upload`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'avatar',
+          fileName: file.name,
+          channelId: channelId
+        })
+      });
+
+      if (!presignedResponse.ok) {
+        throw new Error('Failed to get presigned URL');
+      }
+
+      const { s3Key, presignedUrl } = await presignedResponse.json();
+
+      // 2. Upload to S3
+      const uploadResponse = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type
+        }
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      // 3. Start processing
+      const processResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/start-image-processing`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channelId: channelId,
+          type: 'avatar',
+          s3Key: s3Key
+        })
+      });
+
+      if (!processResponse.ok) {
+        throw new Error('Failed to start image processing');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      throw error;
     }
   };
 
@@ -130,47 +213,44 @@ const CreateChannelPage: FC = () => {
     setError('');
 
     try {
-      const formData = new FormData();
-      formData.append('name', form.name);
-      // UPDATED: Ensure handle has @ prefix
+      // 1. Create channel first (without avatar)
       const formattedHandle = form.handle.startsWith('@') ? form.handle : `@${form.handle}`;
-      formData.append('handle', formattedHandle);
-      formData.append('description', form.description);
-      formData.append('category', form.category);
-      formData.append('isPublic', form.isPublic.toString());
-      formData.append('allowComments', form.allowComments.toString());
       
-      // NEW FIELDS
-      formData.append('teamEnabled', (form.teamEnabled || false).toString());
-      formData.append('maxTeamMembers', (form.maxTeamMembers || 10).toString());
-      formData.append('membershipEnabled', (form.membershipEnabled || false).toString());
-      formData.append('membershipType', form.membershipType || 'free');
-      if (form.membershipPrice) {
-        formData.append('membershipPrice', form.membershipPrice.toString());
-      }
-      formData.append('membershipCurrency', form.membershipCurrency || 'USD');
-      if (form.membershipDescription) {
-        formData.append('membershipDescription', form.membershipDescription);
-      }
-      
-      if (form.avatar) {
-        formData.append('avatar', form.avatar);
-      }
-
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels`, {
         method: 'POST',
         credentials: 'include',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          handle: formattedHandle,
+          description: form.description,
+          category: form.category,
+          isPublic: form.isPublic,
+          allowComments: form.allowComments,
+        }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        // UPDATED: Navigate to channel overview
-        router.push(`/create/channels/${data.id}`);
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
         setError(errorData.message || 'Failed to create channel');
+        return;
       }
+
+      const data = await response.json();
+      const channelId = data.id;
+
+      // 2. Upload avatar if provided
+      if (form.avatar) {
+        try {
+          await uploadAvatar(channelId, form.avatar);
+        } catch (error) {
+          console.error('Error uploading avatar:', error);
+          // Don't fail the whole process if avatar upload fails
+        }
+      }
+
+      // 3. Navigate to channel overview
+      router.push(`/create/channels/${channelId}`);
     } catch (error) {
       console.error('Error creating channel:', error);
       setError('Something went wrong. Please try again.');
@@ -178,6 +258,15 @@ const CreateChannelPage: FC = () => {
       setLoading(false);
     }
   };
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (handleCheckTimeoutRef.current) {
+        clearTimeout(handleCheckTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="p-8 max-w-2xl mx-auto">
@@ -238,9 +327,12 @@ const CreateChannelPage: FC = () => {
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             required
           />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Your handle will be automatically generated from this name
+          </p>
         </div>
 
-        {/* Channel Handle - UPDATED */}
+        {/* Channel Handle */}
         <div>
           <label htmlFor="handle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Channel Handle *
@@ -256,7 +348,13 @@ const CreateChannelPage: FC = () => {
               value={form.handle}
               onChange={handleInputChange}
               placeholder="channelhandle"
-              className="w-full pl-8 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              className={`w-full pl-8 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors ${
+                form.handle && handleAvailable === false 
+                  ? 'border-red-500 dark:border-red-400' 
+                  : form.handle && handleAvailable === true
+                  ? 'border-green-500 dark:border-green-400'
+                  : 'border-gray-300 dark:border-gray-600'
+              }`}
               required
             />
             {form.handle && (
@@ -271,12 +369,64 @@ const CreateChannelPage: FC = () => {
               </div>
             )}
           </div>
-          {form.handle && handleAvailable === false && (
-            <p className="text-sm text-red-600 mt-1">This handle is not available</p>
-          )}
-          {form.handle && handleAvailable === true && (
-            <p className="text-sm text-green-600 mt-1">Handle is available!</p>
-          )}
+          
+          {/* Handle feedback - moved directly under input */}
+          <div className="mt-2 space-y-1">
+            {form.handle && handleChecking && (
+              <div className="flex items-center space-x-2">
+                <FiLoader className="w-3 h-3 text-blue-500 animate-spin" />
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  Checking availability...
+                </p>
+              </div>
+            )}
+            
+            {form.handle && !handleChecking && handleAvailable === false && (
+              <div className="flex items-center space-x-2">
+                <FiX className="w-3 h-3 text-red-500" />
+                <p className="text-xs text-red-600 dark:text-red-400">
+                  Handle "@{form.handle}" is not available. Try a different one.
+                </p>
+              </div>
+            )}
+            
+            {form.handle && !handleChecking && handleAvailable === true && (
+              <div className="flex items-center space-x-2">
+                <FiCheck className="w-3 h-3 text-green-500" />
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  Handle "@{form.handle}" is available!
+                </p>
+              </div>
+            )}
+            
+            {form.handle && !handleChecking && handleAvailable === null && form.handle.length < 3 && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Handle must be at least 3 characters long
+              </p>
+            )}
+            
+            {!form.handle && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Your unique channel handle (e.g., @amazingchannel)
+              </p>
+            )}
+            
+            {/* Updated feedback messaging */}
+            {!isHandleManuallyEdited && form.handle && (
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                💡 Auto-generated from your channel name. You can edit this handle to customize it.
+              </p>
+            )}
+            
+            {isHandleManuallyEdited && (
+              <div className="flex items-center space-x-1">
+                <span className="text-xs">✏️</span>
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  Great! You've customized your handle.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Description */}
@@ -314,7 +464,7 @@ const CreateChannelPage: FC = () => {
           </select>
         </div>
 
-        {/* Settings - UPDATED */}
+        {/* Settings */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Channel Settings</h3>
           
@@ -355,137 +505,6 @@ const CreateChannelPage: FC = () => {
               className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
             />
           </div>
-
-          {/* NEW TEAM SETTINGS */}
-          <div className="flex items-center justify-between">
-            <div>
-              <label htmlFor="teamEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Enable Team Features
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Allow team members to help manage your channel
-              </p>
-            </div>
-            <input
-              type="checkbox"
-              id="teamEnabled"
-              name="teamEnabled"
-              checked={form.teamEnabled || false}
-              onChange={handleInputChange}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-            />
-          </div>
-
-          {form.teamEnabled && (
-            <div>
-              <label htmlFor="maxTeamMembers" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Maximum Team Members
-              </label>
-              <input
-                type="number"
-                id="maxTeamMembers"
-                name="maxTeamMembers"
-                value={form.maxTeamMembers || 10}
-                onChange={handleInputChange}
-                min="1"
-                max="50"
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              />
-            </div>
-          )}
-
-          {/* NEW MEMBERSHIP SETTINGS */}
-          <div className="flex items-center justify-between">
-            <div>
-              <label htmlFor="membershipEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Enable Memberships
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Allow viewers to become paid members
-              </p>
-            </div>
-            <input
-              type="checkbox"
-              id="membershipEnabled"
-              name="membershipEnabled"
-              checked={form.membershipEnabled || false}
-              onChange={handleInputChange}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-            />
-          </div>
-
-          {form.membershipEnabled && (
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="membershipType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Membership Type
-                </label>
-                <select
-                  id="membershipType"
-                  name="membershipType"
-                  value={form.membershipType || 'free'}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                >
-                  <option value="free">Free</option>
-                  <option value="paid">Paid</option>
-                  <option value="tiered">Tiered</option>
-                </select>
-              </div>
-
-              {form.membershipType === 'paid' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="membershipPrice" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Monthly Price
-                    </label>
-                    <input
-                      type="number"
-                      id="membershipPrice"
-                      name="membershipPrice"
-                      value={form.membershipPrice || ''}
-                      onChange={handleInputChange}
-                      min="0"
-                      step="0.01"
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="membershipCurrency" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Currency
-                    </label>
-                    <select
-                      id="membershipCurrency"
-                      name="membershipCurrency"
-                      value={form.membershipCurrency || 'USD'}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                    >
-                      <option value="USD">USD</option>
-                      <option value="EUR">EUR</option>
-                      <option value="GBP">GBP</option>
-                      <option value="CAD">CAD</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="membershipDescription" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Membership Description
-                </label>
-                <textarea
-                  id="membershipDescription"
-                  name="membershipDescription"
-                  value={form.membershipDescription || ''}
-                  onChange={handleInputChange}
-                  placeholder="Describe what members get..."
-                  rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Error Message */}
@@ -506,7 +525,7 @@ const CreateChannelPage: FC = () => {
           </button>
           <button
             type="submit"
-            disabled={loading || handleAvailable === false}
+            disabled={loading || handleAvailable === false || !form.handle || form.handle.length < 3}
             className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2"
           >
             {loading ? (

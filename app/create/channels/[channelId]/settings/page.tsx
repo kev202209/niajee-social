@@ -18,6 +18,7 @@ const ChannelSettingsPage: FC = () => {
   const [success, setSuccess] = useState<string>('');
   const [avatarPreview, setAvatarPreview] = useState<string>('');
   const [newAvatar, setNewAvatar] = useState<File | null>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -88,6 +89,67 @@ const ChannelSettingsPage: FC = () => {
     }
   };
 
+  // NEW: Handle avatar upload using presigned URL
+  const uploadAvatar = async (file: File): Promise<boolean> => {
+    try {
+      setUploadingAvatar(true);
+      
+      // 1. Get presigned URL
+      const presignedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/presigned-upload`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'avatar',
+          fileName: file.name,
+          channelId: channelId
+        })
+      });
+
+      if (!presignedResponse.ok) {
+        throw new Error('Failed to get presigned URL');
+      }
+
+      const { s3Key, presignedUrl } = await presignedResponse.json();
+
+      // 2. Upload to S3
+      const uploadResponse = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type
+        }
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      // 3. Start processing
+      const processResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/start-image-processing`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channelId: channelId,
+          type: 'avatar',
+          s3Key: s3Key
+        })
+      });
+
+      if (!processResponse.ok) {
+        throw new Error('Failed to start image processing');
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      throw error;
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -95,25 +157,28 @@ const ChannelSettingsPage: FC = () => {
     setSuccess('');
 
     try {
-      const formData = new FormData();
-      formData.append('name', form.name);
-      formData.append('description', form.description);
-      formData.append('category', form.category);
-      formData.append('isPublic', form.isPublic.toString());
-      formData.append('allowComments', form.allowComments.toString());
-      
+      // Upload avatar first if there's a new one
       if (newAvatar) {
-        formData.append('avatar', newAvatar);
+        await uploadAvatar(newAvatar);
       }
 
+      // Update channel data
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}`, {
         method: 'PATCH',
         credentials: 'include',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          description: form.description,
+          category: form.category,
+          isPublic: form.isPublic,
+          allowComments: form.allowComments,
+        }),
       });
 
       if (response.ok) {
         setSuccess('Channel updated successfully!');
+        setNewAvatar(null);
         fetchChannel(); // Refresh channel data
       } else {
         const errorData = await response.json();
@@ -182,7 +247,9 @@ const ChannelSettingsPage: FC = () => {
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
             <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
-              {avatarPreview ? (
+              {uploadingAvatar ? (
+                <FiLoader className="w-8 h-8 text-white animate-spin" />
+              ) : avatarPreview ? (
                 avatarPreview.startsWith("data:") ? (
                   // Local preview for newly selected file
                   <Image
@@ -212,10 +279,11 @@ const ChannelSettingsPage: FC = () => {
               accept="image/*"
               onChange={handleAvatarChange}
               className="absolute inset-0 opacity-0 cursor-pointer"
+              disabled={uploadingAvatar}
             />
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Click to change channel avatar
+            {uploadingAvatar ? 'Uploading avatar...' : 'Click to change channel avatar'}
           </p>
         </div>
 
@@ -344,7 +412,7 @@ const ChannelSettingsPage: FC = () => {
         {/* Save Button */}
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || uploadingAvatar}
           className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2"
         >
           {saving ? (
