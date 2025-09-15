@@ -10,12 +10,14 @@ import {
   FiVideo,
   FiPlay,
   FiUsers,
-  FiFileText, // Add this for blogs
+  FiFileText,
 } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthenticatedImage from "@/components/Image";
 import { useRouter } from 'next/navigation';
 import ProfileMenu from "./ProfileMenu";
+import Logo from '../Logo';
+import { getImageSrc } from '@/app/utils/imageUtils'
 
 interface SearchSuggestion {
   id: string;
@@ -224,16 +226,11 @@ const Header: FC = () => {
   };
 
   return (
-    <header className="w-full fixed top-0 z-50 bg-white dark:bg-gray-900/95 backdrop-blur-md shadow-md ">
-      <div className="h-16 px-4 flex items-center justify-between">
+    <header className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white dark:bg-gray-900/95 backdrop-blur-md shadow-lg rounded-full px-6 py-3 max-w-5xl w-full border border-gray-200 dark:border-gray-700">
+      <div className="h-10 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center min-w-0">
-          <Link
-            href="/"
-            className="font-extrabold bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient text-xl sm:text-2xl md:text-3xl"
-          >
-            NIAJEE
-          </Link>
+          <Logo/>
           <span className="ml-3 text-xs text-gray-500 dark:text-gray-400 hidden sm:inline-block">{tagline}</span>
         </div>
 
@@ -388,7 +385,7 @@ const Header: FC = () => {
               className="focus:outline-none ring-2 ring-transparent hover:ring-gray-300 dark:hover:ring-gray-600 rounded-full transition-all duration-200"
             >
               <AuthenticatedImage
-                mediaKey={user?.profilePic || ""}
+                mediaKey={getImageSrc(user?.profilePic, '480w') || ""}
                 alt="Profile"
                 width={36}
                 height={36}
