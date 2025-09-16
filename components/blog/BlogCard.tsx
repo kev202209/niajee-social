@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import AuthenticatedImage from '@/components/Image'; // Use your custom component
 import { Blog, getImageSrcSafe } from '@/types';
 import { FiHeart, FiMessageCircle, FiEye, FiClock, FiBookmark, FiShare2, FiStar } from 'react-icons/fi';
 import { formatDistanceToNow } from 'date-fns';
@@ -102,9 +102,9 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
   const displayReadTime = blog.estimatedReadTime ?? blog.averageReadTime ?? 0;
   const displayComments = blog.commentCount ?? 0;
 
-  // Get safe image sources
+  // Get safe image sources - these will be the mediaKeys for AuthenticatedImage
   const featuredImageSrc = getImageSrcSafe(blog.featuredImage, '1080w');
-  const authorAvatarSrc = getImageSrcSafe(blog.author.profilePic, '480w') || '/default-avatar.png';
+  const authorAvatarSrc = getImageSrcSafe(blog.author.profilePic, '480w');
 
   return (
     <Link href={`/blogs/${blog.slug}`}>
@@ -121,14 +121,15 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
 
         {/* Featured Image */}
         <div className="relative aspect-video bg-gray-200 dark:bg-gray-700">
-          {featuredImageSrc && !imageError ? (
-            <Image
-              src={featuredImageSrc}
+          {featuredImageSrc ? (
+            <AuthenticatedImage
+              mediaKey={featuredImageSrc}
               alt={blog.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-200"
               onError={() => setImageError(true)}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              fallbackSrc="/placeholder-blog.jpg" // Blog-specific fallback
             />
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -151,16 +152,13 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
           {/* Author Info */}
           <div className="flex items-center space-x-2 mb-3">
             <div className="relative">
-              <Image
-                src={authorAvatarSrc}
+              <AuthenticatedImage
+                mediaKey={authorAvatarSrc}
                 alt={blog.author.displayName}
                 width={24}
                 height={24}
                 className="rounded-full"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/default-avatar.png';
-                }}
+                fallbackSrc="/default-avatar.png"
               />
               {blog.author.verified && (
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
