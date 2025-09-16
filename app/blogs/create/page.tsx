@@ -37,17 +37,17 @@ export default function CreateBlogPage() {
   
   const [formData, setFormData] = useState<CreateBlogDto>({
     title: '',
-    content: { blocks: [] } as OutputData, // Initialize as empty OutputData so TS is satisfied
+    content: { blocks: [] } as OutputData,
     excerpt: '',
     category: 'Technology',
     tags: [],
     status: 'draft'
   });
   
-  const [featuredImage, setFeaturedImage] = useState<File | null>(null);
+  // NEW: Store selected file without uploading immediately
+  const [featuredImageFile, setFeaturedImageFile] = useState<File | null>(null);
   const [featuredImagePreview, setFeaturedImagePreview] = useState<string>('');
-  const [featuredImageUploading, setFeaturedImageUploading] = useState(false);
-  const [featuredImageS3Key, setFeaturedImageS3Key] = useState<string>('');
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -61,7 +61,8 @@ export default function CreateBlogPage() {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // NEW: Only store the file and create preview - don't upload yet
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -77,72 +78,24 @@ export default function CreateBlogPage() {
       return;
     }
 
-    setFeaturedImage(file);
-    setFeaturedImageUploading(true);
+    // Clear any previous errors
+    setErrors(prev => ({ ...prev, featuredImage: '' }));
+
+    // Store the file and create preview
+    setFeaturedImageFile(file);
     
-    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setFeaturedImagePreview(e.target?.result as string);
     };
     reader.readAsDataURL(file);
 
-    try {
-      // Step 1: Get presigned URL
-      const presignedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/presigned-upload`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'featured',
-          fileName: file.name,
-          // blogId will be provided when blog is created
-        })
-      });
-
-      if (!presignedResponse.ok) {
-        throw new Error('Failed to get upload URL');
-      }
-
-      const { presignedUrl, s3Key } = await presignedResponse.json();
-
-      // Step 2: Upload to S3
-      const uploadResponse = await fetch(presignedUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        }
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image');
-      }
-
-      setFeaturedImageS3Key(s3Key);
-      
-      // Clear error
-      setErrors(prev => ({ ...prev, featuredImage: '' }));
-      toast.success('Featured image uploaded successfully!');
-      
-    } catch (error) {
-      console.error('Upload error:', error);
-      setErrors(prev => ({ 
-        ...prev, 
-        featuredImage: error instanceof Error ? error.message : 'Upload failed' 
-      }));
-      toast.error('Failed to upload image');
-      // Keep the preview but clear the uploaded state
-      setFeaturedImageS3Key('');
-    } finally {
-      setFeaturedImageUploading(false);
-    }
+    toast.success('Image selected. It will be uploaded when you publish the blog.');
   };
 
   const removeImage = () => {
-    setFeaturedImage(null);
+    setFeaturedImageFile(null);
     setFeaturedImagePreview('');
-    setFeaturedImageS3Key('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -196,6 +149,106 @@ export default function CreateBlogPage() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // NEW: Helper function to upload and process featured image
+  const uploadAndProcessFeaturedImage = async (blogId: string): Promise<void> => {
+    if (!featuredImageFile) return;
+
+    try {
+      // Step 1: Get presigned URL
+      const presignedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/presigned-upload`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'featured',
+          fileName: featuredImageFile.name,
+          blogId: blogId, // Now we have the actual blog ID
+        })
+      });
+
+      if (!presignedResponse.ok) {
+        throw new Error('Failed to get upload URL');
+      }
+
+      const { presignedUrl, s3Key } = await presignedResponse.json();
+
+      // Step 2: Upload to S3
+      const uploadResponse = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: featuredImageFile,
+        headers: {
+          'Content-Type': featuredImageFile.type,
+        }
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image to S3');
+      }
+
+      // Step 3: Start image processing (this creates placeholder and starts Lambda)
+      const processResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/start-image-processing`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blogId: blogId,
+          type: 'featured',
+          s3Key: s3Key,
+        })
+      });
+
+      if (!processResponse.ok) {
+        throw new Error('Failed to start image processing');
+      }
+
+      toast.success('Featured image uploaded and processing started!');
+    } catch (error) {
+      console.error('Image upload/processing error:', error);
+      throw new Error(`Image processing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  // NEW: Helper function to process content images from editor
+  const processContentImages = async (blogId: string): Promise<void> => {
+    if (!formData.content?.blocks) return;
+
+    // Find all image blocks that might have uploaded images
+    const imageBlocks = formData.content.blocks
+      .filter(block => block.type === 'image' && block.data?.file?.url)
+      .map((block, index) => ({
+        blockId: `block_${index}`,
+        s3Key: (block.data as any)?.file?.s3Key, // If the editor stores S3 keys
+      }))
+      .filter(img => img.s3Key); // Only process if we have S3 keys
+
+    if (imageBlocks.length === 0) return;
+
+    try {
+      const processResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/process-content-images`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blogId: blogId,
+          images: imageBlocks,
+        })
+      });
+
+      if (!processResponse.ok) {
+        throw new Error('Failed to start content image processing');
+      }
+
+      const data = await processResponse.json();
+      if (data.started) {
+        toast.success(`Started processing ${imageBlocks.length} content images`);
+      }
+    } catch (error) {
+      console.error('Content image processing error:', error);
+      // Don't throw here - content image processing is not critical for blog creation
+      toast.warning('Blog created but some content images may not be processed');
+    }
+  };
+
   const handleSubmit = async (status: 'draft' | 'published') => {
     if (!validateForm()) {
       toast.error("Please fill in all required fields.");
@@ -205,7 +258,7 @@ export default function CreateBlogPage() {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Create the blog with basic data (JSON, not FormData)
+      // Step 1: Create the blog with basic data (no images yet)
       const blogData = {
         title: formData.title,
         content: JSON.stringify(formData.content?.blocks ?? []),
@@ -246,28 +299,25 @@ export default function CreateBlogPage() {
 
       const createdBlog = data.data;
       
-      // Step 2: If there's a featured image, start processing
-      if (featuredImageS3Key && createdBlog.id) {
+      // Step 2: Process images if any (only after successful blog creation)
+      if (featuredImageFile || (formData.content?.blocks && formData.content.blocks.length > 0)) {
+        setIsProcessingImages(true);
+        
         try {
-          // Update the S3 key to use the actual blog ID instead of 'temp'
-          const actualS3Key = featuredImageS3Key.replace('uploads/blogs/temp/', `uploads/blogs/${createdBlog.id}/`);
+          // Process featured image if selected
+          if (featuredImageFile) {
+            await uploadAndProcessFeaturedImage(createdBlog.id);
+          }
+
+          // Process content images from editor
+          await processContentImages(createdBlog.id);
           
-          await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/start-image-processing`, {
-            method: 'POST',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              blogId: createdBlog.id,
-              type: 'featured',
-              s3Key: actualS3Key,
-            })
-          });
-          
-          toast.success('Featured image is being processed...');
         } catch (imageError) {
           console.error('Image processing error:', imageError);
           // Don't fail the whole operation if image processing fails
-          toast.warning('Blog created but image processing failed');
+          toast.warning('Blog created successfully, but some images may need to be re-uploaded');
+        } finally {
+          setIsProcessingImages(false);
         }
       }
 
@@ -280,10 +330,11 @@ export default function CreateBlogPage() {
       setErrors({ submit: message });
     } finally {
       setIsSubmitting(false);
+      setIsProcessingImages(false);
     }
   };
 
-  // Simple, safe preview renderer — avoids using `any` and prevents XSS by escaping HTML.
+  // Simple, safe preview renderer
   const escapeHtml = (str: string) =>
     str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
@@ -292,7 +343,6 @@ export default function CreateBlogPage() {
       return '<p>Your blog content will appear here...</p>';
     }
 
-    // Render each block as JSON preview — safe and avoids `any` typing.
     return content.blocks
       .map(block => `<pre class="editor-block-preview">${escapeHtml(JSON.stringify(block, null, 2))}</pre>`)
       .join('');
@@ -301,6 +351,8 @@ export default function CreateBlogPage() {
   if (!user) {
     return null;
   }
+
+  const isLoading = isSubmitting || isProcessingImages;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -315,6 +367,7 @@ export default function CreateBlogPage() {
               <button
                 onClick={() => router.back()}
                 className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                disabled={isLoading}
               >
                 <FiArrowLeft className="w-5 h-5" />
                 <span>Back</span>
@@ -327,7 +380,8 @@ export default function CreateBlogPage() {
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => setShowPreview(!showPreview)}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50"
+                disabled={isLoading}
               >
                 <FiEye className="w-4 h-4" />
                 <span>{showPreview ? 'Edit' : 'Preview'}</span>
@@ -335,7 +389,7 @@ export default function CreateBlogPage() {
               
               <button
                 onClick={() => handleSubmit('draft')}
-                disabled={isSubmitting}
+                disabled={isLoading}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
               >
                 <FiBookmark className="w-4 h-4" />
@@ -344,13 +398,15 @@ export default function CreateBlogPage() {
               
               <Button
                 onClick={() => handleSubmit('published')}
-                disabled={isSubmitting}
+                disabled={isLoading}
                 className="flex items-center space-x-2"
               >
-                {isSubmitting ? (
+                {isLoading ? (
                   <>
-                    <FiBookmark className="w-4 h-4 animate-spin" />
-                    <span>Publishing...</span>
+                    <FiLoader className="w-4 h-4 animate-spin" />
+                    <span>
+                      {isSubmitting ? 'Publishing...' : 'Processing Images...'}
+                    </span>
                   </>
                 ) : (
                   <>
@@ -361,6 +417,23 @@ export default function CreateBlogPage() {
               </Button>
             </div>
           </div>
+
+          {/* Progress indicator during image processing */}
+          {isProcessingImages && (
+            <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <FiLoader className="w-5 h-5 text-blue-600 animate-spin" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                    Processing images...
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    Your blog has been created. Images are being processed in the background.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Form */}
           {!showPreview ? (
@@ -376,6 +449,7 @@ export default function CreateBlogPage() {
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="Enter your blog title..."
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isLoading}
                 />
                 {errors.title && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.title}</p>
@@ -393,6 +467,7 @@ export default function CreateBlogPage() {
                   placeholder="Write a brief description of your blog..."
                   rows={3}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isLoading}
                 />
                 {errors.excerpt && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.excerpt}</p>
@@ -410,6 +485,7 @@ export default function CreateBlogPage() {
                     value={formData.category}
                     onChange={(e) => handleInputChange('category', e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isLoading}
                   >
                     {CATEGORIES.map((category) => (
                       <option key={category} value={category}>
@@ -429,30 +505,26 @@ export default function CreateBlogPage() {
                       ref={fileInputRef}
                       type="file"
                       accept="image/*"
-                      onChange={handleImageUpload}
+                      onChange={handleImageSelect}
                       className="hidden"
-                      disabled={featuredImageUploading}
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      disabled={featuredImageUploading}
+                      disabled={isLoading}
                       className="w-full flex items-center justify-center px-4 py-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50"
                     >
-                      {featuredImageUploading ? (
-                        <>
-                          <FiLoader className="w-5 h-5 mr-2 animate-spin" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <FiUpload className="w-5 h-5 mr-2" />
-                          Upload Image
-                        </>
-                      )}
+                      <FiUpload className="w-5 h-5 mr-2" />
+                      {featuredImageFile ? 'Change Image' : 'Select Image'}
                     </button>
                     {errors.featuredImage && (
                       <p className="text-sm text-red-600 dark:text-red-400">{errors.featuredImage}</p>
+                    )}
+                    {featuredImageFile && (
+                      <p className="text-xs text-green-600 dark:text-green-400">
+                        Image selected: {featuredImageFile.name}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -468,18 +540,15 @@ export default function CreateBlogPage() {
                       fill
                       className="object-cover"
                     />
-                    {featuredImageUploading && (
-                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                        <div className="text-white text-sm flex items-center space-x-2">
-                          <FiLoader className="w-4 h-4 animate-spin" />
-                          <span>Uploading...</span>
-                        </div>
+                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                      <div className="bg-white dark:bg-gray-800 rounded-lg px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+                        Will be uploaded when you submit
                       </div>
-                    )}
+                    </div>
                   </div>
                   <button
                     onClick={removeImage}
-                    disabled={featuredImageUploading}
+                    disabled={isLoading}
                     className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors disabled:opacity-50"
                   >
                     <FiX className="w-4 h-4" />
@@ -499,6 +568,7 @@ export default function CreateBlogPage() {
                   onKeyDown={handleTagAdd}
                   placeholder="Add tags for your blog..."
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={isLoading}
                 />
                 {(formData.tags ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-3">
@@ -511,6 +581,7 @@ export default function CreateBlogPage() {
                         <button
                           onClick={() => removeTag(tag)}
                           className="ml-2 hover:text-blue-600 dark:hover:text-blue-400"
+                          disabled={isLoading}
                         >
                           <FiX className="w-3 h-3" />
                         </button>
@@ -532,6 +603,7 @@ export default function CreateBlogPage() {
                   value={formData.content}
                   onChange={(data) => handleInputChange('content', data)}
                   placeholder="Write your blog content here..."
+                  readOnly={isLoading}
                 />
                 {errors.content && (
                   <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.content}</p>
