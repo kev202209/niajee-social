@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import CreateHeader from '@/components/create/Header'
 import Link from 'next/link'
 import {
@@ -17,8 +17,24 @@ const sidebarItems = [
 ]
 
 export default function CreateLayout({ children }: { children: React.ReactNode }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Default closed on mobile
+  const [isMobile, setIsMobile] = useState(false)
   const pathname = usePathname()
+
+  // Check screen size
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const mobile = window.innerWidth < 1024 // lg breakpoint
+      setIsMobile(mobile)
+      if (!mobile) {
+        setIsSidebarOpen(true) // Auto-open on desktop
+      }
+    }
+
+    checkScreenSize()
+    window.addEventListener('resize', checkScreenSize)
+    return () => window.removeEventListener('resize', checkScreenSize)
+  }, [])
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
 
@@ -32,20 +48,30 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="flex h-screen overflow-hidden">
+      {/* Mobile overlay */}
+      {isMobile && isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-screen pt-16
-          bg-white dark:bg-gray-900 z-40 border-r border-gray-200 dark:border-gray-700
+          fixed top-0 left-0 h-screen pt-16 z-40
+          bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700
           transition-all duration-300 ease-in-out
-          ${isSidebarOpen ? 'w-64' : 'w-16'}
+          ${isSidebarOpen ? 'w-64' : 'w-0 lg:w-16'}
+          ${isMobile && !isSidebarOpen ? '-translate-x-full' : ''}
         `}
       >
-        <nav className="flex flex-col pt-6 h-full px-4">
+        <nav className="flex flex-col pt-6 h-full px-4 overflow-hidden">
           {sidebarItems.map(({ label, icon: Icon, href }) => (
             <Link
               key={label}
               href={href}
+              onClick={() => isMobile && setIsSidebarOpen(false)}
               className={`flex items-center p-3 rounded-lg font-medium transition mb-1
                 ${pathname === href
                   ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
@@ -56,7 +82,7 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
               <span
                 className={`
                   ml-3 whitespace-nowrap transition-all duration-300
-                  ${isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden'}
+                  ${isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden lg:opacity-0'}
                 `}
               >
                 {label}
@@ -75,7 +101,7 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
         <main
           className={`
             pt-16 h-full overflow-y-auto transition-all duration-300
-            ${isSidebarOpen ? 'ml-64' : 'ml-16'}
+            ${isSidebarOpen && !isMobile ? 'ml-64' : 'ml-0 lg:ml-16'}
           `}
         >
           {children}
