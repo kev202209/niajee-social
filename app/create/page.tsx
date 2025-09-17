@@ -4,7 +4,7 @@ import React, { useEffect, useState, FC } from 'react';
 import { Channel } from '@/types';
 import { FiUsers, FiVideo, FiEye, FiPlus, FiTrendingUp, FiUpload, FiPlayCircle } from 'react-icons/fi';
 import Link from 'next/link';
-import Image from 'next/image';
+import AuthenticatedImage from '@/components/Image';
 import { getImageSrc } from '../utils/imageUtils';
 
 interface DashboardStats {
@@ -196,16 +196,13 @@ const CreateDashboard: FC = () => {
                     <div className="flex items-center space-x-3 mb-3">
                       <div className="relative w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                         {avatarSrc ? (
-                          <Image 
-                            src={avatarSrc} 
+                          <AuthenticatedImage 
+                            mediaKey={avatarSrc}
                             alt={channel.name} 
                             width={48}
                             height={48}
                             className="w-full h-full rounded-full object-cover" 
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src = '/placeholder.png';
-                            }}
+                            fallbackSrc="/placeholder.png"
                           />
                         ) : (
                           <FiVideo className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
