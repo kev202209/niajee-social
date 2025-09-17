@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import Header from '@/components/Landing/Header';
+import Header from '@/components/Header';
 import Footer from '@/components/Landing/Footer';
 import { FiCheck, FiX, FiSmartphone, FiBarChart2, FiClock, FiZap, FiShield } from 'react-icons/fi';
 import PurchaseModal from '@/components/pricing/PurchaseModal';

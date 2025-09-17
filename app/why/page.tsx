@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Heart, Users, Shield, Globe } from 'lucide-react';
-import Header from '@/components/Landing/Header';
+import Header from '@/components/Header';
 import Footer from '@/components/Landing/Footer';
 
 export default function WhyPage() {
