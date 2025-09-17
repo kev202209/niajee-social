@@ -24,7 +24,7 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
   useOutsideClick([profileMenuRef], () => setShowProfileMenu(false))
 
   const [tagline, setTagline] = useState("Loading…")
-  const { user} = useAuth()
+  const { user, loading } = useAuth()
 
   useEffect(() => {
     fetch(`${api_link}/api/content/taglines`)
@@ -35,6 +35,33 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
 
   // Check if we're in a channel-specific route
   const isChannelRoute = pathname.match(/^\/create\/channels\/[^\/]+\//)
+
+  // Don't render if still loading or no user
+  if (loading || !user) {
+    return (
+      <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-900/80 backdrop-blur-md shadow-sm z-50">
+        <div className="flex items-center h-16 px-4 justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="font-extrabold text-xl bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient"
+              >
+                NIAJEE
+              </Link>
+              <span className="text-xs text-white bg-blue-600 dark:bg-blue-500 rounded px-2 py-0.5 ml-1">
+                Creator
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <DarkModeToggle />
+            <div className="w-9 h-9 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+      </header>
+    )
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-900/80 backdrop-blur-md shadow-sm z-50">
@@ -88,7 +115,7 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
               className="focus:outline-none"
             >
               <AuthenticatedImage
-                mediaKey={user!.profilePic ? getImageSrc(user!.profilePic, '480w') : ""}
+                mediaKey={user.profilePic ? getImageSrc(user.profilePic, '480w') : undefined}
                 alt="Profile"
                 width={36}
                 height={36}
