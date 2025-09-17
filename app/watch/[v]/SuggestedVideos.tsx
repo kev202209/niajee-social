@@ -5,8 +5,8 @@ import { FiChevronLeft, FiChevronRight, FiClock, FiPlusCircle, FiAlertCircle, Fi
 import { SuggestedVideo } from "../../../types";
 import AuthenticatedImage from "@/components/Image";
 import Link from "next/link";
-import timeAgo from "@/app/utils/timeAgo";
-import { getImageSrc } from '@/app/utils/imageUtils';
+import timeAgo from "@/utils/timeAgo";
+import { getImageSrc } from '@/utils/imageUtils';
 
 interface SuggestedVideosProps {
   videoId: string;

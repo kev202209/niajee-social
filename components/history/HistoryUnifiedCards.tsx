@@ -2,7 +2,7 @@
 import React from 'react';
 import VideoCard from '@/components/home/VideoCard';
 import ShortCard from '@/components/home/ShortCard';
-import  timeAgo  from '@/app/utils/timeAgo';
+import  timeAgo  from '@/utils/timeAgo';
 import { Video, Short } from '@/types';
 
 interface RawHistoryChannel {

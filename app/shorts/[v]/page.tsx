@@ -10,7 +10,7 @@ import VideoActions from "./VideoActions";
 import ReportModal from "./ReportModal"; 
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import CommentsSection from "./CommentsSection";
-import { getFullUrl } from "@/app/utils/videourl";
+import { getFullUrl } from "@/utils/videourl";
 
 // Updated backend data structure for shorts
 interface ShortData {

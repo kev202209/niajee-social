@@ -11,17 +11,17 @@ import {
   EyeOff 
 } from 'lucide-react';
 import { mVideo as Video } from '../../types';
-import timeAgo from '../../app/utils/timeAgo';
+import timeAgo from '../../utils/timeAgo';
 import Button from '../ui/CustomButton';
 import LikeButton from '../LikeButton';
 import ReportModal from '@/app/shorts/[v]/ReportModal';
 import ShareModal from './ShareModal';
 import { toast } from "sonner";
 import useOutsideClick from '@/hooks/useOutsideClick';
-import { formatCount } from '@/app/utils/formatCount';
-import ShareService from '@/app/utils/ShareService';
+import { formatCount } from '@/utils/formatCount';
+import ShareService from '@/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 interface VideoMetaProps {
   video: Video;

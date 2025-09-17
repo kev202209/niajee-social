@@ -9,7 +9,7 @@ import { SquareChevronLeft, SquareChevronRight } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { usePathname } from 'next/navigation'
 import ProfileMenu from "@/components/home/ProfileMenu"
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 interface CreateHeaderProps {
   toggleSidebar?: () => void

@@ -6,7 +6,7 @@ import { Channel } from '@/types';
 import { FiBookmark, FiTrash2, FiUpload, FiLoader } from 'react-icons/fi';
 import Image from 'next/image';
 import AuthenticatedImage from "@/components/Image";
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 const ChannelSettingsPage: FC = () => {
   const params = useParams();

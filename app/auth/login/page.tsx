@@ -9,7 +9,7 @@ import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
 import { useAuth } from "@/contexts/AuthContext";
 import "react-toastify/dist/ReactToastify.css";
-import { getDeviceInfo } from "../../utils/deviceInfo";
+import { getDeviceInfo } from "../../../utils/deviceInfo";
 
 export default function LoginPage() {
   const router = useRouter();

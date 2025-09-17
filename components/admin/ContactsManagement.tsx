@@ -13,7 +13,7 @@ import {
   FiEdit3,
   FiTrash2,
 } from 'react-icons/fi';
-import { formatCount } from '@/app/utils/formatCount';
+import { formatCount } from '@/utils/formatCount';
 
 interface Contact {
   id: string;

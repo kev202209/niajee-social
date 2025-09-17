@@ -10,7 +10,7 @@ import ControlBar from './ControlBar';
 import VideoMeta from './VideoMeta';
 import Hls from 'hls.js';
 import BufferingSpinner from './BufferingSpinner';
-import { getFullUrl } from '@/app/utils/videourl';
+import { getFullUrl } from '@/utils/videourl';
 
 interface VideoProps {
   video: mVideo;

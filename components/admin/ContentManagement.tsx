@@ -13,8 +13,8 @@ import {
   FiHeart,
   FiMessageCircle,
 } from 'react-icons/fi';
-import { formatCount } from '@/app/utils/formatCount';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { formatCount } from '@/utils/formatCount';
+import { getImageSrc } from '@/utils/imageUtils';
 
 interface ContentItem {
   id: string;

@@ -1,7 +1,7 @@
 // hooks/useVideoPlayer.ts
 'use client';
 import { useState, useRef, useEffect, useCallback } from 'react';
-import ViewTrackingService from '@/app/utils/ViewTrackingService';
+import ViewTrackingService from '@/utils/ViewTrackingService';
 
 export interface VideoPlayerControls {
   buffering: boolean;

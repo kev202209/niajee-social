@@ -15,7 +15,7 @@ import { FiClock, FiEye, FiCalendar, FiTag, FiArrowLeft, FiShare2, FiExternalLin
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthenticatedImage from "@/components/Image";
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 // Block content renderer component
 interface BlockData {

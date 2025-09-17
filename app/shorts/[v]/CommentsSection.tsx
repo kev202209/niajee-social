@@ -10,8 +10,8 @@ import {
 } from 'react-icons/fi';
 import { useAuth } from "@/contexts/AuthContext";
 import AuthenticatedImage from "@/components/Image";
-import timeAgo from '@/app/utils/timeAgo';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import timeAgo from '@/utils/timeAgo';
+import { getImageSrc } from '@/utils/imageUtils';
 
 interface Comment {
   id: string;

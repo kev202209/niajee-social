@@ -4,7 +4,7 @@ import React, { useEffect, useState, FC } from 'react';
 import AuthenticatedImage from "@/components/Image";
 import { DetailedChannel as Channel } from '@/types';
 import { FiSettings, FiUsers, FiVideo, FiEye, FiPlus, FiRefreshCw } from 'react-icons/fi';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 const ChannelsPage: FC = () => {
   const [channels, setChannels] = useState<Channel[]>([]);

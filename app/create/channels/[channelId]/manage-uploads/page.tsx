@@ -20,7 +20,7 @@ import {
 import { toast } from 'sonner';
 import Link from 'next/link';
 import AuthenticatedImage from '@/components/Image';
-import timeAgo from '@/app/utils/timeAgo';
+import timeAgo from '@/utils/timeAgo';
 import { ProcessedImage } from '@/types';
 
 // Updated interface to match the new structure

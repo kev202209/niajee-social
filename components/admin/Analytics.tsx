@@ -11,7 +11,7 @@ import {
   FiBarChart2,
   FiActivity,
 } from 'react-icons/fi';
-import { formatCount } from '@/app/utils/formatCount';
+import { formatCount } from '@/utils/formatCount';
 
 interface AnalyticsData {
   overview: {

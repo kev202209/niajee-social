@@ -4,8 +4,8 @@ import { FiSend, FiMessageCircle, FiChevronDown, FiChevronUp, FiHeart } from "re
 import AuthenticatedImage from "@/components/Image"; 
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import timeAgo from '@/app/utils/timeAgo';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import timeAgo from '@/utils/timeAgo';
+import { getImageSrc } from '@/utils/imageUtils';
 
 interface BlogCommentsProps {
   blogId: string;

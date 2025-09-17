@@ -79,6 +79,46 @@
 -[] have the footer with the same color has the header
 -[] Fix the links on the user card on the header
 -[] Ensure you centralise the headers and sidebars so that they are not so many.
+-[] Remember to update the videos so that they can load faster by making some gifs from them.
+-[] Remember to update the nav bar to look like it is hovering by having it have a padding or margin so that i does not touch the walls of the screen
+-[] Fix the issue with the watch page where the content is out of screen and remove the old sidebar.
+-[] See if you can fix the short page where the client swipes to the next to handle correctly and show a new video.
+-[] Finish up on the manage uploads. 
+-[] see how you can fix the sidebar so that it can be appropraite for the short and video page.
+-[] Fix the short page loading skeleton. it looks off, it does not match the page layout.
+-[] Fix the video comment section, currently the user needs to click the button twice to submit.
+-[] Create pages are not mobile responsive, please change that
+-[] Add the banner adding option for the channel new and settings page.
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
+-[]
 -[]
 -[]
 -[]

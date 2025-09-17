@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import AuthenticatedImage from "@/components/Image";
 import { FiList } from 'react-icons/fi';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 const channelSidebarItems = [
   { label: 'Overview', icon: Home, href: '' },

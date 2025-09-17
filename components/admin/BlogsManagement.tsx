@@ -16,8 +16,8 @@ import {
   FiStar,
   FiUser
 } from 'react-icons/fi';
-import { formatCount } from '@/app/utils/formatCount';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { formatCount } from '@/utils/formatCount';
+import { getImageSrc } from '@/utils/imageUtils';
 import { Blog, BlogReport, RawBlog, RawReport, ProcessedImage } from '@/types';
 
 const BLOG_IMAGES_BASE_URL = 'http://localhost:5000/uploads/blogs/';

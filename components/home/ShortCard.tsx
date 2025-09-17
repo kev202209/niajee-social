@@ -5,8 +5,8 @@ import DropdownMenuPortal from "./DropDownMenu";
 import Link from "next/link";
 import AuthenticatedImage from "@/components/Image";
 import Hls from 'hls.js';
-import { getFullUrl } from "@/app/utils/videourl";
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getFullUrl } from "@/utils/videourl";
+import { getImageSrc } from '@/utils/imageUtils';
 
 const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const videoRef = useRef<HTMLVideoElement>(null);

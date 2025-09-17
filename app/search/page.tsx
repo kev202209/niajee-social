@@ -8,10 +8,10 @@ import { FiSearch, FiTrendingUp, FiUsers, FiVideo, FiPlay, FiHash, FiGrid } from
 import AuthenticatedImage from '@/components/Image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import timeAgo from '@/app/utils/timeAgo';
-import { formatCount } from '@/app/utils/formatCount';
+import timeAgo from '@/utils/timeAgo';
+import { formatCount } from '@/utils/formatCount';
 import type { User, Channel, mVideo, Short, Blog, Post, ProcessedImage } from '@/types';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 // ---- Updated Search Result Models with proper typing ----
 interface UserResult {

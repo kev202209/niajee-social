@@ -11,7 +11,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { toast } from "sonner";
-import ShareService from '@/app/utils/ShareService';
+import ShareService from '@/utils/ShareService';
 
 interface ShareModalProps {
   isOpen: boolean;

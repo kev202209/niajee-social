@@ -2,11 +2,11 @@ import { FC, useEffect, useRef, useState, useCallback } from "react";
 import { Video } from "../../types";
 import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiUser } from "react-icons/fi";
 import Link from "next/link";
-import timeAgo from "../../app/utils/timeAgo";
+import timeAgo from "../../utils/timeAgo";
 import Hls from 'hls.js';
 import AuthenticatedImage from "@/components/Image";
-import { getFullUrl } from "@/app/utils/videourl";
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getFullUrl } from "@/utils/videourl";
+import { getImageSrc } from '@/utils/imageUtils';
 
 function useOutsideClick(
   ref: React.RefObject<HTMLElement | null>,

@@ -15,7 +15,7 @@ import {
   FiAlertTriangle,
   FiX,
 } from 'react-icons/fi';
-import { formatCount } from '@/app/utils/formatCount';
+import { formatCount } from '@/utils/formatCount';
 import { getImageSrcSafe } from '@/types';
 
 interface Post {

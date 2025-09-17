@@ -12,11 +12,11 @@ import Link from 'next/link'
 import LikeButton from "@/components/LikeButton";
 import { toast } from "sonner";
 import useOutsideClick from "@/hooks/useOutsideClick";
-import { formatCount } from '@/app/utils/formatCount';
+import { formatCount } from '@/utils/formatCount';
 import ShareModal from '@/components/video/ShareModal';
-import ShareService from '@/app/utils/ShareService';
+import ShareService from '@/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 // Define the video data structure here or import it from a shared types file
 interface ShortData {

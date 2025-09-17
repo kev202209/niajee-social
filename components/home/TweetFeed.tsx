@@ -4,8 +4,8 @@ import AuthenticatedImage from "@/components/Image";
 import TweetFeedSkeleton from "./TweetFeedSkeleton";
 import { FiMessageCircle, FiRepeat, FiHeart, FiBookmark, FiShare, FiRefreshCw, FiImage, FiPlay, FiBarChart } from "react-icons/fi";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
-import timeAgo from "@/app/utils/timeAgo";
-import { getImageSrc } from '@/app/utils/imageUtils';
+import timeAgo from "@/utils/timeAgo";
+import { getImageSrc } from '@/utils/imageUtils';
 
 const TweetFeed: FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);

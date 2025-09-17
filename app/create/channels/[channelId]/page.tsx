@@ -7,8 +7,8 @@ import { DetailedChannel as Channel } from '@/types'
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiClock, FiPlay, FiCalendar, FiSmartphone } from 'react-icons/fi'
 import ChannelOverviewSkeleton from './ChannelOverviewSkeleton'
 import AuthenticatedImage from "@/components/Image"; // Add this import at the top
-import timeAgo from '@/app/utils/timeAgo';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import timeAgo from '@/utils/timeAgo';
+import { getImageSrc } from '@/utils/imageUtils';
 
 interface ChannelStats {
   totalViews: number | null;

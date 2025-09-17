@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { Channel } from '@/types';
 import { FiUsers, FiVideo, FiEye, FiTrendingUp, FiCalendar, FiLoader } from 'react-icons/fi';
 import AuthenticatedImage from "@/components/Image";
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 interface AnalyticsData {
   totalViews: number;

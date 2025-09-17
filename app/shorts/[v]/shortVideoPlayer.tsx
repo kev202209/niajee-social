@@ -2,7 +2,7 @@ import { FC, useEffect, useRef, useState } from 'react';
 import { FaVolumeMute, FaVolumeDown, FaVolumeUp, FaPause, FaPlay } from 'react-icons/fa';
 import Hls from 'hls.js';
 import ShortsProgressBar from './ShortsProgressBar';
-import ViewTrackingService from '@/app/utils/ViewTrackingService';
+import ViewTrackingService from '@/utils/ViewTrackingService';
 
 interface Channel {
   name: string;

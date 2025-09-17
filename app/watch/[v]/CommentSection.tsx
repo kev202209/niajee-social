@@ -5,9 +5,9 @@ import { FiThumbsUp, FiThumbsDown, FiMessageCircle, FiSend, FiChevronDown, FiChe
 import { Comment, CreateCommentDto } from '../../../types';
 import { useAuth } from '@/contexts/AuthContext';
 import TextAreaWithLimit from '@/components/ui/TextAreaWithLimit';
-import timeAgo from '@/app/utils/timeAgo';
+import timeAgo from '@/utils/timeAgo';
 import AuthenticatedImage from "@/components/Image";
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 interface CommentsSectionProps {
   videoId: string;

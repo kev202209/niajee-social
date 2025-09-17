@@ -5,7 +5,7 @@ import { Channel } from '@/types';
 import { FiUsers, FiVideo, FiEye, FiPlus, FiTrendingUp, FiUpload, FiPlayCircle } from 'react-icons/fi';
 import Link from 'next/link';
 import AuthenticatedImage from '@/components/Image';
-import { getImageSrc } from '../utils/imageUtils';
+import { getImageSrc } from '../../utils/imageUtils';
 
 interface DashboardStats {
   totalViews: number;

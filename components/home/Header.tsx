@@ -17,7 +17,7 @@ import AuthenticatedImage from "@/components/Image";
 import { useRouter } from 'next/navigation';
 import ProfileMenu from "./ProfileMenu";
 import Logo from '../Logo';
-import { getImageSrc } from '@/app/utils/imageUtils'
+import { getImageSrc } from '@/utils/imageUtils'
 
 interface SearchSuggestion {
   id: string;

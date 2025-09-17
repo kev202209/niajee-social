@@ -10,9 +10,9 @@ import {
   FiAlertTriangle,
   FiEye
 } from 'react-icons/fi';
-import { formatCount } from '@/app/utils/formatCount';
+import { formatCount } from '@/utils/formatCount';
 import Image from 'next/image';
-import { getImageSrc } from '@/app/utils/imageUtils';
+import { getImageSrc } from '@/utils/imageUtils';
 
 interface User {
   id: string;
