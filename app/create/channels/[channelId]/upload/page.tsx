@@ -42,7 +42,11 @@ const ChannelUploadPage = () => {
     processingProgress: 0,
     processingMessage: '',
     uploadSpeed: '',
-    estimatedTime: ''
+    estimatedTime: '',
+    // NEW: Thumbnail upload states
+    thumbnailUploading: false,
+    thumbnailUploaded: false,
+    thumbnailError: ''
   });
 
   const {
@@ -124,7 +128,10 @@ const ChannelUploadPage = () => {
       processingProgress: 0,
       processingMessage: '',
       uploadSpeed: '',
-      estimatedTime: ''
+      estimatedTime: '',
+      thumbnailUploading: false,
+      thumbnailUploaded: false,
+      thumbnailError: ''
     });
     setUploadedBytes(0);
   };
@@ -146,27 +153,60 @@ const ChannelUploadPage = () => {
     }
   };
 
+  // ✅ UPDATED: Interface now includes thumbnail data
   interface PresignedResponse {
-    // Make it flexible for both videoId and shortId
     videoId?: string;
     shortId?: string;
-    presignedUrl: string;
-    s3Key: string;
-    originalFileName: string;
-    expectedFileName: string;
+    video: {
+      presignedUrl: string;
+      s3Key: string;
+      expectedFileName: string;
+    };
+    thumbnail?: {
+      presignedUrl: string;
+      s3Key: string;
+      fileName: string;
+    } | null;
     expiresIn: number;
   }
 
-  const requestPresignedUrl = async (fileName: string, fileSize: number, channelId: string, contentType: 'video' | 'short') => {
+  // ✅ UPDATED: Now supports thumbnail file in the request
+  const requestPresignedUrl = async (
+    fileName: string, 
+    fileSize: number, 
+    channelId: string, 
+    contentType: 'video' | 'short',
+    thumbnailFile?: File
+  ): Promise<PresignedResponse> => {
     const endpoint = contentType === 'short' ? '/api/shorts/presigned-upload' : '/api/videos/presigned-upload';
+    
+    // ✅ NEW: Include thumbnail file info if provided
+    const requestBody: any = { 
+      fileName, 
+      fileSize, 
+      channelId 
+    };
+
+    if (thumbnailFile) {
+      requestBody.thumbnailFile = {
+        fileName: thumbnailFile.name,
+        fileSize: thumbnailFile.size
+      };
+    }
+
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ fileName, fileSize, channelId })
+      body: JSON.stringify(requestBody)
     });
-    if (!res.ok) throw new Error('Failed to get upload URL');
-    return (await res.json()) as PresignedResponse;
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to get upload URL');
+    }
+    
+    return await res.json();
   };
 
   const uploadToR2 = async (presignedUrl: string, file: File) => {
@@ -176,6 +216,17 @@ const ChannelUploadPage = () => {
       headers: { 'Content-Type': file.type || 'video/mp4' }
     });
     if (!response.ok) throw new Error('Upload to R2 failed');
+    return response;
+  };
+
+  // ✅ NEW: Separate function for thumbnail upload
+  const uploadThumbnailToR2 = async (presignedUrl: string, file: File) => {
+    const response = await fetch(presignedUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type || 'image/jpeg' }
+    });
+    if (!response.ok) throw new Error('Thumbnail upload to R2 failed');
     return response;
   };
 
@@ -189,13 +240,19 @@ const ChannelUploadPage = () => {
     visibility: string;
   }
 
-  const startProcessing = async (contentId: string, s3Key: string, metadata: Metadata) => {
+  // ✅ UPDATED: Now supports thumbnailS3Key parameter
+  const startProcessing = async (
+    contentId: string, 
+    s3Key: string, 
+    metadata: Metadata,
+    thumbnailS3Key?: string
+  ) => {
     const endpoint = metadata.contentType === 'short' ? '/api/shorts/start-processing' : '/api/videos/start-processing';
     
     // Use the correct field name
     const idField = metadata.contentType === 'short' ? 'shortId' : 'videoId';
     
-    const requestBody = {
+    const requestBody: any = {
       [idField]: contentId,
       s3Key,
       title: metadata.title,
@@ -207,26 +264,55 @@ const ChannelUploadPage = () => {
       visibility: metadata.visibility
     };
 
+    // ✅ NEW: Include thumbnail S3 key if provided
+    if (thumbnailS3Key) {
+      requestBody.thumbnailS3Key = thumbnailS3Key;
+    }
+
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(requestBody)
     });
-    if (!res.ok) throw new Error('Failed to start processing');
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to start processing');
+    }
+    
     return res.json();
   };
 
+  // ✅ UPDATED: Complete rewrite of handleSubmit to support thumbnail uploads
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.video || !form.title.trim()) {
       setUploadState(prev => ({ ...prev, error: 'Please select a video and enter a title' }));
       return;
     }
-    setUploadState(prev => ({ ...prev, uploading: true, error: '', success: '' }));
+    
+    setUploadState(prev => ({ 
+      ...prev, 
+      uploading: true, 
+      error: '', 
+      success: '',
+      thumbnailError: '',
+      uploadProgress: 0
+    }));
 
     try {
-      const presigned = await requestPresignedUrl(form.video.name, form.video.size, channelId, form.contentType);
+      // ✅ STEP 1: Request presigned URLs (including thumbnail if provided)
+      console.log('🎬 [UPLOAD] Step 1: Requesting presigned URLs...');
+      setUploadState(prev => ({ ...prev, status: 'Getting upload URLs...', uploadProgress: 10 }));
+      
+      const presigned = await requestPresignedUrl(
+        form.video.name, 
+        form.video.size, 
+        channelId, 
+        form.contentType,
+        form.thumbnail // ✅ NEW: Pass thumbnail file if selected
+      );
       
       // Use the correct ID from response
       const contentId = presigned.shortId || presigned.videoId;
@@ -235,41 +321,131 @@ const ChannelUploadPage = () => {
       // Store the ID in state
       setUploadState(prev => ({ ...prev, videoId: contentId }));
 
-      const renamedFile = new File([form.video], presigned.expectedFileName, { type: form.video.type });
+      console.log('🎬 [UPLOAD] Presigned URLs received:', {
+        contentId,
+        videoS3Key: presigned.video.s3Key,
+        thumbnailS3Key: presigned.thumbnail?.s3Key,
+        hasThumbnail: !!presigned.thumbnail
+      });
 
-      console.log('Using videoId:', presigned.videoId, 'key:', presigned.s3Key, 'expected:', presigned.expectedFileName);
+      // ✅ STEP 2: Upload thumbnail first (if provided)
+      let thumbnailS3Key: string | undefined;
+      if (presigned.thumbnail && form.thumbnail) {
+        console.log('🖼️ [UPLOAD] Step 2a: Uploading thumbnail...');
+        setUploadState(prev => ({ 
+          ...prev, 
+          status: 'Uploading thumbnail...', 
+          uploadProgress: 20,
+          thumbnailUploading: true 
+        }));
 
-      setUploadState(prev => ({ ...prev, uploadProgress: 50, progress: 50 }));
-      await uploadToR2(presigned.presignedUrl, renamedFile);
+        try {
+          await uploadThumbnailToR2(presigned.thumbnail.presignedUrl, form.thumbnail);
+          thumbnailS3Key = presigned.thumbnail.s3Key;
+          
+          setUploadState(prev => ({ 
+            ...prev, 
+            thumbnailUploading: false,
+            thumbnailUploaded: true 
+          }));
+          
+          console.log('🖼️ [UPLOAD] Thumbnail uploaded successfully to:', thumbnailS3Key);
+          toast.success('Thumbnail uploaded successfully!');
+          
+        } catch (thumbnailError) {
+          console.error('🖼️ [UPLOAD] Thumbnail upload failed:', thumbnailError);
+          setUploadState(prev => ({ 
+            ...prev, 
+            thumbnailUploading: false,
+            thumbnailError: 'Thumbnail upload failed. Video will be uploaded without custom thumbnail.' 
+          }));
+          // Don't throw - continue with video upload
+          toast.warning('Thumbnail upload failed, continuing with video upload');
+        }
+      }
+
+      // ✅ STEP 3: Upload video file
+      console.log('🎬 [UPLOAD] Step 3: Uploading video...');
+      setUploadState(prev => ({ 
+        ...prev, 
+        status: 'Uploading video...', 
+        uploadProgress: 40 
+      }));
+
+      const renamedFile = new File([form.video], presigned.video.expectedFileName, { 
+        type: form.video.type 
+      });
+
+      await uploadToR2(presigned.video.presignedUrl, renamedFile);
       setUploadedBytes(renamedFile.size);
+      
+      setUploadState(prev => ({ 
+        ...prev, 
+        uploadProgress: 80,
+        status: 'Video uploaded, starting processing...' 
+      }));
+
+      console.log('🎬 [UPLOAD] Video uploaded successfully');
+
+      // ✅ STEP 4: Start processing with all data
+      console.log('🎬 [UPLOAD] Step 4: Starting processing...');
+      setUploadState(prev => ({
+        ...prev,
+        uploadProgress: 90,
+        status: 'Starting processing...'
+      }));
+
+      const processingResult = await startProcessing(
+        contentId, 
+        presigned.video.s3Key, 
+        {
+          title: form.title,
+          description: form.description,
+          channelId,
+          contentType: form.contentType,
+          tags: form.tags,
+          category: form.category,
+          visibility: form.visibility
+        },
+        thumbnailS3Key // ✅ NEW: Pass thumbnail S3 key if uploaded
+      );
+
+      console.log('🎬 [UPLOAD] Processing started:', processingResult);
+
       setUploadState(prev => ({
         ...prev,
         uploadProgress: 100,
         progress: 100,
         uploading: false,
         processing: true,
-        isProcessing: true
+        isProcessing: true,
+        status: 'Processing started!'
       }));
 
-      await startProcessing(contentId, presigned.s3Key, {
-        title: form.title,
-        description: form.description,
-        channelId,
-        contentType: form.contentType,
-        tags: form.tags,
-        category: form.category,
-        visibility: form.visibility
-      });
-
-      toast.success('Upload started! Processing queued.');
+      // ✅ Success feedback
+      const successMessage = thumbnailS3Key 
+        ? 'Upload completed! Video and thumbnail are being processed.'
+        : 'Upload completed! Video is being processed.';
+      
+      toast.success(successMessage);
+      
       setTimeout(() => {
         window.location.href = `/create/channels/${channelId}/manage-uploads`;
       }, 1200);
 
     } catch (err) {
-      console.error('Upload error:', err);
-      setUploadState(prev => ({ ...prev, uploading: false, processing: false, error: 'Upload failed' }));
-      toast.error('Upload failed');
+      console.error('🎬 [UPLOAD] Upload error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Upload failed';
+      
+      setUploadState(prev => ({ 
+        ...prev, 
+        uploading: false, 
+        processing: false, 
+        error: errorMessage,
+        thumbnailUploading: false
+      }));
+      
+      toast.error(errorMessage);
     }
   };
 
@@ -346,9 +522,40 @@ const ChannelUploadPage = () => {
               <ThumbnailUploader
                 thumbnailPreview={thumbnailPreview}
                 handleThumbnailChange={handleThumbnailChange}
-                uploading={uploadState.uploading}
+                uploading={uploadState.uploading || uploadState.thumbnailUploading}
                 clearThumbnail={clearThumbnail}
               />
+
+              {/* ✅ NEW: Thumbnail upload status */}
+              {uploadState.thumbnailUploading && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <FiLoader className="w-4 h-4 text-blue-600 animate-spin" />
+                    <p className="text-blue-800 dark:text-blue-200 text-sm">
+                      Uploading thumbnail...
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {uploadState.thumbnailUploaded && (
+                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <FiCheck className="w-4 h-4 text-green-600" />
+                    <p className="text-green-800 dark:text-green-200 text-sm">
+                      Thumbnail uploaded successfully!
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {uploadState.thumbnailError && (
+                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                    ⚠️ {uploadState.thumbnailError}
+                  </p>
+                </div>
+              )}
             </div>
 
             <FormFields
@@ -391,7 +598,7 @@ const ChannelUploadPage = () => {
             </div>
           )}
 
-            {uploadState.error && (
+          {uploadState.error && (
             <div className="p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
               <p className="text-red-800 dark:text-red-200 text-sm">
                 {uploadState.error}
@@ -432,13 +639,14 @@ const ChannelUploadPage = () => {
                 ) : (
                   <>
                     <FiLoader className="w-4 h-4 animate-spin" />
-                    Uploading... ({uploadState.uploadProgress}%)
+                    {uploadState.thumbnailUploading ? 'Uploading Thumbnail...' : `Uploading... (${uploadState.uploadProgress}%)`}
                   </>
                 )
               ) : (
                 <>
                   <FiUpload className="w-4 h-4" />
                   Upload {form.contentType === 'short' ? 'Short' : 'Video'}
+                  {form.thumbnail && ' + Thumbnail'}
                 </>
               )}
             </button>
