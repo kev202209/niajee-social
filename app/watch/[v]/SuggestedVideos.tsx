@@ -2,11 +2,11 @@
 
 import { useRef, useState, useEffect, useCallback } from "react";
 import { FiChevronLeft, FiChevronRight, FiClock, FiPlusCircle, FiAlertCircle, FiRefreshCw } from "react-icons/fi";
-import { SuggestedVideo } from "../../../types";
+import { SuggestedVideo, getThumbnailSrc } from "@/types"; // Import getThumbnailSrc
+import { getImageSrc } from "@/utils/imageUtils";
 import AuthenticatedImage from "@/components/Image";
 import Link from "next/link";
 import timeAgo from "@/utils/timeAgo";
-import { getImageSrc } from '@/utils/imageUtils';
 
 interface SuggestedVideosProps {
   videoId: string;
@@ -255,7 +255,7 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
         <div className="relative w-40 h-24 flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
           {video.thumbnailUrl ? (
             <AuthenticatedImage
-              mediaKey={getImageSrc(video.thumbnailUrl, '480w')}
+              mediaKey={getThumbnailSrc(video.thumbnailUrl)}
               alt={video.title}
               fill
               className="object-cover"

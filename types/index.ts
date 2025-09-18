@@ -27,7 +27,11 @@ export interface Video {
   videoUrl: {
     [quality: string]: string; // e.g., "360p", "720p", "1080p"
   };
-  thumbnail: ProcessedImage;
+  thumbnail: {
+    data: ProcessedImage;
+    type: 'auto-generated' | 'user-uploaded';
+    status: 'queued' | 'processing' | 'complete' | 'failed';
+  }; // Updated to match actual structure
   title: string;
   description: string;
   duration: number;
@@ -50,7 +54,11 @@ export interface Short {
   videoUrl: {
     [quality: string]: string; // e.g., "240p", "360p", "master"
   };
-  thumbnailUrl?: ProcessedImage;
+  thumbnailUrl: {
+    data: ProcessedImage;
+    type: 'auto-generated' | 'user-uploaded';
+    status: 'queued' | 'processing' | 'complete' | 'failed';
+  }; // Updated to match actual structure
   duration?: number; // Made optional since it's missing from your data
   views: number;
   likes: number;
@@ -118,9 +126,12 @@ export interface UploadItem {
   title: string;
   description: string;
   contentType: 'video' | 'short';
-  processingStatus: 'processing' | 'complete' | 'failed' | 'queued';
-  processingProgress: number;
-  thumbnail?: ProcessedImage | string; // Allow both types
+  processingStatus: ProcessingStatus;
+  thumbnail: {
+    data: ProcessedImage;
+    type: 'auto-generated' | 'user-uploaded';
+    status: 'queued' | 'processing' | 'complete' | 'failed';
+  } | null; // This matches your actual structure
   duration?: number;
   fileSize: number;
   createdAt: string;
@@ -130,6 +141,26 @@ export interface UploadItem {
   shortId?: string;
   errorMessage?: string;
 }
+
+// Add the ProcessingStatus interface to types
+export interface ProcessingStatus {
+  video?: {
+    jobId: string;
+    status: 'queued' | 'processing' | 'complete' | 'failed';
+    startedAt?: string;
+    completedAt?: string;
+    progress?: number;
+    errorMessage?: string;
+  };
+  thumbnail?: {
+    type: 'auto-generated' | 'user-uploaded';
+    status: 'queued' | 'processing' | 'complete' | 'failed';
+    startedAt?: string;
+    completedAt?: string;
+    errorMessage?: string;
+  };
+}
+
 
 export interface AnalyticsData {
   totalViews: number;
@@ -224,7 +255,7 @@ export interface mVideo {
 }
 
 // Update SuggestedVideo to extend from mVideo
-export interface SuggestedVideo extends Omit<mVideo, 'videoUrl'> {
+export interface SuggestedVideo extends Omit<mVideo, 'videoUrl' | 'thumbnailUrl'> {
   videoSrc: string;
   channelName: string;
   channelAvatar: ProcessedImage;
@@ -232,8 +263,12 @@ export interface SuggestedVideo extends Omit<mVideo, 'videoUrl'> {
   views: string;
   uploadDate: string;
   duration: number;
-  thumbnailUrl: ProcessedImage;
-  age: string
+  thumbnailUrl: {
+    data: ProcessedImage;
+    type: 'auto-generated' | 'user-uploaded';
+    status: 'queued' | 'processing' | 'complete' | 'failed';
+  }; // Updated to match actual structure
+  age: string;
 }
 
 export interface Comment {
@@ -405,6 +440,15 @@ export const getImageSrcSafe = (
   }
   
   return '';
+};
+
+// Helper function to extract thumbnail safely (moved from manage uploads)
+export const getThumbnailSrc = (
+  thumbnail: UploadItem['thumbnail'] | Video['thumbnail'] | Short['thumbnailUrl'] | SuggestedVideo['thumbnailUrl'],
+  variant: '480w' | '720w' | '1080w' = '480w'
+): string => {
+  if (!thumbnail?.data) return '';
+  return getImageSrcSafe(thumbnail.data, variant);
 };
 
 export * from './blog.types';

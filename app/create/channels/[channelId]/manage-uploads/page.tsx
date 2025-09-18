@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
-import { Channel, getImageSrcSafe } from '@/types';
+import { Channel, UploadItem, ProcessingStatus, getThumbnailSrc } from '@/types';
 import { 
   FiUpload, 
   FiLoader, 
@@ -21,47 +21,6 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import AuthenticatedImage from '@/components/Image';
 import timeAgo from '@/utils/timeAgo';
-import { ProcessedImage } from '@/types';
-
-// Updated interface to match the new structure
-interface ProcessingStatus {
-  video?: {
-    jobId: string;
-    status: 'queued' | 'processing' | 'complete' | 'failed';
-    startedAt?: string;
-    completedAt?: string;
-    progress?: number;
-    errorMessage?: string;
-  };
-  thumbnail?: {
-    type: 'auto-generated' | 'user-uploaded';
-    status: 'queued' | 'processing' | 'complete' | 'failed';
-    startedAt?: string;
-    completedAt?: string;
-    errorMessage?: string;
-  };
-}
-
-interface UploadItem {
-  id: string;
-  uploadId: string;
-  title: string;
-  description: string;
-  contentType: 'video' | 'short';
-  processingStatus: ProcessingStatus;
-  thumbnail?: {
-    data?: ProcessedImage;
-    type?: 'auto-generated' | 'user-uploaded';
-    status?: 'queued' | 'processing' | 'complete' | 'failed';
-  }; // Updated to match your actual structure
-  duration?: number;
-  fileSize: number;
-  createdAt: string;
-  updatedAt: string;
-  r2Key?: string;
-  videoId?: string;
-  shortId?: string;
-}
 
 const ManageUploadsPage = () => {
   const params = useParams();
@@ -219,19 +178,6 @@ const ManageUploadsPage = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  // Add helper function to extract thumbnail image data
-  const getThumbnailImageSrc = (thumbnail: UploadItem['thumbnail']): string => {
-    if (!thumbnail) return '';
-    
-    // Handle the nested structure with data property
-    if (thumbnail.data && typeof thumbnail.data === 'object') {
-      return getImageSrcSafe(thumbnail.data, '480w');
-    }
-    
-    // Fallback for direct thumbnail (backward compatibility)
-    return getImageSrcSafe(thumbnail as any, '480w');
-  };
-
   useEffect(() => {
     fetchChannel();
     fetchUploads();
@@ -328,7 +274,7 @@ const ManageUploadsPage = () => {
                     <div className="w-32 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center">
                       {upload.thumbnail?.data ? (
                         <AuthenticatedImage
-                          mediaKey={getThumbnailImageSrc(upload.thumbnail)}
+                          mediaKey={getThumbnailSrc(upload.thumbnail)}
                           alt={upload.title}
                           width={128}
                           height={80}

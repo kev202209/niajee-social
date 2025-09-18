@@ -1,12 +1,12 @@
 import { FC, useEffect, useRef, useState, useCallback } from "react";
-import { Video } from "../../types";
+import { Video, getThumbnailSrc } from "@/types"; // Import getThumbnailSrc
+import { getImageSrc } from "@/utils/imageUtils";
 import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiUser } from "react-icons/fi";
 import Link from "next/link";
 import timeAgo from "../../utils/timeAgo";
 import Hls from 'hls.js';
 import AuthenticatedImage from "@/components/Image";
 import { getFullUrl } from "@/utils/videourl";
-import { getImageSrc } from '@/utils/imageUtils';
 
 function useOutsideClick(
   ref: React.RefObject<HTMLElement | null>,
@@ -35,6 +35,8 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
   const optionsRef = useRef<HTMLDivElement>(null);
   
   useOutsideClick(optionsRef, () => setShowOptions(false));
+
+  console.log('-----here is the video thumbnail:', video.thumbnail);
 
   // Helper to get video source URL from key (memoized so effects can depend on it)
   const getVideoSource = useCallback(() => {
@@ -192,7 +194,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
         >
           {/* Thumbnail */}
           <AuthenticatedImage
-            mediaKey={getImageSrc(video.thumbnail, '480w')}
+            mediaKey={getThumbnailSrc(video.thumbnail)}
             alt={video.title}
             fill
             className="absolute inset-0 object-cover w-full h-full"

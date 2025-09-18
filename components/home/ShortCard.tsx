@@ -1,4 +1,5 @@
-import { Short } from "@/types"; 
+import { Short, getThumbnailSrc } from "@/types"; // Import getThumbnailSrc
+import { getImageSrc } from "@/utils/imageUtils";
 import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiVolume, FiVolumeX, FiXCircle, FiUser } from "react-icons/fi";
 import DropdownMenuPortal from "./DropDownMenu";
@@ -6,7 +7,6 @@ import Link from "next/link";
 import AuthenticatedImage from "@/components/Image";
 import Hls from 'hls.js';
 import { getFullUrl } from "@/utils/videourl";
-import { getImageSrc } from '@/utils/imageUtils';
 
 const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -200,7 +200,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
         >
            {/* Thumbnail */}
            <AuthenticatedImage
-             mediaKey={getImageSrc(short.thumbnailUrl, '480w')}
+             mediaKey={getThumbnailSrc(short.thumbnailUrl)}
              alt={short.title}
              fill
              className="absolute inset-0 object-cover w-full h-full"
@@ -248,7 +248,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
         {/* Details Section */}
         <div className="p-3 relative">
           <div className="flex items-start gap-2 mb-2">
-            {/* Channel Avatar - Use name as fallback for handle */}
+            {/* Channel Avatar */}
             <button
               onClick={(e) => {
                 e.preventDefault();
