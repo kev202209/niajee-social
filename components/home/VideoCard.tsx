@@ -4,9 +4,9 @@ import { getImageSrc } from "@/utils/imageUtils";
 import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiUser } from "react-icons/fi";
 import Link from "next/link";
 import timeAgo from "../../utils/timeAgo";
-import Hls from 'hls.js';
 import AuthenticatedImage from "@/components/Image";
 import { getFullUrl } from "@/utils/videourl";
+import HoverPreviewPlayer from "@/components/media/HoverPreviewPlayer";
 
 function useOutsideClick(
   ref: React.RefObject<HTMLElement | null>,
@@ -25,18 +25,10 @@ function useOutsideClick(
 }
 
 const VideoCard: FC<{ video: Video }> = ({ video }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
-  const [isMuted, setIsMuted] = useState<boolean>(true);
-  const [volume, setVolume] = useState<number>(0.5);
   const [showOptions, setShowOptions] = useState<boolean>(false);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
-  const [videoReady, setVideoReady] = useState<boolean>(false);
   const optionsRef = useRef<HTMLDivElement>(null);
   
   useOutsideClick(optionsRef, () => setShowOptions(false));
-
-  console.log('-----here is the video thumbnail:', video.thumbnail);
 
   // Helper to get video source URL from key (memoized so effects can depend on it)
   const getVideoSource = useCallback(() => {
@@ -50,119 +42,6 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
     return getFullUrl(String(first));
   }, [video.videoUrl]);
  
-  // Setup HLS and video source
-  useEffect(() => {
-    const videoElement = videoRef.current;
-    if (!videoElement) return;
-
-    const videoSrc = getVideoSource();
-    if (!videoSrc) return;
-
-    // Clean up previous HLS instance
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
-    }
-
-    // Check if it's an HLS stream
-    if (videoSrc.includes('.m3u8')) {
-      if (Hls.isSupported()) {
-        const hls = new Hls({
-          debug: false,
-          enableWorker: true,
-          autoStartLoad: false, // Don't auto-load to save bandwidth
-        });
-
-        hls.loadSource(videoSrc);
-        hls.attachMedia(videoElement);
-
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          setVideoReady(true);
-          videoElement.volume = volume;
-          videoElement.muted = true; // Always start muted for autoplay
-        });
-
-        hls.on(Hls.Events.ERROR, (event, data) => {
-          if (data.fatal) {
-            console.error('HLS Error:', data);
-            hls.destroy();
-          }
-        });
-
-        hlsRef.current = hls;
-      } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-        // Safari native HLS support
-        videoElement.src = videoSrc;
-        videoElement.volume = volume;
-        videoElement.muted = true;
-        setVideoReady(true);
-      }
-    } else {
-      // Regular MP4 or other formats
-      videoElement.src = videoSrc;
-      videoElement.volume = volume;
-      videoElement.muted = true;
-      setVideoReady(true);
-    }
-
-    return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
-    };
-  }, [getVideoSource, volume]);
-
-  const handleMouseEnter = async () => {
-    if (!videoReady || !videoRef.current) return;
-    
-    try {
-      // Start loading HLS if not already loaded
-      if (hlsRef.current && !hlsRef.current.loadLevel) {
-        hlsRef.current.startLoad();
-      }
-      
-      await videoRef.current.play();
-      setIsPlaying(true);
-    } catch (error) {
-      console.error('Error playing video:', error);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (videoRef.current && isPlaying) {
-      videoRef.current.pause();
-      setIsPlaying(false);
-    }
-  };
-
-  const toggleMute = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    setIsMuted((prev) => {
-      const newMuted = !prev;
-      if (videoRef.current) {
-        videoRef.current.muted = newMuted;
-      }
-      return newMuted;
-    });
-  };
-
-  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (videoRef.current) {
-      videoRef.current.volume = newVolume;
-      if (newVolume > 0 && isMuted) {
-        setIsMuted(false);
-        videoRef.current.muted = false;
-      }
-      if (newVolume === 0 && !isMuted) {
-        setIsMuted(true);
-        videoRef.current.muted = true;
-      }
-    }
-  };
-
   const formatDuration = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -186,58 +65,17 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
   return (
     <Link href={`/watch/${video.videoId}`}>
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer relative">
-        {/* Video Thumbnail Container with 16:9 Aspect Ratio */}
-        <div
-          className="relative group rounded-t-lg overflow-hidden aspect-video"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          {/* Thumbnail */}
-          <AuthenticatedImage
-            mediaKey={getThumbnailSrc(video.thumbnail)}
-            alt={video.title}
-            fill
-            className="absolute inset-0 object-cover w-full h-full"
+        {/* Video Thumbnail/Preview with 16:9 aspect ratio */}
+        <div className="relative rounded-t-lg overflow-hidden aspect-video">
+          <HoverPreviewPlayer
+            source={video.videoUrl}
+            poster={getThumbnailSrc(video.thumbnail)}
+            durationSeconds={video.duration}
+            className="w-full h-full"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            fallbackSrc="/placeholder-video.jpg"
           />
-          {/* Video Preview */}
-          <video
-            ref={videoRef}
-            poster="" // Remove poster, since thumbnail is handled above
-            src={getVideoSource()}
-            muted={isMuted}
-            loop
-            playsInline
-            className="absolute inset-0 object-cover w-full h-full opacity-0 group-hover:opacity-100 transition-opacity"
-          />
-          
-          {/* Duration Badge */}
-          <div className="absolute bottom-2 right-2 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded">
-            {formatDuration(video.duration)}
-          </div>
-          
-          {/* Volume Controls */}
-          <button
-            onClick={toggleMute}
-            className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-          >
-            {isMuted ? <FiVolumeX /> : <FiVolume />}
-          </button>
-          
-          <div className="absolute bottom-12 left-2 opacity-0 group-hover:opacity-100 transition">
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              value={volume}
-              onChange={handleVolumeChange}
-              className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-            />
-          </div>
         </div>
-        
+
         {/* Details Section */}
         <div className="p-3 relative overflow-visible">
           <div className="flex gap-3">
@@ -258,13 +96,13 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
                 </div>
               )}
             </Link>
-            
+
             {/* Video Info */}
             <div className="flex-1 min-w-0">
               <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight line-clamp-2 mb-1">
                 {video.title}
               </h3>
-              
+
               <div className="flex items-center gap-1 mb-1">
                 <p className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
                   {video.channel.name}
@@ -275,12 +113,12 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
                   </div>
                 )}
               </div>
-              
+
               <p className="text-xs text-gray-500 dark:text-gray-400">
                 {formatViews(video.views)} views • {timeAgo(video.createdAt)}
               </p>
             </div>
-            
+
             {/* Options Menu */}
             <div className="relative flex-shrink-0" ref={optionsRef}>
               <button

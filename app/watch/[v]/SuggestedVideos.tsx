@@ -7,6 +7,7 @@ import { getImageSrc } from "@/utils/imageUtils";
 import AuthenticatedImage from "@/components/Image";
 import Link from "next/link";
 import timeAgo from "@/utils/timeAgo";
+import HoverPreviewPlayer from "@/components/media/HoverPreviewPlayer";
 
 interface SuggestedVideosProps {
   videoId: string;
@@ -237,14 +238,17 @@ export default function SuggestedVideos({ videoId }: SuggestedVideosProps) {
 
 function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
   const [hover, setHover] = useState(false);
- 
-   const isNew = (() => {
-     const now = new Date();
-     const published = new Date(video.age);
-     const diffMs = now.getTime() - published.getTime();
-     return diffMs < 24 * 60 * 60 * 1000; // less than 1 day
-   })();
- 
+  const isNew = (() => {
+    const now = new Date();
+    const published = new Date(video.age);
+    const diffMs = now.getTime() - published.getTime();
+    return diffMs < 24 * 60 * 60 * 1000; // less than 1 day
+  })();
+
+  // If your API provides a numeric seconds field (e.g. video.durationSeconds), pass it.
+  // If not, keep durationLabel for static display when not hovering.
+  const durationSeconds = (video as any).durationSeconds as number | undefined;
+
   return (
     <Link href={`/watch/${video.id}`}>
       <div
@@ -254,13 +258,13 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
       >
         <div className="relative w-40 h-24 flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
           {video.thumbnailUrl ? (
-            <AuthenticatedImage
-              mediaKey={getThumbnailSrc(video.thumbnailUrl)}
-              alt={video.title}
-              fill
-              className="object-cover"
+            <HoverPreviewPlayer
+              source={(video as any).videoSrc || ''} // if you have only a string src here
+              poster={getThumbnailSrc(video.thumbnailUrl)}
+              durationSeconds={durationSeconds}
+              durationLabel={video.duration != null ? String(video.duration) : ''} // original label if seconds are not available
+              className="w-full h-full"
               sizes="160px"
-              fallbackSrc="/placeholder-video.jpg"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700">
@@ -280,29 +284,10 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
             </div>
           )}
 
-          {/* Duration badge */}
-          {video.duration && (
-            <div className="absolute bottom-1 right-1 bg-black bg-opacity-70 text-white text-xs px-1.5 py-0.5 rounded">
-              {video.duration}
-            </div>
-          )}
-
           {/* New badge */}
           {isNew && (
             <div className="absolute top-1 right-1 text-white border border-red-500 text-xs px-2 py-0.5 rounded-full">
               New
-            </div>
-          )}
-
-          {/* Hover overlay */}
-          {hover && (
-            <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black bg-opacity-50 transition-opacity">
-              <button className="text-white p-1.5 bg-black bg-opacity-50 rounded-full hover:bg-opacity-70 transition">
-                <FiClock className="w-4 h-4" />
-              </button>
-              <button className="text-white p-1.5 bg-black bg-opacity-50 rounded-full hover:bg-opacity-70 transition">
-                <FiPlusCircle className="w-4 h-4" />
-              </button>
             </div>
           )}
         </div>
