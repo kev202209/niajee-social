@@ -2,9 +2,10 @@
 'use client';
 import React, { useState } from 'react';
 import {
-  FiRewind, FiPlay, FiPause, FiFastForward, FiVolume2, FiVolumeX, FiToggleRight,
-   FiSettings, FiMonitor, FiMaximize, FiMinimize,
+  FiRewind, FiPlay, FiPause, FiVolume2, FiVolumeX, FiToggleRight,
+  FiSettings, FiMonitor, FiMaximize, FiMinimize, FiFastForward,
 } from 'react-icons/fi';
+// import { FaStepForward,FaStepBackward  } from "react-icons/fa";
 import { PictureInPicture2,  Captions } from 'lucide-react';
 import { VideoPlayerControls } from '../../hooks/useVideoPlayer';
 import SettingsPopup from './SettingsPopup';
@@ -67,10 +68,10 @@ export default function ControlBar({ controls, videoId }: { controls: VideoPlaye
           </span>
         </div>
         <div className="flex items-center space-x-2 ml-auto flex-wrap">
-          <button onClick={controls.toggleAutoplay} title="Autoplay" className="hover:text-gray-300">
+          {/* <button onClick={controls.toggleAutoplay} title="Autoplay" className="hover:text-gray-300">
             <FiToggleRight className={controls.isAutoplay ? 'text-blue-400' : ''} />
-          </button>
-          <button title="Subtitles" className="hover:text-gray-300">< Captions /></button>
+          </button> */}
+          {/* <button title="Subtitles" className="hover:text-gray-300">< Captions /></button> */}
           <div className="relative">
             <button onClick={() => setShowSettings(prev => !prev)} title="Settings" className="hover:text-gray-300"><FiSettings /></button>
             {showSettings && (
@@ -81,8 +82,8 @@ export default function ControlBar({ controls, videoId }: { controls: VideoPlaye
               />
             )}
           </div>
-          <button onClick={controls.toggleMiniplayer} title="Miniplayer" className="hover:text-gray-300"><PictureInPicture2 /></button>
-          <button onClick={controls.toggleCinemaMode} title="Cinema Mode" className="hover:text-gray-300"><FiMonitor /></button>
+          {/* <button onClick={controls.toggleMiniplayer} title="Miniplayer" className="hover:text-gray-300"><PictureInPicture2 /></button> */}
+          {/* <button onClick={controls.toggleCinemaMode} title="Cinema Mode" className="hover:text-gray-300"><FiMonitor /></button> */}
           <button onClick={controls.toggleFullscreen} title={controls.isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'} className="hover:text-gray-300">
             {controls.isFullscreen ? <FiMinimize /> : <FiMaximize />}
           </button>
