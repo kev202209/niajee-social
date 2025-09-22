@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import type { Metadata } from 'next'
 import { Toaster } from '@/components/ui/sonner'
 import {PostHogProvider} from './providers/PHprovider'
+import CookieConsent from '@/components/CookieConsent'
 
 export const metadata: Metadata = {
   title: 'Niajee - Social Media Super App',
@@ -30,6 +31,7 @@ export default function RootLayout({
             <Providers>
               <Toaster position="top-right" richColors closeButton />
               <main className="">{children}</main>
+              <CookieConsent />
             </Providers>
           </AuthProvider>
         </PostHogProvider>
