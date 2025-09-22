@@ -1,10 +1,8 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import { FiChevronLeft, FiChevronRight, FiClock, FiPlusCircle, FiAlertCircle, FiRefreshCw } from "react-icons/fi";
-import { SuggestedVideo, getThumbnailSrc } from "@/types"; // Import getThumbnailSrc
-import { getImageSrc } from "@/utils/imageUtils";
-import AuthenticatedImage from "@/components/Image";
+import { FiChevronLeft, FiChevronRight, FiAlertCircle, FiRefreshCw } from "react-icons/fi";
+import { SuggestedVideo, getThumbnailSrc } from "@/types";
 import Link from "next/link";
 import timeAgo from "@/utils/timeAgo";
 import HoverPreviewPlayer from "@/components/media/HoverPreviewPlayer";
@@ -237,7 +235,6 @@ export default function SuggestedVideos({ videoId }: SuggestedVideosProps) {
 }
 
 function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
-  const [hover, setHover] = useState(false);
   const isNew = (() => {
     const now = new Date();
     const published = new Date(video.age);
@@ -245,21 +242,31 @@ function SuggestedVideoCard({ video }: { video: SuggestedVideo }) {
     return diffMs < 24 * 60 * 60 * 1000; // less than 1 day
   })();
 
+  // Optional extras the API may return
+  type VideoWithExtras = SuggestedVideo & {
+    durationSeconds?: number;
+    videoSrc?: string;
+  };
+
+  const hasDurationSeconds = (v: SuggestedVideo): v is VideoWithExtras =>
+    'durationSeconds' in v;
+
+  const hasVideoSrc = (v: SuggestedVideo): v is VideoWithExtras =>
+    'videoSrc' in v;
+
   // If your API provides a numeric seconds field (e.g. video.durationSeconds), pass it.
   // If not, keep durationLabel for static display when not hovering.
-  const durationSeconds = (video as any).durationSeconds as number | undefined;
+  const durationSeconds = hasDurationSeconds(video) ? video.durationSeconds : undefined;
 
   return (
     <Link href={`/watch/${video.id}`}>
       <div
         className="flex items-start gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 p-2 rounded"
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
       >
         <div className="relative w-40 h-24 flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
           {video.thumbnailUrl ? (
             <HoverPreviewPlayer
-              source={(video as any).videoSrc || ''} // if you have only a string src here
+              source={hasVideoSrc(video) ? (video.videoSrc ?? '') : ''}
               poster={getThumbnailSrc(video.thumbnailUrl)}
               durationSeconds={durationSeconds}
               durationLabel={video.duration != null ? String(video.duration) : ''} // original label if seconds are not available

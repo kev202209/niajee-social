@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Header from '@/components/home/Header';
 import Sidebar from '@/components/home/Sidebar';
 import { FiUsers, FiVideo, FiPlay, FiBell } from 'react-icons/fi';
-import { Channel, ChannelStats, MediaItem, ChannelOverview, getImageSrcSafe } from '@/types';
+import { Channel, MediaItem, ChannelOverview, getImageSrcSafe } from '@/types';
 import { getImageSrc } from '@/utils/imageUtils';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;

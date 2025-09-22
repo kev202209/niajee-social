@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import Hls from 'hls.js';
+import Hls, { ErrorData } from 'hls.js';
 import AuthenticatedImage from '@/components/Image';
 import { FiVolume, FiVolumeX } from 'react-icons/fi';
 import { getFullUrl } from '@/utils/videourl';
@@ -107,7 +107,7 @@ const HoverPreviewPlayer: React.FC<HoverPreviewPlayerProps> = ({
         setReady(true);
         if (isHovered) attemptPlay();
       };
-      const onError = (_evt: any, data: any) => {
+      const onError = (_evt: string, data: ErrorData) => {
         if (data?.fatal) {
           try { hls.destroy(); } catch {}
         }

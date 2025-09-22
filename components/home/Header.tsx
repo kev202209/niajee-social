@@ -1,6 +1,5 @@
 "use client";
 import { FC, useRef, useState, useEffect, useMemo } from "react";
-import Link from "next/link";
 import DarkModeToggle from "../DarkModeToggle";
 import useOutsideClick from "@/hooks/useOutsideClick";
 import {

@@ -170,6 +170,17 @@ const ChannelUploadPage = () => {
     expiresIn: number;
   }
 
+  // Strongly typed request body for presigned URL request
+  type PresignedUploadRequestBody = {
+    fileName: string;
+    fileSize: number;
+    channelId: string;
+    thumbnailFile?: {
+      fileName: string;
+      fileSize: number;
+    };
+  };
+
   // ✅ UPDATED: Now supports thumbnail file in the request
   const requestPresignedUrl = async (
     fileName: string, 
@@ -181,7 +192,7 @@ const ChannelUploadPage = () => {
     const endpoint = contentType === 'short' ? '/api/shorts/presigned-upload' : '/api/videos/presigned-upload';
     
     // ✅ NEW: Include thumbnail file info if provided
-    const requestBody: any = { 
+    const requestBody: PresignedUploadRequestBody = { 
       fileName, 
       fileSize, 
       channelId 
@@ -202,11 +213,11 @@ const ChannelUploadPage = () => {
     });
     
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to get upload URL');
+      const errorData = (await res.json().catch(() => null)) as { message?: string } | null;
+      throw new Error(errorData?.message || 'Failed to get upload URL');
     }
     
-    return await res.json();
+    return (await res.json()) as PresignedResponse;
   };
 
   const uploadToR2 = async (presignedUrl: string, file: File) => {
@@ -240,33 +251,76 @@ const ChannelUploadPage = () => {
     visibility: string;
   }
 
+  // Strongly typed processing bodies
+  type StartProcessingVideoBody = {
+    videoId: string;
+    s3Key: string;
+    title: string;
+    description: string;
+    channelId: string;
+    contentType: 'video';
+    tags: string[];
+    category: string;
+    visibility: string;
+    thumbnailS3Key?: string;
+  };
+
+  type StartProcessingShortBody = {
+    shortId: string;
+    s3Key: string;
+    title: string;
+    description: string;
+    channelId: string;
+    contentType: 'short';
+    tags: string[];
+    category: string;
+    visibility: string;
+    thumbnailS3Key?: string;
+  };
+
+  type StartProcessingResult = {
+    status?: string;
+    message?: string;
+    [k: string]: unknown;
+  };
+
   // ✅ UPDATED: Now supports thumbnailS3Key parameter
   const startProcessing = async (
     contentId: string, 
     s3Key: string, 
     metadata: Metadata,
     thumbnailS3Key?: string
-  ) => {
+  ): Promise<StartProcessingResult> => {
     const endpoint = metadata.contentType === 'short' ? '/api/shorts/start-processing' : '/api/videos/start-processing';
     
-    // Use the correct field name
-    const idField = metadata.contentType === 'short' ? 'shortId' : 'videoId';
-    
-    const requestBody: any = {
-      [idField]: contentId,
-      s3Key,
-      title: metadata.title,
-      description: metadata.description,
-      channelId: metadata.channelId,
-      contentType: metadata.contentType,
-      tags: metadata.tags,
-      category: metadata.category,
-      visibility: metadata.visibility
-    };
+    let requestBody: StartProcessingVideoBody | StartProcessingShortBody;
 
-    // ✅ NEW: Include thumbnail S3 key if provided
-    if (thumbnailS3Key) {
-      requestBody.thumbnailS3Key = thumbnailS3Key;
+    if (metadata.contentType === 'short') {
+      requestBody = {
+        shortId: contentId,
+        s3Key,
+        title: metadata.title,
+        description: metadata.description,
+        channelId: metadata.channelId,
+        contentType: 'short',
+        tags: metadata.tags,
+        category: metadata.category,
+        visibility: metadata.visibility,
+        ...(thumbnailS3Key ? { thumbnailS3Key } : {})
+      };
+    } else {
+      requestBody = {
+        videoId: contentId,
+        s3Key,
+        title: metadata.title,
+        description: metadata.description,
+        channelId: metadata.channelId,
+        contentType: 'video',
+        tags: metadata.tags,
+        category: metadata.category,
+        visibility: metadata.visibility,
+        ...(thumbnailS3Key ? { thumbnailS3Key } : {})
+      };
     }
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
@@ -277,11 +331,11 @@ const ChannelUploadPage = () => {
     });
     
     if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.message || 'Failed to start processing');
+      const errorData = (await res.json().catch(() => null)) as { message?: string } | null;
+      throw new Error(errorData?.message || 'Failed to start processing');
     }
     
-    return res.json();
+    return (await res.json()) as StartProcessingResult;
   };
 
   // ✅ UPDATED: Complete rewrite of handleSubmit to support thumbnail uploads

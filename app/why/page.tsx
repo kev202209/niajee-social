@@ -9,11 +9,11 @@ import Footer from '@/components/Landing/Footer';
 export default function WhyPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-indigo-900">
-      <Header /> {/* Add Landing Header */}
-      <div className="max-w-4xl mx-auto px-4 py-16 pt-24"> {/* Adjusted pt-16 to pt-24 for header space */}
+      <Header />
+      <main className="max-w-4xl mx-auto px-4 py-16 pt-24">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight pb-2"> {/* Added leading-tight and pb-2 */}
+          <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight pb-2">
             <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
               Why Niajee?
             </span>
@@ -24,7 +24,8 @@ export default function WhyPage() {
         </div>
 
         {/* Introduction */}
-        <section className="mb-16">
+        <section className="mb-16" aria-labelledby="intro">
+          <h2 id="intro" className="sr-only">Introduction</h2>
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
               Imagine a world where your voice isn&apos;t just heard—it&apos;s celebrated. Where your culture isn&apos;t exoticized or misunderstood, but embraced as the heartbeat of innovation and creativity. Niajee isn&apos;t just another app; it&apos;s a revolution born from the soul of Africa. It&apos;s the answer to a question we&apos;ve all asked: <strong>Why should we settle for spaces built by others, when we can build our own?</strong>
@@ -36,10 +37,12 @@ export default function WhyPage() {
         </section>
 
         {/* The Problem */}
-        <section className="mb-16">
+        <section className="mb-16" aria-labelledby="problem">
           <div className="flex items-center mb-8">
-            <Shield className="w-8 h-8 text-red-500 mr-4" />
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">The Problem: Lost in the Crowd</h2>
+            <Shield aria-hidden="true" className="w-8 h-8 text-red-500 mr-4" />
+            <h2 id="problem" className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              The Problem: Lost in the Crowd
+            </h2>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
@@ -55,10 +58,12 @@ export default function WhyPage() {
         </section>
 
         {/* The Vision */}
-        <section className="mb-16">
+        <section className="mb-16" aria-labelledby="vision">
           <div className="flex items-center mb-8">
-            <Globe className="w-8 h-8 text-blue-500 mr-4" />
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">The Vision: Our Space, Our Rules</h2>
+            <Globe aria-hidden="true" className="w-8 h-8 text-blue-500 mr-4" />
+            <h2 id="vision" className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              The Vision: Our Space, Our Rules
+            </h2>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
@@ -74,10 +79,12 @@ export default function WhyPage() {
         </section>
 
         {/* The Impact */}
-        <section className="mb-16">
+        <section className="mb-16" aria-labelledby="impact">
           <div className="flex items-center mb-8">
-            <Users className="w-8 h-8 text-green-500 mr-4" />
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">The Impact: A Ripple That Becomes a Wave</h2>
+            <Users aria-hidden="true" className="w-8 h-8 text-green-500 mr-4" />
+            <h2 id="impact" className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+              The Impact: A Ripple That Becomes a Wave
+            </h2>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-lg">
             <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
@@ -93,33 +100,31 @@ export default function WhyPage() {
         </section>
 
         {/* Call to Action */}
-        <section className="text-center">
+        <section className="text-center" aria-labelledby="cta">
+          <h2 id="cta" className="sr-only">Call to Action</h2>
           <div className="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl p-8 text-white shadow-lg">
-            <Heart className="w-12 h-12 mx-auto mb-4 text-white" />
-            <h2 className="text-3xl font-bold mb-4">Join the Movement</h2>
+            <Heart aria-hidden="true" className="w-12 h-12 mx-auto mb-4 text-white" />
+            <h3 className="text-3xl font-bold mb-4">Join the Movement</h3>
             <p className="text-lg mb-6">
-              Niajee is Africa&apos;s call to action. It&apos;s time to build, to connect, to create—on our terms. Whether you&apos;re an entrepreneur, an artist, a dreamer, or just someone who believes in Africa&apos;s potential, this is your platform.
-            </p>
-            <p className="text-lg mb-8">
-              Share this page. Tell your friends. Download the app. Support the vision. Together, we&apos;ll show the world what Africa can achieve when we have the space to shine.
+              Build, connect, and create on our terms. Be part of Africa’s digital home.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 href="/auth/register"
                 className="px-8 py-3 bg-white text-indigo-600 font-semibold rounded-full hover:bg-gray-100 transition"
               >
-                Join Niajee
+                Create your account
               </Link>
               <Link
                 href="/contact"
                 className="px-8 py-3 border border-white text-white font-semibold rounded-full hover:bg-white hover:text-indigo-600 transition"
               >
-                Learn More
+                Talk to us
               </Link>
             </div>
           </div>
         </section>
-      </div>
+      </main>
       <Footer />
     </div>
   );

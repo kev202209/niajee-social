@@ -2,11 +2,10 @@
 'use client';
 import React, { useState } from 'react';
 import {
-  FiRewind, FiPlay, FiPause, FiVolume2, FiVolumeX, FiToggleRight,
-  FiSettings, FiMonitor, FiMaximize, FiMinimize, FiFastForward,
+  FiRewind, FiPlay, FiPause, FiVolume2, FiVolumeX,
+  FiSettings, FiMaximize, FiMinimize, FiFastForward,
 } from 'react-icons/fi';
 // import { FaStepForward,FaStepBackward  } from "react-icons/fa";
-import { PictureInPicture2,  Captions } from 'lucide-react';
 import { VideoPlayerControls } from '../../hooks/useVideoPlayer';
 import SettingsPopup from './SettingsPopup';
 import ProgressBar from './ProgressBar';

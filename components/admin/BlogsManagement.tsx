@@ -17,7 +17,6 @@ import {
   FiUser
 } from 'react-icons/fi';
 import { formatCount } from '@/utils/formatCount';
-import { getImageSrc } from '@/utils/imageUtils';
 import { Blog, BlogReport, RawBlog, RawReport, ProcessedImage } from '@/types';
 
 const BLOG_IMAGES_BASE_URL = 'http://localhost:5000/uploads/blogs/';
@@ -116,15 +115,17 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
           : 'draft';
 
         // Parse content - handle both string and array formats
-        let contentBlocks: any[] = [];
+        // Replaced any[] with Blog['content'] and safe casts
+        let contentBlocks = [] as Blog['content'];
         if (typeof b.content === 'string') {
           try {
-            contentBlocks = JSON.parse(b.content);
+            const parsed = JSON.parse(b.content) as unknown;
+            contentBlocks = Array.isArray(parsed) ? (parsed as Blog['content']) : ([] as Blog['content']);
           } catch {
-            contentBlocks = [];
+            contentBlocks = [] as Blog['content'];
           }
         } else if (Array.isArray(b.content)) {
-          contentBlocks = b.content;
+          contentBlocks = b.content as Blog['content'];
         }
 
         return {

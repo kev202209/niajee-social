@@ -385,7 +385,7 @@ const CreateChannelPage: FC = () => {
               <div className="flex items-center space-x-2">
                 <FiX className="w-3 h-3 text-red-500" />
                 <p className="text-xs text-red-600 dark:text-red-400">
-                  Handle "@{form.handle}" is not available. Try a different one.
+                  Handle &quot;@{form.handle}&quot; is not available. Try a different one.
                 </p>
               </div>
             )}
@@ -394,7 +394,7 @@ const CreateChannelPage: FC = () => {
               <div className="flex items-center space-x-2">
                 <FiCheck className="w-3 h-3 text-green-500" />
                 <p className="text-xs text-green-600 dark:text-green-400">
-                  Handle "@{form.handle}" is available!
+                  Handle &quot;@{form.handle}&quot; is available!
                 </p>
               </div>
             )}
@@ -422,7 +422,7 @@ const CreateChannelPage: FC = () => {
               <div className="flex items-center space-x-1">
                 <span className="text-xs">✏️</span>
                 <p className="text-xs text-blue-600 dark:text-blue-400">
-                  Great! You've customized your handle.
+                  Great! You&apos;ve customized your handle.
                 </p>
               </div>
             )}

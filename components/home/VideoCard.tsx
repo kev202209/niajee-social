@@ -1,11 +1,11 @@
-import { FC, useEffect, useRef, useState, useCallback } from "react";
-import { Video, getThumbnailSrc } from "@/types"; // Import getThumbnailSrc
-import { getImageSrc } from "@/utils/imageUtils";
-import { FiVolume, FiVolumeX, FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiUser } from "react-icons/fi";
+import { FC, useEffect, useRef, useState } from "react";
+import { Video, getThumbnailSrc } from "@/types";
+import { FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiUser } from "react-icons/fi";
 import Link from "next/link";
 import timeAgo from "../../utils/timeAgo";
 import AuthenticatedImage from "@/components/Image";
-import { getFullUrl } from "@/utils/videourl";
+import { formatCount } from "@/utils/formatCount";
+import { getImageSrc } from "@/utils/imageUtils";
 import HoverPreviewPlayer from "@/components/media/HoverPreviewPlayer";
 
 function useOutsideClick(
@@ -30,37 +30,6 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
   
   useOutsideClick(optionsRef, () => setShowOptions(false));
 
-  // Helper to get video source URL from key (memoized so effects can depend on it)
-  const getVideoSource = useCallback(() => {
-    const qualities = ['1080p', '720p', '360p'];
-    for (const quality of qualities) {
-      if ((video.videoUrl as Record<string, string | undefined>)[quality]) {
-        return getFullUrl((video.videoUrl as Record<string, string>)[quality]);
-      }
-    }
-    const first = Object.values(video.videoUrl)[0] || '';
-    return getFullUrl(String(first));
-  }, [video.videoUrl]);
- 
-  const formatDuration = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    
-    if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const formatViews = (views: number): string => {
-    if (views >= 1000000) {
-      return `${(views / 1000000).toFixed(1)}M`;
-    } else if (views >= 1000) {
-      return `${(views / 1000).toFixed(1)}K`;
-    }
-    return views.toString();
-  };
 
   return (
     <Link href={`/watch/${video.videoId}`}>
@@ -115,7 +84,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
               </div>
 
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatViews(video.views)} views • {timeAgo(video.createdAt)}
+                {formatCount(video.views)} views • {timeAgo(video.createdAt)}
               </p>
             </div>
 

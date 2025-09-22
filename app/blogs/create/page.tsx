@@ -217,7 +217,7 @@ export default function CreateBlogPage() {
       .filter(block => block.type === 'image' && block.data?.file?.url)
       .map((block, index) => ({
         blockId: `block_${index}`,
-        s3Key: (block.data as any)?.file?.s3Key, // If the editor stores S3 keys
+        s3Key: (block.data)?.file?.s3Key, // If the editor stores S3 keys
       }))
       .filter(img => img.s3Key); // Only process if we have S3 keys
 

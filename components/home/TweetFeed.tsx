@@ -1,4 +1,4 @@
-import { Post, PostUser } from "@/types/post.types";
+import { Post} from "@/types/post.types";
 import { FC, useEffect, useState, useCallback } from "react";
 import AuthenticatedImage from "@/components/Image";
 import TweetFeedSkeleton from "./TweetFeedSkeleton";

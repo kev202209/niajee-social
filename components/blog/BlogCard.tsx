@@ -19,8 +19,6 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ blog, featured = false }: BlogCardProps) {
-  const [imageError, setImageError] = useState(false);
-
   // use Blog fields (no `any`)
   const [isLiked, setIsLiked] = useState<boolean>(blog.userInteraction?.liked ?? false);
   const [isSaved, setIsSaved] = useState<boolean>(blog.userInteraction?.saved ?? false);
@@ -127,9 +125,8 @@ export default function BlogCard({ blog, featured = false }: BlogCardProps) {
               alt={blog.title}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-200"
-              onError={() => setImageError(true)}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              fallbackSrc="/placeholder-blog.jpg" // Blog-specific fallback
+              fallbackSrc="/placeholder-blog.jpg"
             />
           ) : (
             <div className="flex items-center justify-center h-full">

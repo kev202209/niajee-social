@@ -155,6 +155,11 @@ type RawBlog = Partial<
   }
 >;
 
+// Helper to detect a thumbnail container { data, type, status }
+function isThumbnailContainer(val: unknown): val is { data: ProcessedImage } {
+  return typeof val === 'object' && val !== null && 'data' in val;
+}
+
 const SEARCH_TYPES = [
   { key: 'top', label: 'Top', icon: FiTrendingUp },
   { key: 'latest', label: 'Latest', icon: FiSearch },
@@ -220,7 +225,8 @@ export default function SearchPage() {
         type: 'video',
         title: v.title,
         description: v.description,
-        thumbnail: v.thumbnail || v.thumbnailUrl, // Now properly typed
+        // If backend sends a container, unwrap to .data; else use provided ProcessedImage|string
+        thumbnail: isThumbnailContainer(v.thumbnailUrl) ? v.thumbnailUrl.data : (v.thumbnail ?? v.thumbnailUrl),
         views: v.views ?? v.viewCount,
         duration: v.duration,
         createdAt: v.createdAt || v.publishedAt,
@@ -236,7 +242,8 @@ export default function SearchPage() {
         type: 'short',
         title: s.title,
         description: s.caption || s.description,
-        thumbnail: s.thumbnailUrl || s.thumbnail, // Now properly typed
+        // Unwrap Short.thumbnailUrl container to ProcessedImage
+        thumbnail: isThumbnailContainer(s.thumbnailUrl) ? s.thumbnailUrl.data : s.thumbnail,
         views: s.views ?? s.viewCount,
         createdAt: s.createdAt || s.publishedAt,
         channelName: s.channel?.name || s.channelName,
