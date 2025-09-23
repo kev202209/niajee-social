@@ -77,14 +77,6 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  href="/legals/gdpr"
-                  className="hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
-                >
-                  GDPR
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/legals/privacy-policy"
                   className="hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
                 >
