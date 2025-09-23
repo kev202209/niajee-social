@@ -47,7 +47,13 @@ export default function LoginPage() {
         router.push('/');
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Login failed");
+      // Filter error messages to avoid showing internal server errors
+      const errorMessage = err instanceof Error ? err.message : "Login failed";
+      if (errorMessage === "Invalid credentials") {
+        toast.error("Invalid credentials");
+      } else {
+        toast.error("Something went wrong, try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
