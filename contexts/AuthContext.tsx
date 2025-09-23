@@ -30,7 +30,7 @@ interface AuthContextType {
   checkEmailAvailability: (email: string) => Promise<boolean>;
   csrfToken: string | null;
   setCsrfToken: (token: string | null) => void;
-  getCsrf: () => Promise<void>;  // Add this
+  getCsrf: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch(`${api_link}/auth/csrf`, {
         method: 'GET',
-        credentials: 'include',  // Include cookies for session
+        credentials: 'include',
       });
       if (response.ok) {
         const data = await response.json();
@@ -68,10 +68,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Ensure we have a CSRF token before protected requests
+  const ensureCsrf = async () => {
+    if (!csrfToken) {
+      await getCsrf();
+    }
+  };
+
   useEffect(() => {
     const initAuth = async () => {
-      await getCsrf();  // Fetch token first
-      await checkAuth();  // Then check auth with token
+      // Always fetch CSRF early so auth pages can POST safely
+      await getCsrf();
+      await checkAuth();
     };
     initAuth();
   }, []);
@@ -83,17 +91,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+          ...(csrfToken && { 'x-csrf-token': csrfToken }),
         },
       });
 
       if (response.ok) {
         const userData: User = await response.json();
         setUser(userData);
-      } else if (response.status === 403) {  // Assume 403 for invalid CSRF
+      } else if (response.status === 403) {
         console.warn('CSRF invalid, refreshing token');
-        await getCsrf();  // Refresh token
-        // Optionally retry checkAuth here
+        await getCsrf();
       } else {
         setUser(null);
       }
@@ -108,13 +115,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       setError(null);
+      await ensureCsrf();
 
       const response = await fetch(`${api_link}/auth/login`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+          ...(csrfToken && { 'x-csrf-token': csrfToken }),
         },
         body: JSON.stringify({
           identifier,
@@ -127,15 +135,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         if (response.status === 403) {
-          await getCsrf();  // Refresh and retry if CSRF issue
-          // Optionally throw or retry
+          await getCsrf();
         }
         throw new Error(
           data.message || 'Login failed. Please check your internet connection.'
         );
       }
       setUser(data.user);
-      setCsrfToken(data.csrfToken || null);  // Capture and store
+      setCsrfToken(data.csrfToken || null);
+      
+      // Store last login method
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('lastLoginMethod', 'email');
+      }
     } catch (err) {
       const errorMessage = handleFetchError(err, 'Login failed');
       setError(errorMessage);
@@ -159,6 +171,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       setError(null);
+      await ensureCsrf();
 
       const registerDto = {
         firstName: formData.firstName,
@@ -168,18 +181,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         birthday: formData.birthday,
       };
 
-      // Send JSON (not multipart/form-data) — backend expects JSON for this endpoint
       const response = await fetch(`${api_link}/auth/register`, {
         method: 'POST',
         credentials: 'include',
         headers: {
-        'Content-Type': 'application/json',
-        ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+          'Content-Type': 'application/json',
+          ...(csrfToken && { 'x-csrf-token': csrfToken }),
         },
         body: JSON.stringify({
           ...registerDto,
           deviceInfo,
-          // backend expects "redirect"
           redirect: redirect ?? null
         }),
       });
@@ -187,14 +198,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
 
       if (!response.ok) {
-        // preserve internal error for logging in context, but throw a generic message to caller
         const backendMessage = data?.message;
         setError(backendMessage || 'Registration failed');
         throw new Error(backendMessage || 'Registration failed');
       }
 
-      setCsrfToken(data.csrfToken || null);  // If added to register response
-
+      setCsrfToken(data.csrfToken || null);
       return data;
     } catch (err) {
       const errorMessage = handleFetchError(err, 'Registration failed');
@@ -206,60 +215,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const verifyEmail = async (token: string) => {
-    try {
-      const response = await fetch(`${api_link}/auth/verify-email/${token}`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Email verification failed');
-      }
-    } catch (err) {
-      throw new Error(handleFetchError(err, 'Email verification failed'));
-    }
+    // Backend expects GET /auth/verify-email?token=...
+    const response = await fetch(`${api_link}/auth/verify-email?token=${encodeURIComponent(token)}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Email verification failed');
   };
 
   const sendResetPasswordOtp = async (email: string) => {
-    try {
-      const response = await fetch(`${api_link}/auth/forgot-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send reset OTP');
-      }
-    } catch (err) {
-      throw new Error(handleFetchError(err, 'Failed to send reset OTP'));
-    }
+    await ensureCsrf();
+    const response = await fetch(`${api_link}/auth/forgot-password`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(csrfToken && { 'x-csrf-token': csrfToken }),
+      },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) throw new Error('Failed to send reset OTP');
   };
 
   const verifyResetOtp = async (otp: string) => {
-    try {
-      const response = await fetch(`${api_link}/auth/verify-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
-        },
-        body: JSON.stringify({ otp }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Invalid OTP');
-      }
-    } catch (err) {
-      throw new Error(handleFetchError(err, 'Invalid OTP'));
-    }
+    await ensureCsrf();
+    const response = await fetch(`${api_link}/auth/verify-otp`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(csrfToken && { 'x-csrf-token': csrfToken }),
+      },
+      body: JSON.stringify({ otp }),
+    });
+    if (!response.ok) throw new Error('Invalid OTP');
   };
 
   const resetPassword = async (
@@ -267,50 +256,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     newPassword: string,
     confirmPassword: string
   ) => {
-    try {
-      const response = await fetch(`${api_link}/auth/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
-        },
-        body: JSON.stringify({ otp, newPassword, confirmPassword }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Password reset failed');
-      }
-    } catch (err) {
-      throw new Error(handleFetchError(err, 'Password reset failed'));
-    }
+    await ensureCsrf();
+    const response = await fetch(`${api_link}/auth/reset-password`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(csrfToken && { 'x-csrf-token': csrfToken }),
+      },
+      body: JSON.stringify({ otp, newPassword, confirmPassword }),
+    });
+    if (!response.ok) throw new Error('Password reset failed');
   };
 
   const checkEmailAvailability = async (email: string): Promise<boolean> => {
-    try {
-      const response = await fetch(`${api_link}/auth/check-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
-        },
-        credentials: 'include',
-        body: JSON.stringify({ email }), // Send the email in the request body as JSON
-      });
-      return response.ok;
-    } catch (err) {
-      throw new Error(handleFetchError(err, 'Email availability check failed'));
+    await ensureCsrf();
+    const response = await fetch(`${api_link}/auth/check-email?email=${encodeURIComponent(email)}`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(csrfToken && { 'x-csrf-token': csrfToken }),
+      },
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data.message === 'Email available';
     }
+    return false;
   };
 
   const logout = async () => {
     try {
       setLoading(true);
+      await ensureCsrf();
       const response = await fetch(`${api_link}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+          ...(csrfToken && { 'x-csrf-token': csrfToken }),
         },
       });
       if (response.ok) {
@@ -324,6 +309,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(errorMessage);
     } finally {
       setLoading(false);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('lastLoginMethod');
+      }
     }
   };
 
