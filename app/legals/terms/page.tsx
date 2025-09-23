@@ -16,7 +16,7 @@ export default function TermsOfUse() {
         <section className="mb-8">
           <h2 className="text-2xl font-semibold mb-2">1. Introduction</h2>
           <p className="mb-4">
-            Welcome to Niajee (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). Niajee is an all-in-one social media platform that centralizes long videos, short-form content, and community-driven discussions into one unified experience. These Terms of Use (&quot;Terms&quot;) govern your access to and use of our website, mobile applications, and other services (collectively, the &quot;Services&quot;). By using our Services, you agree to be bound by these Terms. If you do not agree with these Terms, please do not use our Services.
+            Welcome to Niajee (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;). Niajee is an all-in-one social media platform that centralizes long videos, short-form content, blogs, and community-driven discussions into one unified experience. These Terms of Use (&quot;Terms&quot;) govern your access to and use of our website, mobile applications, and other services (collectively, the &quot;Services&quot;). By using our Services, you agree to be bound by these Terms. If you do not agree with these Terms, please do not use our Services.
           </p>
         </section>
 
@@ -128,6 +128,18 @@ export default function TermsOfUse() {
             If any provision of these Terms is found to be unenforceable or invalid, that provision will be limited or eliminated to the minimum extent necessary so that these Terms
             will otherwise remain in full force and effect and enforceable.
             </p>    
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-2">14. Contact Us</h2>
+          <p className="mb-4">
+            If you have any questions about this Privacy Policy, please contact us:
+          </p>
+          <ul className="list-disc ml-8 mb-4">
+            <li>By visiting this page on our website: niajee.com/legals/contact-us</li>
+            <li>By email: <a href="mailto:support@niajee.com" className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">support@niajee.com</a></li>
+
+          </ul>
         </section>
         </div>
         </div>

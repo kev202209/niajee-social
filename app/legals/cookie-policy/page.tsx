@@ -46,12 +46,12 @@ export default function CookiePolicy() {
             <li>
               <strong>Functionality Cookies:</strong> These cookies enable the website to provide enhanced functionality and personalization. They may be set by us or by third-party providers whose services we have added to our pages.
             </li>
-            <li>
+            {/* <li>
               <strong>Targeting/Advertising Cookies:</strong> These cookies may be set through our site by our advertising partners. They may be used by those companies to build a profile of your interests and show you relevant advertisements on other sites.
             </li>
             <li>
               <strong>Social Media Cookies:</strong> These cookies are set by social media services that we have added to the site to enable you to share our content with your friends and networks. They can track your browser across other sites and build a profile of your interests.
-            </li>
+            </li> */}
           </ul>
         </section>
 
@@ -88,9 +88,8 @@ export default function CookiePolicy() {
             If you have any questions about our use of cookies or this Cookie Policy, please contact us:
           </p>
           <ul className="list-disc ml-8 mb-4">
-            <li>By phone: 07000000998847</li>
-            <li>By visiting this page on our website: <Link href="/legals/contact-us" className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">niajee-social.com/legals/contact-us</Link></li>
-            <li>By email: support@niajee-social.com</li>
+            <li>By visiting this page on our website: <Link href="/legals/contact-us" className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">niajee.com/legals/contact-us</Link></li>
+            <li>By email: <a href="mailto:support@niajee.com" className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">support@niajee.com</a></li>
           </ul>
         </section>
       </div>

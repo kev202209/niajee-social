@@ -117,9 +117,9 @@ export default function PrivacyPolicy() {
             If you have any questions about this Privacy Policy, please contact us:
           </p>
           <ul className="list-disc ml-8 mb-4">
-            <li>By a call: 07000000998847</li>
-            <li>By visiting this page on our website: niajee-social.com/legals/contact-us</li>
-            <li>By mail: support@niajee-social.com</li>
+            <li>By visiting this page on our website: niajee.com/legals/contact-us</li>
+            <li>By email: <a href="mailto:support@niajee.com" className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">support@niajee.com</a></li>
+
           </ul>
         </section>
 
