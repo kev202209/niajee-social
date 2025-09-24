@@ -67,7 +67,11 @@ export default function CookieConsent() {
           <p className="text-sm text-gray-700 dark:text-gray-200">
             We use cookies to operate this site and improve your experience. Essential cookies are
             required and the site may not function correctly without them. By continuing to use this site, you agree to our use of cookies. See our{' '}
-            <Link href="/privacy" className="underline text-indigo-600 dark:text-indigo-400">
+            <Link href="/legals/cookie-policy" className="underline text-indigo-600 dark:text-indigo-400">
+              Cookie Policy
+            </Link>
+              {' '}and{' '}
+            <Link href="/legals/privacy-policy" className="underline text-indigo-600 dark:text-indigo-400">
               Privacy Policy
             </Link>.
           </p>
