@@ -15,10 +15,10 @@ interface DeviceInfo {
   deviceName: string;
   browser: string;
   operatingSystem: string;
-  location: string;
-  country: string;
-  city: string;
-  ipAddress: string;
+  location: string;  // Will be set to 'Unknown'
+  country: string;   // Will be set to 'Unknown'
+  city: string;      // Will be set to 'Unknown'
+  ipAddress: string; // Will be set to 'Unknown'
   screenResolution: string;
   timezone: string;
   language: string;
@@ -30,11 +30,7 @@ interface DeviceInfo {
   cookieEnabled: boolean;
   onlineStatus: boolean;
   referrer: string;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-    accuracy: number;
-  };
+  // Removed coordinates (no geolocation)
 }
 
 const getBrowserName = (): string => {
@@ -92,130 +88,18 @@ const getConnectionType = (): string => {
   return 'Unknown';
 };
 
-type LocationResult = {
-  ip: string;
-  country: string;
-  city: string;
-  location: string;
-};
-
-type ServiceDef = {
-  url: string;
-  parse: (data: unknown) => LocationResult;
-};
-
-const safeString = (v: unknown, fallback = 'Unknown'): string =>
-  typeof v === 'string' && v.trim() ? v : fallback;
-
-const getIPAndLocation = async (): Promise<LocationResult> => {
-  const services: ServiceDef[] = [
-    {
-      url: 'https://ipapi.co/json/',
-      parse: (data: unknown) => {
-        const d = data as Record<string, unknown>;
-        return {
-          ip: safeString(d.ip),
-          country: safeString(d.country_name),
-            city: safeString(d.city),
-          location: `${safeString(d.city)}, ${safeString(d.region)}, ${safeString(d.country_name)}`
-        };
-      }
-    },
-    {
-      url: 'http://ip-api.com/json/',
-      parse: (data: unknown) => {
-        const d = data as Record<string, unknown>;
-        return {
-          ip: safeString(d.query),
-          country: safeString(d.country),
-          city: safeString(d.city),
-          location: `${safeString(d.city)}, ${safeString(d.regionName)}, ${safeString(d.country)}`
-        };
-      }
-    },
-    {
-      url: 'https://ipinfo.io/json',
-      parse: (data: unknown) => {
-        const d = data as Record<string, unknown>;
-        return {
-          ip: safeString(d.ip),
-          country: safeString(d.country),
-          city: safeString(d.city),
-          location: `${safeString(d.city)}, ${safeString(d.region)}, ${safeString(d.country)}`
-        };
-      }
-    }
-  ];
-
-  for (const service of services) {
-    try {
-      const response = await fetch(service.url, {
-        method: 'GET',
-        headers: { Accept: 'application/json' }
-      });
-      if (response.ok) {
-        const data: unknown = await response.json();
-        return service.parse(data);
-      }
-    } catch (err) {
-      console.warn(`Failed to get location from ${service.url}:`, err);
-      continue;
-    }
-  }
-
-  return {
-    ip: 'Unknown',
-    country: 'Unknown',
-    city: 'Unknown',
-    location: 'Unknown Location'
-  };
-};
-
-const getGeolocation = (): Promise<{
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-} | null> => {
-  return new Promise((resolve) => {
-    if (!navigator.geolocation) {
-      resolve(null);
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        resolve({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy
-        });
-      },
-      (error) => {
-        console.warn('Geolocation failed:', error.message);
-        resolve(null);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000
-      }
-    );
-  });
-};
-
 export const getDeviceInfo = async (): Promise<DeviceInfo> => {
   try {
-    const locationData = await getIPAndLocation();
-    const coordinates = await getGeolocation();
     const nav = navigator as NavigatorExtended;
 
     const deviceInfo: DeviceInfo = {
       deviceName: getDeviceType(),
       browser: getBrowserName(),
       operatingSystem: getOSName(),
-      location: locationData.location,
-      country: locationData.country,
-      city: locationData.city,
-      ipAddress: locationData.ip,
+      location: 'Unknown',  // Static value, no external API or geolocation
+      country: 'Unknown',
+      city: 'Unknown',
+      ipAddress: 'Unknown',
       screenResolution: `${screen.width}x${screen.height}`,
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       language: nav.language,
@@ -227,7 +111,7 @@ export const getDeviceInfo = async (): Promise<DeviceInfo> => {
       cookieEnabled: nav.cookieEnabled,
       onlineStatus: nav.onLine,
       referrer: document.referrer || 'Direct',
-      coordinates: coordinates || undefined
+      // Removed coordinates
     };
     return deviceInfo;
   } catch (err) {
@@ -237,7 +121,7 @@ export const getDeviceInfo = async (): Promise<DeviceInfo> => {
       deviceName: getDeviceType(),
       browser: getBrowserName(),
       operatingSystem: getOSName(),
-      location: 'Unknown Location',
+      location: 'Unknown',
       country: 'Unknown',
       city: 'Unknown',
       ipAddress: 'Unknown',

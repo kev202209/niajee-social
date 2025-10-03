@@ -7,6 +7,7 @@ import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { useAuth } from "@/contexts/AuthContext";  // Already imported, but ensure it's used
 
 interface DeviceVerificationResponse {
   success: boolean;
@@ -26,6 +27,7 @@ export default function VerifyDevicePage() {
   const hasVerified = useRef(false);
   
   const api_link = process.env.NEXT_PUBLIC_API_URL;
+  const { csrfToken, ensureCsrf } = useAuth();  // Add this to access CSRF
 
   // keep getAuthToken stable
   const getAuthToken = useCallback((): string | null => {
@@ -46,12 +48,14 @@ export default function VerifyDevicePage() {
     hasVerified.current = true;
     setIsVerifying(true);
     try {
+      await ensureCsrf();  // Ensure CSRF token is available
       const authToken = getAuthToken();
       const response = await fetch(`${api_link}/auth/devices/verify`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
+          ...(csrfToken && { 'x-csrf-token': csrfToken }),  // Add CSRF header
         },
         credentials: 'include',
         body: JSON.stringify({ deviceToken })
@@ -77,7 +81,7 @@ export default function VerifyDevicePage() {
     } finally {
       setIsVerifying(false);
     }
-  }, [api_link, getAuthToken, router]);
+  }, [api_link, getAuthToken, csrfToken, ensureCsrf, router]);
 
   useEffect(() => {
     if (token && !hasVerified.current) {
@@ -90,12 +94,14 @@ export default function VerifyDevicePage() {
 
     setIsTrusting(true);
     try {
+      await ensureCsrf();  // Ensure CSRF token
       const authToken = getAuthToken();
       const response = await fetch(`${api_link}/auth/devices/trust`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
+          ...(csrfToken && { 'x-csrf-token': csrfToken }),  // Add CSRF header
         },
         credentials: 'include',
         body: JSON.stringify({ deviceId: token })

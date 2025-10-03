@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -17,10 +17,19 @@ export default function LoginPage() {
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [lastLoginMethod, setLastLoginMethod] = useState<string | null>(null);
   const api_link = process.env.NEXT_PUBLIC_API_URL;
 
   // Get redirect URL from query params
   const redirectUrl = searchParams.get('redirect');
+
+  // Load last method on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const method = localStorage.getItem('lastLoginMethod');
+      setLastLoginMethod(method);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,7 +56,13 @@ export default function LoginPage() {
         router.push('/');
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Login failed");
+      // Filter error messages to avoid showing internal server errors
+      const errorMessage = err instanceof Error ? err.message : "Login failed";
+      if (errorMessage === "Invalid credentials") {
+        toast.error("Invalid credentials");
+      } else {
+        toast.error("Something went wrong, try again later.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -58,6 +73,10 @@ export default function LoginPage() {
     const googleUrl = redirectUrl 
       ? `${api_link}/auth/google?redirect=${encodeURIComponent(redirectUrl)}`
       : `${api_link}/auth/google`;
+    // Store Google method (assume success, or handle in callback if needed)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lastLoginMethod', 'google');
+    }
     window.location.href = googleUrl;
   };
 
@@ -101,6 +120,13 @@ export default function LoginPage() {
           >
             Don&apos;t have an account? <span className="font-bold">Sign Up</span>
           </Link>
+
+          {/* NEW: Last used indicator */}
+          {lastLoginMethod && (
+            <div className="mb-4 text-sm text-gray-600 dark:text-gray-400 text-center">
+              Last used: {lastLoginMethod === 'email' ? 'Email/Password' : 'Google'}
+            </div>
+          )}
 
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Email or Username
