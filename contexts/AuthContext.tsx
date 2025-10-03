@@ -273,7 +273,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const checkEmailAvailability = async (email: string): Promise<boolean> => {
     await ensureCsrf();
     const response = await fetch(`${api_link}/auth/check-email?email=${encodeURIComponent(email)}`, {
-      method: 'GET',
+      method: 'POST',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
