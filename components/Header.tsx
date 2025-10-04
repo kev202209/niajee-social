@@ -39,6 +39,12 @@ export default function Header() {
           >
             Contact Us
           </Link>
+          <Link
+            href="/legals/privacy-policy"
+            className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400 transition"
+          >
+            Privacy Policy
+          </Link>
         </nav>
         
         {/* Desktop Auth & Toggle */}
