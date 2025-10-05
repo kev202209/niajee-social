@@ -71,7 +71,7 @@ const TweetFeed: FC = () => {
   // Error state
   if (error) {
     return (
-      <aside className="w-80 bg-gray-100 dark:bg-gray-900 h-screen pt-16 fixed right-0 top-0 p-4">
+      <aside className="w-80 bg-gray-100 dark:bg-gray-900 h-screen pt-20 fixed right-0 top-0 p-4">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 truncate">
           Community Feed
         </h2>
@@ -96,7 +96,7 @@ const TweetFeed: FC = () => {
   // Empty state
   if (posts.length === 0) {
     return (
-      <aside className="w-80 bg-gray-100 dark:bg-gray-900 h-screen pt-16 fixed right-0 top-0 p-4">
+      <aside className="w-80 bg-gray-100 dark:bg-gray-900 h-screen pt-20 fixed right-0 top-0 p-4">
         <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-3 truncate">
           Community Feed
         </h2>
@@ -121,7 +121,7 @@ const TweetFeed: FC = () => {
   // Success state with posts
   return (
     <div className="h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900 ">
-      <div className="p-4 h-full flex flex-col">
+      <div className="p-4 h-full flex flex-col pt-20"> {/* Increased pt-16 to pt-20 to clear the Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Community Feed
