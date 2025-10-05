@@ -1,7 +1,6 @@
 'use client'
 
 import { FC, useRef, useState, useEffect } from "react"
-import Link from "next/link"
 import AuthenticatedImage from "@/components/Image"
 import DarkModeToggle from "../DarkModeToggle"
 import useOutsideClick from "@/hooks/useOutsideClick"
