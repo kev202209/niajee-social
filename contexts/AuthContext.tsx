@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { User } from '@/types';
 
 interface AuthContextType {
@@ -50,6 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [csrfToken, setCsrfToken] = useState<string | null>(null);
   const api_link = process.env.NEXT_PUBLIC_API_URL;
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Add getCsrf function
   const getCsrf = async () => {
@@ -75,6 +76,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await getCsrf();
     }
   };
+
+  // Setup automatic token refresh (every 50 minutes, as per backend example)
+  useEffect(() => {
+    const setupTokenRefresh = (): void => {
+      intervalRef.current = setInterval(async (): Promise<void> => {
+        if (!user) return; // Only refresh if logged in
+        try {
+          const response: Response = await fetch(`${api_link}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          if (!response.ok) {
+            throw new Error('Refresh failed');
+          }
+          // Optionally update CSRF or user data if returned
+          const data = await response.json();
+          if (data.csrfToken) {
+            setCsrfToken(data.csrfToken);
+          }
+        } catch (error) {
+          console.error('Token refresh failed:', error);
+          // Handle failure - redirect to login
+          setUser(null);
+          if (typeof window !== 'undefined') {
+            window.location.href = '/auth/login';
+          }
+        }
+      }, 50 * 60 * 1000); // 50 minutes
+    };
+
+    if (user) {
+      setupTokenRefresh();
+    }
+
+    return (): void => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [user, api_link]); // Depend on user to start/stop refresh
 
   useEffect(() => {
     const initAuth = async () => {
@@ -287,7 +328,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       setLoading(true);
       await ensureCsrf();
@@ -312,6 +353,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
       if (typeof window !== 'undefined') {
         localStorage.removeItem('lastLoginMethod');
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     }
   };
