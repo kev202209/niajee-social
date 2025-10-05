@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import { usePathname } from 'next/navigation'
 import ProfileMenu from "@/components/home/ProfileMenu"
 import { getImageSrc } from '@/utils/imageUtils';
+import Logo  from '@/components/Logo'
 
 interface CreateHeaderProps {
   toggleSidebar?: () => void
@@ -43,12 +44,7 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
         <div className="flex items-center h-16 px-4 justify-between">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Link
-                href="/"
-                className="font-extrabold text-xl bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient"
-              >
-                NIAJEE
-              </Link>
+              <Logo className="h-8 w-auto" />
               <span className="text-xs text-white bg-blue-600 dark:bg-blue-500 rounded px-2 py-0.5 ml-1">
                 Creator
               </span>
@@ -83,12 +79,7 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
           )}
 
           <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="font-extrabold text-xl bg-clip-text text-transparent bg-[linear-gradient(to_right,theme(colors.indigo.400),theme(colors.indigo.100),theme(colors.sky.400),theme(colors.fuchsia.400),theme(colors.sky.400),theme(colors.indigo.100),theme(colors.indigo.400))] bg-[length:200%_auto] animate-gradient"
-            >
-              NIAJEE
-            </Link>
+            <Logo className="h-8 w-auto" />
             <span className="text-xs text-white bg-blue-600 dark:bg-blue-500 rounded px-2 py-0.5 ml-1">
               Creator
             </span>
