@@ -17,6 +17,7 @@ import UploadNotification from '../../../../../components/upload/UploadNotificat
 
 import { useUploadForm } from '../../../../../hooks/upload/useUploadForm';
 import { useFileHandlers } from '../../../../../hooks/upload/useFileHandlers';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 const ChannelUploadPage = () => {
   const params = useParams();
@@ -87,7 +88,7 @@ const ChannelUploadPage = () => {
       setChannel(response.data.channel || response.data);
     } catch (err) {
       console.error('Error fetching channel:', err);
-      toast.error('Failed to load channel data');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }

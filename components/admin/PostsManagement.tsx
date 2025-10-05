@@ -17,6 +17,7 @@ import {
 } from 'react-icons/fi';
 import { formatCount } from '@/utils/formatCount';
 import { getImageSrcSafe } from '@/types';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 interface Post {
   id: string;
@@ -101,7 +102,7 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
       setTotalPosts(data.data.pagination.total);
     } catch (error) {
       console.error('Error fetching posts:', error);
-      toast.error('Failed to load posts');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -143,7 +144,7 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
       fetchPosts();
     } catch (error) {
       console.error('Error flagging post:', error);
-      toast.error('Failed to flag post');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -175,7 +176,7 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
       fetchPosts();
     } catch (error) {
       console.error('Error removing post:', error);
-      toast.error('Failed to remove post');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -207,7 +208,7 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
       fetchPosts();
     } catch (error) {
       console.error('Error featuring post:', error);
-      toast.error('Failed to feature post');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -239,7 +240,7 @@ export default function PostsManagement({ userRole }: PostsManagementProps) {
       fetchPosts();
     } catch (error) {
       console.error('Error unfeaturing post:', error);
-      toast.error('Failed to unfeature post');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }

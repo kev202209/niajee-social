@@ -14,6 +14,7 @@ import {
   FiTrash2,
 } from 'react-icons/fi';
 import { formatCount } from '@/utils/formatCount';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 interface Contact {
   id: string;
@@ -85,7 +86,7 @@ export default function ContactsManagement({ userRole }: ContactsManagementProps
       setTotalContacts(data.data.pagination.total);
     } catch (error) {
       console.error('Error fetching contacts:', error);
-      toast.error('Failed to load contacts');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -144,7 +145,7 @@ export default function ContactsManagement({ userRole }: ContactsManagementProps
       fetchStats();
     } catch (error) {
       console.error('Error marking contact as processed:', error);
-      toast.error('Failed to mark contact as processed');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -172,7 +173,7 @@ export default function ContactsManagement({ userRole }: ContactsManagementProps
       fetchStats();
     } catch (error) {
       console.error('Error marking contact as unprocessed:', error);
-      toast.error('Failed to mark contact as unprocessed');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -203,7 +204,7 @@ export default function ContactsManagement({ userRole }: ContactsManagementProps
       fetchContacts();
     } catch (error) {
       console.error('Error updating notes:', error);
-      toast.error('Failed to update notes');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -240,7 +241,7 @@ export default function ContactsManagement({ userRole }: ContactsManagementProps
       fetchStats();
     } catch (error) {
       console.error('Error deleting contact:', error);
-      toast.error('Failed to delete contact');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }

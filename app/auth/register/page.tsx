@@ -86,7 +86,7 @@ export default function RegisterPage() {
         toast.error('Email is already registered');
       }
     } catch (err) {
-      toast.error('Failed to check email availability');
+      toast.error('Something went wrong. Please check our internet connection and try again.');
       console.error(err);
     } finally {
       setIsEmailLoading(false);
@@ -159,7 +159,7 @@ export default function RegisterPage() {
           "relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg"
         }
         closeButton={false}
-        autoClose={7000}
+        autoClose={3000}
         hideProgressBar={true}
       />
 

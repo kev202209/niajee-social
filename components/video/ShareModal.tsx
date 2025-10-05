@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { toast } from "sonner";
 import ShareService from '@/utils/ShareService';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -66,7 +67,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
       setTimeout(() => setCopied(false), 3000);
     } catch (error) {
       console.error('Error copying to clipboard:', error);
-      toast.error('Failed to copy link');
+      toast.error(GENERIC_ERROR_MESSAGE);
     }
   };
 

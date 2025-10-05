@@ -11,6 +11,7 @@ import {
 import { formatCount } from '@/utils/formatCount';
 import Image from 'next/image';
 import { getImageSrc } from '@/utils/imageUtils';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 interface Report {
   id: string;
@@ -133,7 +134,7 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
       setTotalReports(data.data.pagination.total ?? mappedReports.length);
     } catch (error) {
       console.error('Error fetching reports:', error);
-      toast.error('Failed to load reports');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -175,7 +176,7 @@ export default function ReportsManagement({ userRole }: ReportsManagementProps) 
       fetchReports();
     } catch (error) {
       console.error('Error updating report status:', error);
-      toast.error('Failed to update report status');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }

@@ -18,6 +18,7 @@ import {
 } from 'react-icons/fi';
 import { formatCount } from '@/utils/formatCount';
 import { Blog, BlogReport, RawBlog, RawReport, ProcessedImage } from '@/types';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 const BLOG_IMAGES_BASE_URL = 'http://localhost:5000/uploads/blogs/';
 const PROFILE_IMAGES_BASE_URL = 'http://localhost:5000/uploads/profiles/';
@@ -164,7 +165,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       setTotalItems(data.data.pagination.total ?? mappedBlogs.length);
     } catch (error) {
       console.error('Error fetching blogs:', error);
-      toast.error('Failed to load blogs');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -243,7 +244,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       setTotalItems(data.data.pagination.total ?? mappedReports.length);
     } catch (error) {
       console.error('Error fetching blog reports:', error);
-      toast.error('Failed to load blog reports');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -280,7 +281,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       setShowReportModal(false);
     } catch (error) {
       console.error('Error updating report status:', error);
-      toast.error('Failed to update report status');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -310,7 +311,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       fetchBlogs();
     } catch (error) {
       console.error('Error flagging blog:', error);
-      toast.error('Failed to flag blog');
+      toast.error(GENERIC_ERROR_MESSAGE);
     }
   };
 
@@ -337,7 +338,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       fetchBlogs();
     } catch (error) {
       console.error('Error removing blog:', error);
-      toast.error('Failed to remove blog');
+      toast.error(GENERIC_ERROR_MESSAGE);
     }
   };
 
@@ -393,7 +394,7 @@ export default function BlogsManagement({ userRole }: BlogsManagementProps) {
       fetchBlogs();
     } catch (error) {
       console.error('Error updating blog status:', error);
-      toast.error('Failed to update blog status');
+      toast.error(GENERIC_ERROR_MESSAGE);
     }
   };
 

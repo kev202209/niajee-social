@@ -15,6 +15,7 @@ import {
 } from 'react-icons/fi';
 import { formatCount } from '@/utils/formatCount';
 import { getImageSrc } from '@/utils/imageUtils';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 interface ContentItem {
   id: string;
@@ -88,7 +89,7 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
       setTotalContent(data.data.totalContent);
     } catch (error) {
       console.error('Error fetching content:', error);
-      toast.error('Failed to load content');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -126,7 +127,7 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
       fetchContent();
     } catch (error) {
       console.error('Error flagging content:', error);
-      toast.error('Failed to flag content');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -166,7 +167,7 @@ export default function ContentManagement({ userRole }: ContentManagementProps) 
       fetchContent();
     } catch (error) {
       console.error('Error removing content:', error);
-      toast.error('Failed to remove content');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }

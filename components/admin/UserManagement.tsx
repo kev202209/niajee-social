@@ -13,6 +13,7 @@ import {
 import { formatCount } from '@/utils/formatCount';
 import Image from 'next/image';
 import { getImageSrc } from '@/utils/imageUtils';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 interface User {
   id: string;
@@ -111,7 +112,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
       setTotalUsers(data.data.pagination.total ?? users.length);
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to load users');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }
@@ -143,7 +144,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
       fetchUsers();
     } catch (error) {
       console.error('Error verifying user:', error);
-      toast.error('Failed to verify user');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -179,7 +180,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
       fetchUsers();
     } catch (error) {
       console.error('Error suspending user:', error);
-      toast.error('Failed to suspend user');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -211,7 +212,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
       fetchUsers();
     } catch (error) {
       console.error('Error banning user:', error);
-      toast.error('Failed to ban user');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setActionLoading(null);
     }
@@ -247,7 +248,7 @@ export default function UserManagement({ userRole }: UserManagementProps) {
   //     fetchUsers();
   //   } catch (error) {
   //     console.error('Error updating user role:', error);
-  //     toast.error('Failed to update user role');
+  //     toast.error(GENERIC_ERROR_MESSAGE);
   //   } finally {
   //     setActionLoading(null);
   //   }

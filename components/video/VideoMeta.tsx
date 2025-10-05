@@ -22,6 +22,7 @@ import { formatCount } from '@/utils/formatCount';
 import ShareService from '@/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";
 import { getImageSrc } from '@/utils/imageUtils';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages'
 
 interface VideoMetaProps {
   video: Video;
@@ -106,7 +107,7 @@ export default function VideoMeta({ video }: VideoMetaProps) {
 
     } catch (error) {
       console.error('Error toggling like:', error);
-      toast.error('Failed to update like status. Please try again.');
+      toast.error(GENERIC_ERROR_MESSAGE);
       setIsLiked(!liked);
     }
   };
@@ -156,10 +157,10 @@ export default function VideoMeta({ video }: VideoMetaProps) {
         } else if (error.message === 'Channel not found') {
           toast.error('Channel not found');
         } else {
-          toast.error('Failed to update follow status. Please try again.');
+          toast.error(GENERIC_ERROR_MESSAGE);
         }
       } else {
-        toast.error('Failed to update follow status. Please try again.');
+        toast.error(GENERIC_ERROR_MESSAGE);
       }
     } finally {
       setIsFollowLoading(false);
@@ -206,7 +207,7 @@ export default function VideoMeta({ video }: VideoMetaProps) {
       
     } catch (error) {
       console.error('Error toggling save:', error);
-      toast.error('Failed to update save status. Please try again.');
+      toast.error(GENERIC_ERROR_MESSAGE);
       setIsSaved(!optimisticSave);
     } finally {
       setLoading(prev => ({ ...prev, save: false }));
@@ -242,7 +243,7 @@ export default function VideoMeta({ video }: VideoMetaProps) {
       
     } catch (error) {
       console.error('Error downloading video:', error);
-      toast.error('Failed to download video. Please try again.');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(prev => ({ ...prev, download: false }));
     }
@@ -312,7 +313,7 @@ export default function VideoMeta({ video }: VideoMetaProps) {
       
     } catch (error) {
       console.error('Error marking as not interested:', error);
-      toast.error('Failed to update preferences. Please try again.');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(prev => ({ ...prev, notInterested: false }));
     }

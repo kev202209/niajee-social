@@ -17,6 +17,7 @@ import ShareModal from '@/components/video/ShareModal';
 import ShareService from '@/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";
 import { getImageSrc } from '@/utils/imageUtils';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 // Define the video data structure here or import it from a shared types file
 interface ShortData {
@@ -133,7 +134,7 @@ const VideoActions = ({
       
     } catch (error) {
       console.error('Error toggling like:', error);
-      toast.error('Failed to update like status. Please try again.');
+      toast.error(GENERIC_ERROR_MESSAGE);
       setLiked(!newLiked);
     } finally {
       setLoading(prev => ({ ...prev, like: false }));
@@ -171,7 +172,7 @@ const VideoActions = ({
       
     } catch (error) {
       console.error('Error toggling follow:', error);
-      toast.error('Failed to update follow status. Please try again.');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(prev => ({ ...prev, follow: false }));
     }
@@ -217,7 +218,7 @@ const VideoActions = ({
       
     } catch (error) {
       console.error('Error toggling save:', error);
-      toast.error('Failed to update save status. Please try again.');
+      toast.error(GENERIC_ERROR_MESSAGE);
       setSaved(!optimisticSave);
     } finally {
       setLoading(prev => ({ ...prev, save: false }));
@@ -253,7 +254,7 @@ const VideoActions = ({
       
     } catch (error) {
       console.error('Error marking as not interested:', error);
-      toast.error('Failed to update preferences. Please try again.');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(prev => ({ ...prev, notInterested: false }));
     }

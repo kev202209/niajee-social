@@ -159,7 +159,7 @@ export default function AdminPage() {
       setStats(data.data as FullDashboardStats);
     } catch (err) {
       console.error('Error fetching dashboard stats:', err);
-      toast.error('Failed to load dashboard data');
+      toast.error('Something went wrong. Please check your internet connection and try again.');
     } finally {
       setLoading(false);
     }

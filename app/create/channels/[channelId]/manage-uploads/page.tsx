@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import AuthenticatedImage from '@/components/Image';
 import timeAgo from '@/utils/timeAgo';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 const ManageUploadsPage = () => {
   const params = useParams();
@@ -56,11 +57,11 @@ const ManageUploadsPage = () => {
         const data = await response.json();
         setUploads(data.uploads || []);
       } else {
-        toast.error('Failed to fetch uploads');
+        toast.error('Something went wrong. Try again Later or refresh the page and try again');
       }
     } catch (err) {
       console.error('Error fetching uploads:', err);
-      toast.error('Failed to fetch uploads');
+      toast.error('Something went wrong. Try again Later or refresh the page and try again');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -85,11 +86,11 @@ const ManageUploadsPage = () => {
         setUploads(prev => prev.filter(upload => upload.uploadId !== uploadId));
         toast.success('Upload deleted successfully');
       } else {
-        toast.error('Failed to delete upload');
+        toast.error(GENERIC_ERROR_MESSAGE);
       }
     } catch (err) {
       console.error('Error deleting upload:', err);
-      toast.error('Failed to delete upload');
+      toast.error(GENERIC_ERROR_MESSAGE);
     }
   };
 

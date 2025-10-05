@@ -12,6 +12,7 @@ import {
   FiActivity,
 } from 'react-icons/fi';
 import { formatCount } from '@/utils/formatCount';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 interface AnalyticsData {
   overview: {
@@ -105,7 +106,7 @@ export default function Analytics({ userRole }: AnalyticsProps) {
       setAnalytics(data.data);
     } catch (err: unknown) {
       console.error('Error fetching analytics:', err);
-      toast.error('Failed to load analytics data');
+      toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
       setLoading(false);
     }

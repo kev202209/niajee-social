@@ -81,7 +81,7 @@ export default function ResetPasswordPage() {
           "relative flex items-center space-x-4 p-6 text-white rounded-2xl shadow-2xl bg-gradient-to-br from-blue-600 via-indigo-500 to-purple-500 backdrop-blur-md text-lg"
         }
         closeButton={false}
-        autoClose={7000}
+        autoClose={3000}
         hideProgressBar={true}
       />
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
