@@ -1,0 +1,1 @@
+export const GENERIC_ERROR_MESSAGE: string = 'Something went wrong. Please check your internet connection and try again.';
