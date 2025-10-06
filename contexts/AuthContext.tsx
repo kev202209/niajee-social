@@ -96,6 +96,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Update ensureCsrf to add retry logic
   const ensureCsrf = async () => {
+  console.log('[ensureCsrf] Starting...');
+  
+  const token = await getCsrf();
+  
+  console.log('[ensureCsrf] Token obtained:', token );
     if (!csrfToken) {
       await getCsrf();
     }
