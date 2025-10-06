@@ -2,11 +2,17 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { User } from '@/types';
 
+interface DeviceInfo {
+  os: string;
+  browser: string;
+  // Add other properties as needed based on your backend expectations
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
-  login: (identifier: string, password: string, deviceInfo: any) => Promise<void>;
+  login: (identifier: string, password: string, deviceInfo: DeviceInfo) => Promise<void>;
   register: (
     formData: {
       firstName: string;
@@ -15,7 +21,7 @@ interface AuthContextType {
       password: string;
       birthday: string;
     },
-    deviceInfo: any,
+    deviceInfo: DeviceInfo,
     redirect?: string
   ) => Promise<void>;
   logout: () => Promise<void>;
@@ -52,27 +58,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const api_link = process.env.NEXT_PUBLIC_API_URL;
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Add getCsrf function
+  // Add session initialization helper
+  const initializeSession = async (): Promise<void> => {
+    try {
+      // Make a simple request to initialize session before fetching CSRF
+      await fetch(`${api_link}/auth/verify`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.warn('Session initialization request failed:', err);
+    }
+  };
+
+  // Update getCsrf function
   const getCsrf = async () => {
     try {
+      // Ensure session exists first
+      await initializeSession();
+      
       const response = await fetch(`${api_link}/auth/csrf`, {
         method: 'GET',
         credentials: 'include',
       });
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('CSRF token fetched successfully');
         setCsrfToken(data.csrfToken);
       } else {
-        console.error('Failed to fetch CSRF token');
+        console.error('Failed to fetch CSRF token:', response.status);
       }
     } catch (err) {
       console.error('CSRF fetch error:', err);
     }
   };
 
-  // Ensure we have a fresh CSRF token before protected requests
+  // Update ensureCsrf to add retry logic
   const ensureCsrf = async () => {
-    await getCsrf();  // Always fetch a fresh token to avoid stale/invalid ones
+    if (!csrfToken) {
+      await getCsrf();
+    }
+    
+    // Verify token was actually set
+    if (!csrfToken) {
+      console.error('Failed to obtain CSRF token');
+      throw new Error('CSRF token unavailable');
+    }
+    
+    // Small delay for cookie propagation
+    await new Promise(resolve => setTimeout(resolve, 100));
   };
 
   // Setup automatic token refresh (every 50 minutes, as per backend example)
@@ -151,11 +186,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const login = async (identifier: string, password: string, deviceInfo: any) => {
+  // Update login to log more details in production
+  const login = async (identifier: string, password: string, deviceInfo: DeviceInfo) => {
     try {
       setLoading(true);
       setError(null);
       await ensureCsrf();
+
+      console.log('Login attempt with CSRF token:', csrfToken ? 'present' : 'missing');
 
       const response = await fetch(`${api_link}/auth/login`, {
         method: 'POST',
@@ -175,16 +213,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!response.ok) {
         if (response.status === 403) {
+          console.error('CSRF validation failed, fetching new token');
           await getCsrf();
         }
-        throw new Error(
-          data.message || 'Login failed. Please check your internet connection.'
-        );
+        throw new Error(data.message || 'Login failed');
       }
+      
       setUser(data.user);
       setCsrfToken(data.csrfToken || null);
       
-      // Store last login method
       if (typeof window !== 'undefined') {
         localStorage.setItem('lastLoginMethod', 'email');
       }
@@ -205,7 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       password: string;
       birthday: string;
     },
-    deviceInfo: any,
+    deviceInfo: DeviceInfo,
     redirect?: string
   ) => {
     try {
