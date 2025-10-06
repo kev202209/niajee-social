@@ -5,7 +5,7 @@ import Header from "../Header";
 import Hero from "./Hero";
 import StackedFeatureDeck from "./cinematic/StackedFeatureDeck";
 import RoadmapTeaser from "./cinematic/RoadmapTeaser";
-import MobileComingSoon from "./MobileComingSoon";
+// import MobileComingSoon from "./MobileComingSoon";
 import EarlyAccessCTA from "./cinematic/EarlyAccessCTA";
 import Footer from "./Footer";
 import ScrollStoryboard from "./cinematic/ScrollStoryboard";
@@ -19,6 +19,7 @@ export default function Landing() {
         <StackedFeatureDeck />
         <ScrollStoryboard />
         <RoadmapTeaser />
+        {/* This is the culprit of the width issue on home page so before uncommenting, fix the width problem */}
         {/* <MobileComingSoon /> */}
         <EarlyAccessCTA />
       </main>

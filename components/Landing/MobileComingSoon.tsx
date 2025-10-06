@@ -1,10 +1,10 @@
 'use client';
 import { motion } from 'framer-motion';
-
+// This is the culprit of the width issue on home page so before uncommenting, fix the width problem
 export default function MobileComingSoon() {
   return (
     <section id="mobile" className="relative py-32 dark:bg-gray-950 bg-gray-50 ">
-      <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
+      <div className=" mx-auto px-6 grid md:grid-cols-2 gap-16 items-center">
         <motion.div
           initial={{ opacity:0, x:-40 }}
           whileInView={{ opacity:1, x:0 }}
@@ -52,7 +52,7 @@ export default function MobileComingSoon() {
           className="relative flex justify-center"
         >
           {/* Device placeholder */}
-          <div className="relative w-60 h-[520px] rounded-[2.5rem] bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 shadow-2xl border border-white/40 dark:border-white/10 overflow-hidden">
+          <div className="relative h-[520px] rounded-[2.5rem] bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 shadow-2xl border border-white/40 dark:border-white/10 overflow-hidden" style={{ width: 'min(100%, 15rem)' }}>
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.6),transparent_60%)] dark:bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.08),transparent_60%)] pointer-events-none" />
             {/* Screen mock */}
             <div className="absolute inset-[14px] rounded-[2rem] bg-gray-100/90 dark:bg-black/80 flex items-center justify-center">
@@ -66,9 +66,9 @@ export default function MobileComingSoon() {
                 </div>
               </div>
             </div>
-            {/* Side buttons (decorative) */}
-            <div className="absolute -left-1 top-28 w-1 h-12 rounded-l bg-gray-400/70 dark:bg-gray-600" />
-            <div className="absolute -right-1 top-36 w-1 h-20 rounded-r bg-gray-400/70 dark:bg-gray-600" />
+            {/* Side buttons (decorative) - repositioned inside bounds */}
+            <div className="absolute left-0 top-28 w-1 h-12 rounded-l bg-gray-400/70 dark:bg-gray-600" />
+            <div className="absolute right-0 top-36 w-1 h-20 rounded-r bg-gray-400/70 dark:bg-gray-600" />
           </div>
         </motion.div>
       </div>
