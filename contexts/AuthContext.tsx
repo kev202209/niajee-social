@@ -70,11 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Ensure we have a CSRF token before protected requests
+  // Ensure we have a fresh CSRF token before protected requests
   const ensureCsrf = async () => {
-    if (!csrfToken) {
-      await getCsrf();
-    }
+    await getCsrf();  // Always fetch a fresh token to avoid stale/invalid ones
   };
 
   // Setup automatic token refresh (every 50 minutes, as per backend example)
