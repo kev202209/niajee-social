@@ -1,12 +1,7 @@
 'use client';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { User } from '@/types';
-
-interface DeviceInfo {
-  os: string;
-  browser: string;
-  // Add other properties as needed based on your backend expectations
-}
+import { DeviceInfo } from '@/utils/deviceInfo'; 
 
 interface AuthContextType {
   user: User | null;

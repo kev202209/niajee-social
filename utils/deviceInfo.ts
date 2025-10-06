@@ -11,7 +11,7 @@ interface NavigatorExtended extends Navigator {
   hardwareConcurrency: number;
 }
 
-interface DeviceInfo {
+export interface DeviceInfo {
   deviceName: string;
   browser: string;
   operatingSystem: string;
