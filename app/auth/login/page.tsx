@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { FaGoogle, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useRouter, useSearchParams } from 'next/navigation';
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
@@ -122,8 +122,9 @@ export default function LoginPage() {
           </Link>
 
           {/* NEW: Last used indicator */}
+          {/* Currently set as hidden after google auth verification display it by removing the hidden */}
           {lastLoginMethod && (
-            <div className="mb-4 text-sm text-gray-600 dark:text-gray-400 text-center">
+            <div className="hidden mb-4 text-sm text-gray-600 dark:text-gray-400 text-center">
               Last used: {lastLoginMethod === 'email' ? 'Email/Password' : 'Google'}
             </div>
           )}
@@ -168,20 +169,20 @@ export default function LoginPage() {
           </button>
 
           {/* Centered OR divider */}
-          <div className="flex items-center my-4">
+          {/* <div className="flex items-center my-4">
             <div className="flex-grow border-t border-gray-300" />
             <span className="mx-2 text-gray-500">or</span>
             <div className="flex-grow border-t border-gray-300" />
-          </div>
+          </div> */}
 
           {/* OAuth Buttons with icons */}
           <div className="mt-4 flex flex-col gap-2">
-            <button
+            {/* <button
               onClick={handleGoogleLogin}
               className="w-full p-2 dark:bg-sky-500/10 bg-sky-600 hover:bg-sky-500/80 text-white dark:hover:bg-sky-500/80 dark:text-white rounded-xl flex items-center justify-center gap-2"
             >
               <FaGoogle /> Login with Google
-            </button>
+            </button> */}
             <Link
               href="/auth/forget-password"
               className="w-full p-2 text-blue-600 dark:text-white flex items-center justify-center gap-2"
