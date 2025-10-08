@@ -360,8 +360,9 @@ export default function CreateBlogPage() {
       <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
       
       <div className="pt-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
+        {/* Updated container: Responsive padding */}
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 py-8">
+          {/* Updated header: Responsive text and layout */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
               <button
@@ -372,7 +373,7 @@ export default function CreateBlogPage() {
                 <FiArrowLeft className="w-5 h-5" />
                 <span>Back</span>
               </button>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 Create New Blog
               </h1>
             </div>
@@ -437,7 +438,7 @@ export default function CreateBlogPage() {
 
           {/* Form */}
           {!showPreview ? (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-6">
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -475,7 +476,7 @@ export default function CreateBlogPage() {
               </div>
 
               {/* Category and Featured Image Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* Category */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -620,7 +621,7 @@ export default function CreateBlogPage() {
           ) : (
             /* Preview */
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="p-6">
+              <div className="p-4 sm:p-6">
                 {/* Preview Badge */}
                 <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-6">
                   <p className="text-sm text-yellow-800 dark:text-yellow-200 text-center">
@@ -634,7 +635,7 @@ export default function CreateBlogPage() {
                 </div>
 
                 {/* Title */}
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
                   {formData.title || 'Your Blog Title'}
                 </h1>
 

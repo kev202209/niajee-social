@@ -21,7 +21,7 @@ export default function EarlyAccessCTA() {
         <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/auth/register"
-            className="rounded-xl bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 px-8 py-3 text-sm font-semibold text-white shadow hover:brightness-110 transition"
+            className="rounded-xl bg-button-bg px-8 py-3 text-sm font-semibold text-white shadow hover:brightness-110 transition"
           >
             Create Your Account
           </Link>

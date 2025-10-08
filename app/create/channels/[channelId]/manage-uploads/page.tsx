@@ -207,23 +207,26 @@ const ManageUploadsPage = () => {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <header className="mb-8">
-        <div className="flex items-center justify-between">
+    // Updated root container: Responsive padding (smaller on mobile, larger on desktop)
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+      {/* Updated header: Stack elements vertically on mobile for better space usage */}
+      <header className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
               Manage Uploads
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Track and manage your content uploads for {channel?.name}
             </p>
           </div>
           
-          <div className="flex items-center gap-4">
+          {/* Updated button group: Stack on mobile, flex on larger screens */}
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <button
               onClick={refreshUploads}
               disabled={refreshing}
-              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center gap-2"
+              className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               <FiRefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
@@ -231,7 +234,7 @@ const ManageUploadsPage = () => {
             
             <Link
               href={`/create/channels/${channelId}/upload`}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               <FiUpload className="w-4 h-4" />
               New Upload
@@ -241,60 +244,65 @@ const ManageUploadsPage = () => {
       </header>
 
       {uploads.length === 0 ? (
-        <div className="text-center py-12">
-          <FiVideo className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        // Updated empty state: Smaller icon and text on mobile
+        <div className="text-center py-8 sm:py-12">
+          <FiVideo className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
             No uploads yet
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">
             Start by uploading your first video or short
           </p>
           <Link
             href={`/create/channels/${channelId}/upload`}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            className="inline-flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm sm:text-base"
           >
             <FiUpload className="w-4 h-4" />
             Upload Content
           </Link>
         </div>
       ) : (
-        <div className="space-y-4">
+        // Updated uploads list: Responsive spacing
+        <div className="space-y-4 sm:space-y-6">
           {uploads.map((upload) => {
             const overallStatus = getOverallStatus(upload.processingStatus);
             const statusText = getStatusText(upload.processingStatus);
             const videoProgress = upload.processingStatus.video?.progress;
             
             return (
+              // Updated card: Responsive padding and layout
               <div
                 key={upload.id}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6"
               >
-                <div className="flex items-start gap-4">
-                  {/* Thumbnail */}
+                {/* Updated flex layout: Stack vertically on mobile, flex on larger screens */}
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                  {/* Updated thumbnail: Smaller on mobile */}
                   <div className="flex-shrink-0">
-                    <div className="w-32 h-20 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center">
+                    <div className="w-24 h-16 sm:w-32 sm:h-20 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden flex items-center justify-center">
                       {upload.thumbnail?.data ? (
                         <AuthenticatedImage
                           mediaKey={getThumbnailSrc(upload.thumbnail)}
                           alt={upload.title}
-                          width={128}
-                          height={80}
+                          width={96} // Smaller default for mobile
+                          height={64}
                           className="w-full h-full object-cover"
                           fallbackSrc="/placeholder-video.jpg"
                         />
                       ) : (
                         upload.contentType === 'short' ? 
-                          <FiSmartphone className="w-8 h-8 text-gray-400" /> : 
-                          <FiVideo className="w-8 h-8 text-gray-400" />
+                          <FiSmartphone className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" /> : 
+                          <FiVideo className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
                       )}
                     </div>
                   </div>
 
-                  {/* Content Info */}
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                  {/* Updated content info: Full width, responsive text */}
+                  <div className="flex-1 min-w-0">
+                    {/* Updated header flex: Stack on mobile */}
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
                           {upload.title}
                         </h3>
                         {upload.description && (
@@ -302,7 +310,8 @@ const ManageUploadsPage = () => {
                             {upload.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                        {/* Updated metadata: Smaller text, flex-wrap for mobile */}
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                           <span className="capitalize">{upload.contentType}</span>
                           <span>{formatFileSize(upload.fileSize)}</span>
                           {upload.duration && <span>{formatDuration(upload.duration)}</span>}
@@ -310,18 +319,18 @@ const ManageUploadsPage = () => {
                         </div>
                       </div>
 
-                      {/* Status Badge */}
-                      <div className="flex items-center gap-2">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(overallStatus)}`}>
+                      {/* Updated status badge: Smaller on mobile */}
+                      <div className="flex items-center gap-2 self-start sm:self-center">
+                        <span className={`px-2 py-1 sm:px-3 rounded-full text-xs font-medium ${getStatusColor(overallStatus)}`}>
                           <div className="flex items-center gap-1">
                             {getStatusIcon(overallStatus)}
-                            {statusText}
+                            <span className="hidden sm:inline">{statusText}</span> {/* Hide text on mobile for brevity */}
                           </div>
                         </span>
                       </div>
                     </div>
 
-                    {/* Detailed Status Information */}
+                    {/* Updated detailed status: Responsive spacing */}
                     <div className="mt-3 space-y-2">
                       {/* Video Processing Status */}
                       {upload.processingStatus.video && (
@@ -354,10 +363,10 @@ const ManageUploadsPage = () => {
                       )}
                     </div>
 
-                    {/* Progress Bar for Video Processing */}
+                    {/* Updated progress bar: Responsive width */}
                     {upload.processingStatus.video?.status === 'processing' && videoProgress !== undefined && (
                       <div className="mt-3">
-                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-1">
+                        <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">
                           <span>Processing video...</span>
                           <span>{videoProgress}%</span>
                         </div>
@@ -370,32 +379,32 @@ const ManageUploadsPage = () => {
                       </div>
                     )}
 
-                    {/* Error Messages */}
+                    {/* Updated error messages: Responsive padding */}
                     {upload.processingStatus.video?.status === 'failed' && upload.processingStatus.video.errorMessage && (
-                      <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                        <p className="text-sm text-red-800 dark:text-red-200">
+                      <div className="mt-3 p-2 sm:p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <p className="text-xs sm:text-sm text-red-800 dark:text-red-200">
                           Video Error: {upload.processingStatus.video.errorMessage}
                         </p>
                       </div>
                     )}
 
                     {upload.processingStatus.thumbnail?.status === 'failed' && upload.processingStatus.thumbnail.errorMessage && (
-                      <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                        <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                      <div className="mt-3 p-2 sm:p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                        <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200">
                           Thumbnail Error: {upload.processingStatus.thumbnail.errorMessage}
                         </p>
                       </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 mt-4">
+                    {/* Updated actions: Flex-wrap for mobile, touch-friendly sizes */}
+                    <div className="flex flex-wrap items-center gap-2 mt-4">
                       {overallStatus === 'complete' && (upload.videoId || upload.shortId) && (
                         <Link
                           href={upload.contentType === 'short' ? 
                             `/shorts/${upload.shortId}` : 
                             `/watch/${upload.videoId}`
                           }
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md hover:bg-green-200 dark:hover:bg-green-900/30 transition text-sm"
+                          className="inline-flex items-center gap-1 px-3 py-2 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-md hover:bg-green-200 dark:hover:bg-green-900/30 transition text-xs sm:text-sm"
                         >
                           <FiEye className="w-3 h-3" />
                           View
@@ -405,7 +414,7 @@ const ManageUploadsPage = () => {
                       {overallStatus === 'complete' && (
                         <Link
                           href={`/create/channels/${channelId}/editor/${upload.contentType === 'short' ? upload.shortId : upload.videoId}`}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/30 transition text-sm"
+                          className="inline-flex items-center gap-1 px-3 py-2 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-md hover:bg-blue-200 dark:hover:bg-blue-900/30 transition text-xs sm:text-sm"
                         >
                           <FiEdit className="w-3 h-3" />
                           Edit
@@ -414,7 +423,7 @@ const ManageUploadsPage = () => {
                       
                       <button
                         onClick={() => deleteUpload(upload.uploadId)}
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-md hover:bg-red-200 dark:hover:bg-red-900/30 transition text-sm"
+                        className="inline-flex items-center gap-1 px-3 py-2 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-md hover:bg-red-200 dark:hover:bg-red-900/30 transition text-xs sm:text-sm"
                       >
                         <FiTrash2 className="w-3 h-3" />
                         Delete

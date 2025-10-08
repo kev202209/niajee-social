@@ -233,21 +233,23 @@ const ChannelSettingsPage: FC = () => {
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+    // Updated root container: Responsive padding
+    <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto">
+      {/* Updated header: Responsive text */}
+      <header className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Channel Settings
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           Manage your channel information and preferences
         </p>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Avatar */}
-        <div className="flex flex-col items-center space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        {/* Avatar: Smaller on mobile */}
+        <div className="flex flex-col items-center space-y-3 sm:space-y-4">
           <div className="relative">
-            <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
               {uploadingAvatar ? (
                 <FiLoader className="w-8 h-8 text-white animate-spin" />
               ) : avatarPreview ? (
@@ -283,7 +285,7 @@ const ChannelSettingsPage: FC = () => {
               disabled={uploadingAvatar}
             />
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             {uploadingAvatar ? 'Uploading avatar...' : 'Click to change channel avatar'}
           </p>
         </div>
@@ -299,7 +301,7 @@ const ChannelSettingsPage: FC = () => {
             name="name"
             value={form.name}
             onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             required
           />
         </div>
@@ -313,7 +315,7 @@ const ChannelSettingsPage: FC = () => {
             type="text"
             value={channel.handle}
             readOnly
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+            className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed"
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Channel handle cannot be changed
@@ -330,8 +332,8 @@ const ChannelSettingsPage: FC = () => {
             name="description"
             value={form.description}
             onChange={handleInputChange}
-            rows={4}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+            rows={3}
+            className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
           />
         </div>
 
@@ -345,7 +347,7 @@ const ChannelSettingsPage: FC = () => {
             name="category"
             value={form.category}
             onChange={handleInputChange}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="">Select a category</option>
             {categories.map(category => (
@@ -355,8 +357,8 @@ const ChannelSettingsPage: FC = () => {
         </div>
 
         {/* Settings */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Privacy & Comments</h3>
+        <div className="space-y-3 sm:space-y-4">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Privacy & Comments</h3>
           
           <div className="flex items-center justify-between">
             <div>
@@ -399,14 +401,14 @@ const ChannelSettingsPage: FC = () => {
 
         {/* Success/Error Messages */}
         {success && (
-          <div className="p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg">
-            <p className="text-green-800 dark:text-green-200 text-sm">{success}</p>
+          <div className="p-3 sm:p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg">
+            <p className="text-sm text-green-800 dark:text-green-200">{success}</p>
           </div>
         )}
 
         {error && (
-          <div className="p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
-            <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+          <div className="p-3 sm:p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
           </div>
         )}
 
@@ -414,7 +416,7 @@ const ChannelSettingsPage: FC = () => {
         <button
           type="submit"
           disabled={saving || uploadingAvatar}
-          className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2"
+          className="w-full px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
         >
           {saving ? (
             <>
@@ -431,9 +433,9 @@ const ChannelSettingsPage: FC = () => {
       </form>
 
       {/* Danger Zone */}
-      <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">Danger Zone</h3>
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+      <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200 dark:border-gray-700">
+        <h3 className="text-base sm:text-lg font-semibold text-red-600 dark:text-red-400 mb-3 sm:mb-4">Danger Zone</h3>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 sm:p-4">
           <h4 className="font-medium text-red-800 dark:text-red-200 mb-2">Delete Channel</h4>
           <p className="text-sm text-red-700 dark:text-red-300 mb-4">
             Once you delete your channel, there is no going back. This will permanently delete your channel and all associated content.

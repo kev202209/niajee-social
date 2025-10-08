@@ -214,14 +214,15 @@ export default function BlogsPage() {
       <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
       
       <div className="pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header Section */}
+        {/* Updated container: Responsive padding */}
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 py-8">
+          {/* Updated header: Responsive text and layout */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 Discover Amazing Blogs
               </h1>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 Read, learn, and share knowledge with our community
               </p>
             </div>
@@ -229,7 +230,7 @@ export default function BlogsPage() {
             {user && (
               <Link
                 href="/blogs/create"
-                className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
               >
                 <FiPlus className="w-5 h-5 mr-2" />
                 Write a Blog
@@ -248,9 +249,9 @@ export default function BlogsPage() {
             />
           </div>
 
-          {/* Tab Navigation */}
+          {/* Updated tabs: Responsive padding */}
           <div className="mb-8">
-            <nav className="flex space-x-8">
+            <nav className="flex space-x-4 sm:space-x-8">
               <button
                 onClick={() => handleTabChange('latest')}
                 className={`flex items-center space-x-2 py-2 px-4 border-b-2 font-medium text-sm transition-colors ${
@@ -292,47 +293,47 @@ export default function BlogsPage() {
           {/* Content */}
           {activeTab === 'featured' ? (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Featured Blogs</h2>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Featured Blogs</h2>
               {featuredLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[...Array(6)].map((_, i) => (
                     <BlogSkeleton key={i} />
                   ))}
                 </div>
               ) : featuredBlogs.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {featuredBlogs.map((blog) => (
                     <BlogCard key={blog.id} blog={blog} featured />
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <FiStar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">No featured blogs available</p>
+                <div className="text-center py-8 sm:py-12">
+                  <FiStar className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No featured blogs available</p>
                 </div>
               )}
             </div>
           ) : (
             <>
               {error ? (
-                <div className="text-center py-12">
+                <div className="text-center py-8 sm:py-12">
                   <div className="text-red-500 mb-4">{error}</div>
                   <button
                     onClick={fetchBlogs}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
                   >
                     Try Again
                   </button>
                 </div>
               ) : loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {[...Array(12)].map((_, i) => (
                     <BlogSkeleton key={i} />
                   ))}
                 </div>
               ) : blogs.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
                     {blogs.map((blog) => (
                       <BlogCard key={blog.id} blog={blog} />
                     ))}
@@ -347,14 +348,14 @@ export default function BlogsPage() {
                   )}
                 </>
               ) : (
-                <div className="text-center py-12">
-                  <div className="text-gray-500 dark:text-gray-400 mb-4">
+                <div className="text-center py-8 sm:py-12">
+                  <div className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-4">
                     No blogs found {filters.search && `for "${filters.search}"`}
                   </div>
                   {(filters.search || filters.category || filters.tags?.length) && (
                     <button
                       onClick={clearFilters}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
                     >
                       Clear Filters
                     </button>

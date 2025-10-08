@@ -160,25 +160,27 @@ export default function ChannelAnalyticsPage() {
   }
 
   return (
-    <div className="p-8">
-      <header className="mb-8">
-        <div className="flex items-center justify-between">
+    {/* Updated root container: Responsive padding */}
+    <div className="p-4 sm:p-6 lg:p-8">
+      {/* Updated header: Stack on mobile */}
+      <header className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
               Analytics
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               Track your channel&apos;s performance and growth
             </p>
           </div>
           
-          {/* Time Range Selector */}
+          {/* Time Range Selector: Responsive padding */}
           <div className="flex items-center gap-2">
             <FiCalendar className="w-4 h-4 text-gray-500" />
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value as '7d' | '30d' | '90d' | '1y')}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
             >
               {timeRangeOptions.map(option => (
                 <option key={option.value} value={option.value}>
@@ -190,13 +192,13 @@ export default function ChannelAnalyticsPage() {
         </div>
       </header>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      {/* Key Metrics: Responsive padding */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Views</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {analytics.totalViews.toLocaleString()}
               </p>
               <p className="text-xs text-green-600 dark:text-green-400">+0% from last period</p>
@@ -205,11 +207,11 @@ export default function ChannelAnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Subscribers</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {analytics.totalSubscribers.toLocaleString()}
               </p>
               <p className="text-xs text-green-600 dark:text-green-400">+0% from last period</p>
@@ -218,11 +220,11 @@ export default function ChannelAnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Videos</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {analytics.totalVideos.toLocaleString()}
               </p>
               <p className="text-xs text-green-600 dark:text-green-400">+0% from last period</p>
@@ -231,11 +233,11 @@ export default function ChannelAnalyticsPage() {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Avg. Watch Time</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {analytics.averageViewDuration}m
               </p>
               <p className="text-xs text-green-600 dark:text-green-400">+0% from last period</p>
@@ -245,10 +247,10 @@ export default function ChannelAnalyticsPage() {
         </div>
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      {/* Charts Section: Responsive gap */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 mb-6 sm:mb-8">
         {/* Views Chart */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Views Over Time</h3>
           <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
             <p>Chart placeholder - integrate with your preferred charting library</p>
@@ -256,7 +258,7 @@ export default function ChannelAnalyticsPage() {
         </div>
 
         {/* Subscribers Chart */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Subscriber Growth</h3>
           <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
             <p>Chart placeholder - integrate with your preferred charting library</p>
@@ -264,28 +266,28 @@ export default function ChannelAnalyticsPage() {
         </div>
       </div>
 
-      {/* Top Performing Content */}
+      {/* Top Performing Content: Responsive padding */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Top Performing Videos</h3>
+        <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">Top Performing Videos</h3>
         </div>
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {analytics.topVideos.length === 0 ? (
-            <div className="text-center py-8">
-              <FiVideo className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600 dark:text-gray-400">No videos to analyze yet</p>
-              <p className="text-sm text-gray-500 dark:text-gray-500">Upload some videos to see performance metrics</p>
+            <div className="text-center py-6 sm:py-8">
+              <FiVideo className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">No videos to analyze yet</p>
+              <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500">Upload some videos to see performance metrics</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {analytics.topVideos.map((video, index) => (
-                <div key={video.id} className="flex items-center space-x-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg">
+                <div key={video.id} className="flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg">
                   <span className="text-sm font-medium text-gray-500 dark:text-gray-400 w-6">
                     {index + 1}
                   </span>
-                  <div className="relative w-16 h-12">
+                  <div className="relative w-12 h-10 sm:w-16 sm:h-12">
                     <AuthenticatedImage
-                      mediaKey={ getImageSrc(video.thumbnail, '480w')}
+                      mediaKey={getImageSrc(video.thumbnail, '480w')}
                       alt={video.title}
                       fill
                       className="object-cover rounded"
@@ -293,16 +295,16 @@ export default function ChannelAnalyticsPage() {
                       fallbackSrc="/placeholder-video.jpg"
                     />
                   </div>
-                  <div className="flex-1">
-                    <h4 className="font-medium text-gray-900 dark:text-white">{video.title}</h4>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 dark:text-white line-clamp-2">{video.title}</h4>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                       {video.views.toLocaleString()} views
                     </p>
                   </div>
                 </div>
               ))}
             </div>
-            )}
+          )}
         </div>
       </div>
     </div>

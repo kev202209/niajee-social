@@ -2,7 +2,7 @@
 import React from 'react';
 import VideoCard from '@/components/home/VideoCard';
 import ShortCard from '@/components/home/ShortCard';
-import  timeAgo  from '@/utils/timeAgo';
+import timeAgo from '@/utils/timeAgo';
 import { Video, Short } from '@/types';
 
 interface RawHistoryChannel {
@@ -33,7 +33,6 @@ interface HistoryVideoProps {
 interface HistoryShortProps {
   data: RawHistoryBase; // raw short history object
 }
-
 
 function formatDur(sec?: number) {
   if (!sec) return '';
@@ -87,9 +86,9 @@ export const HistoryVideoCard: React.FC<HistoryVideoProps> = ({ data }) => {
     <div className="relative group">
       <div className="relative">
         <VideoCard video={adapted} />
-        {/* Duration badge (if VideoCard doesn’t already show) */}
+        {/* Duration badge: Responsive text */}
         {data.duration && (
-          <span className="absolute bottom-1 right-1 z-10 bg-black/70 text-white text-[11px] px-1.5 py-0.5 rounded">
+          <span className="absolute bottom-1 right-1 z-10 bg-black/70 text-white text-xs sm:text-[11px] px-1.5 py-0.5 rounded">
             {formatDur(data.duration)}
           </span>
         )}
@@ -103,7 +102,8 @@ export const HistoryVideoCard: React.FC<HistoryVideoProps> = ({ data }) => {
           </div>
         )}
       </div>
-      <div className="mt-2 text-xs text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5">
+      {/* Updated metadata: Responsive text and gap */}
+      <div className="mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5">
         <a
           href={`/channels/${data.channel?.handle?.replace(/^@/,'')}`}
           className="hover:underline font-medium text-gray-800 dark:text-gray-200"
@@ -162,11 +162,13 @@ export const HistoryShortCard: React.FC<HistoryShortProps> = ({ data }) => {
             />
           </div>
         )}
-        <span className="absolute top-1 left-1 bg-black/55 text-white text-[10px] px-1.5 py-0.5 rounded">
+        {/* Updated badge: Responsive text */}
+        <span className="absolute top-1 left-1 bg-black/55 text-white text-xs sm:text-[10px] px-1.5 py-0.5 rounded">
           Short
         </span>
       </div>
-      <div className="mt-2 text-xs text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5">
+      {/* Updated metadata: Responsive text and gap */}
+      <div className="mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5">
         {data.channel?.name && (
           <a
             href={`/channels/${(data.channel?.handle ?? '').replace(/^@/,'')}`}

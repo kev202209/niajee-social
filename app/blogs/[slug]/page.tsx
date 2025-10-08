@@ -608,7 +608,8 @@ export default function BlogDetailPage() {
       <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
       
       <div className="pt-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Updated container: Responsive padding */}
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 py-8">
           {/* Back Button */}
           <button
             onClick={() => router.back()}
@@ -620,7 +621,7 @@ export default function BlogDetailPage() {
 
           <article className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
             {/* Header */}
-            <div className="p-6 pb-0">
+            <div className="p-4 sm:p-6 pb-0">
               {/* Category Badge */}
               <div className="mb-4">
                 <Link
@@ -632,7 +633,7 @@ export default function BlogDetailPage() {
               </div>
 
               {/* Title */}
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 leading-tight">
                 {blog.title}
               </h1>
 
@@ -642,7 +643,7 @@ export default function BlogDetailPage() {
               </p>
 
               {/* Meta Information */}
-              <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-gray-400 mb-6">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-gray-500 dark:text-gray-400 mb-6">
                 <div className="flex items-center space-x-2">
                   <div className="relative">
                     <AuthenticatedImage
@@ -701,7 +702,7 @@ export default function BlogDetailPage() {
 
             {/* Featured Image */}
             {blog.featuredImage && !imageError && (
-              <div className="px-6 mb-6">
+              <div className="px-4 sm:px-6 mb-6">
                 <div className="relative aspect-video rounded-lg overflow-hidden">
                   <AuthenticatedImage
                     mediaKey={getImageSrc(blog.featuredImage, '1080w')}
@@ -716,7 +717,7 @@ export default function BlogDetailPage() {
             )}
 
             {/* Content */}
-            <div className="px-6 pb-6">
+            <div className="px-4 sm:px-6 pb-6">
               <div className="prose prose-lg dark:prose-invert max-w-none">
                 <ContentRenderer content={blog.content} />
               </div>
@@ -734,7 +735,7 @@ export default function BlogDetailPage() {
               if (normalizedTags.length === 0) return null;
 
               return (
-                <div className="px-6 pb-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                <div className="px-4 sm:px-6 pb-6 border-t border-gray-200 dark:border-gray-700 pt-6">
                   <div className="flex items-center space-x-2 mb-3">
                     <FiTag className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                     <span className="text-sm font-medium text-gray-900 dark:text-white">Tags:</span>
@@ -756,7 +757,7 @@ export default function BlogDetailPage() {
 
             {/* Series Navigation */}
             {blog.series && (
-              <div className="px-6 pb-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+              <div className="px-4 sm:px-6 pb-6 border-t border-gray-200 dark:border-gray-700 pt-6">
                 <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
                   <h3 className="text-sm font-medium text-blue-900 dark:text-blue-200 mb-2">
                     Part of the series: {blog.series.title}
@@ -787,62 +788,6 @@ export default function BlogDetailPage() {
           )}
         </div>
       </div>
-
-      <style jsx global>{`
-        /* Embed container styles */
-        .embed-container {
-          position: relative;
-          padding-bottom: 56.25%;
-          height: 0;
-          overflow: hidden;
-          max-width: 100%;
-        }
-        
-        .embed-container iframe,
-        .embed-container object,
-        .embed-container embed {
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-        }
-
-        /* Custom prose styles for better readability */
-        .prose {
-          color: inherit;
-        }
-        
-        .prose p {
-          margin-bottom: 1rem;
-        }
-        
-        .prose strong {
-          font-weight: 600;
-          color: rgb(17 24 39);
-        }
-        
-        .dark .prose strong {
-          color: rgb(243 244 246);
-        }
-        
-        .prose em {
-          font-style: italic;
-        }
-        
-        .prose code {
-          background: rgb(243 244 246);
-          color: rgb(220 38 127);
-          padding: 0.125rem 0.25rem;
-          border-radius: 0.25rem;
-          font-size: 0.875em;
-        }
-        
-        .dark .prose code {
-          background: rgb(55 65 81);
-          color: rgb(251 113 133);
-        }
-      `}</style>
     </div>
   );
 }

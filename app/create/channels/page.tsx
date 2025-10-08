@@ -79,14 +79,16 @@ const ChannelsPage: FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <header className="flex items-center justify-between mb-8">
+    // Updated root container: Responsive padding
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Updated header: Stack on mobile */}
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
               My Channels
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1">
               Manage your channels and content
             </p>
           </div>
@@ -110,7 +112,8 @@ const ChannelsPage: FC = () => {
         </header>
         
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          // Updated loading: Responsive grid
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -128,49 +131,52 @@ const ChannelsPage: FC = () => {
             ))}
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center justify-center py-12">
+          // Updated error: Responsive padding
+          <div className="flex flex-col items-center justify-center py-8 sm:py-12">
             <div className="text-center max-w-md">
-              <FiVideo className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              <FiVideo className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">
                 Something went wrong
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-6">{error}</p>
               <button
                 onClick={handleRetry}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
               >
                 Try Again
               </button>
             </div>
           </div>
         ) : channels.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
+          // Updated empty state: Responsive padding
+          <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
             <div className="mb-8">
-              <FiVideo className="w-20 h-20 text-gray-400 mx-auto mb-4" />
-              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+              <FiVideo className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400 mx-auto mb-4" />
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white mb-2">
                 No channels yet
               </h2>
-              <p className="text-gray-600 dark:text-gray-400 max-w-md">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-md">
                 Create your first channel to start sharing videos and building your community
               </p>
             </div>
             <button
               onClick={handleCreateChannel}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-lg"
+              className="inline-flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium text-lg"
             >
-              <FiPlus className="w-5 h-5" />
+              <FiPlus className="w-4 h-4 sm:w-5 sm:h-5" />
               Create Your First Channel
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          // Updated grid: Responsive gap
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {channels.map((ch: Channel) => (
               <div
                 key={ch.id}
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
               >
                 {/* Channel Banner */}
-                <div className="h-32 bg-gradient-to-r from-blue-500 to-purple-600 relative">
+                <div className="h-24 sm:h-32 bg-gradient-to-r from-blue-500 to-purple-600 relative">
                   {ch.banner ? (
                     <div className="relative w-full h-full">
                       <AuthenticatedImage
@@ -184,9 +190,9 @@ const ChannelsPage: FC = () => {
                     </div>
                   ) : null}
                   
-                  {/* Channel Avatar */}
+                  {/* Channel Avatar: Smaller on mobile */}
                   <div className="absolute -bottom-6 left-4">
-                    <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-gray-800 rounded-full border-4 border-white dark:border-gray-800 overflow-hidden">
                       {ch.avatar ? (
                         <div className="relative w-full h-full">
                           <AuthenticatedImage
@@ -200,30 +206,30 @@ const ChannelsPage: FC = () => {
                         </div>
                       ) : (
                         <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                          <FiVideo className="w-6 h-6 text-gray-400" />
+                          <FiVideo className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Channel Info */}
+                {/* Channel Info: Responsive padding */}
                 <div className="p-4 pt-8">
                   <div className="mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
                       {ch.name}
                     </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                       @{ch.handle}
                     </p>
                     {ch.description && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                      <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                         {ch.description}
                       </p>
                     )}
                   </div>
 
-                  {/* Channel Stats */}
+                  {/* Channel Stats: Responsive grid */}
                   <div className="grid grid-cols-3 gap-2 mb-4 text-center">
                     <div>
                       <div className="flex items-center justify-center gap-1">
@@ -254,8 +260,8 @@ const ChannelsPage: FC = () => {
                     </div>
                   </div>
 
-                  {/* Channel Status */}
-                  <div className="flex items-center gap-2 mb-4">
+                  {/* Channel Status: Responsive gap */}
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       ch.isActive 
                         ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
@@ -270,7 +276,7 @@ const ChannelsPage: FC = () => {
                     )}
                   </div>
 
-                  {/* Action Button */}
+                  {/* Action Button: Touch-friendly */}
                   <button
                     onClick={() => handleManage(ch.id)}
                     className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"

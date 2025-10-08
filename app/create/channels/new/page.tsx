@@ -269,7 +269,9 @@ const CreateChannelPage: FC = () => {
   }, []);
 
   return (
-    <div className="p-4 sm:p-8 max-w-2xl mx-auto">
+    // Updated root container: Responsive padding
+    <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto">
+      {/* Updated header: Responsive text */}
       <header className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Create New Channel
@@ -279,8 +281,8 @@ const CreateChannelPage: FC = () => {
         </p>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Avatar Upload - Mobile optimized */}
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        {/* Avatar Upload: Smaller on mobile */}
         <div className="flex flex-col items-center space-y-4">
           <div className="relative">
             <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
@@ -324,7 +326,7 @@ const CreateChannelPage: FC = () => {
             value={form.name}
             onChange={handleInputChange}
             placeholder="Enter your channel name"
-            className="w-full px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm sm:text-base"
+            className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm sm:text-base"
             required
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -370,7 +372,7 @@ const CreateChannelPage: FC = () => {
             )}
           </div>
           
-          {/* Handle feedback - moved directly under input */}
+          {/* Handle feedback: Responsive text */}
           <div className="mt-2 space-y-1">
             {form.handle && handleChecking && (
               <div className="flex items-center space-x-2">
@@ -384,7 +386,7 @@ const CreateChannelPage: FC = () => {
             {form.handle && !handleChecking && handleAvailable === false && (
               <div className="flex items-center space-x-2">
                 <FiX className="w-3 h-3 text-red-500" />
-                <p className="text-xs text-red-600 dark:text-red-400">
+                <p className="text-xs text-red-600 dark:text-red-400 line-clamp-2">
                   Handle &quot;@{form.handle}&quot; is not available. Try a different one.
                 </p>
               </div>
@@ -411,7 +413,6 @@ const CreateChannelPage: FC = () => {
               </p>
             )}
             
-            {/* Updated feedback messaging */}
             {!isHandleManuallyEdited && form.handle && (
               <p className="text-xs text-blue-600 dark:text-blue-400">
                 💡 Auto-generated from your channel name. You can edit this handle to customize it.
@@ -441,7 +442,7 @@ const CreateChannelPage: FC = () => {
             onChange={handleInputChange}
             placeholder="Tell people what your channel is about"
             rows={4}
-            className="w-full px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none text-sm sm:text-base"
+            className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none text-sm sm:text-base"
           />
         </div>
 
@@ -455,7 +456,7 @@ const CreateChannelPage: FC = () => {
             name="category"
             value={form.category}
             onChange={handleInputChange}
-            className="w-full px-3 sm:px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm sm:text-base"
+            className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm sm:text-base"
           >
             <option value="">Select a category</option>
             {categories.map(category => (
@@ -464,7 +465,7 @@ const CreateChannelPage: FC = () => {
           </select>
         </div>
 
-        {/* Settings - Enhanced mobile layout */}
+        {/* Settings: Responsive padding */}
         <div className="space-y-4">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Channel Settings</h3>
           
@@ -507,26 +508,26 @@ const CreateChannelPage: FC = () => {
           </div>
         </div>
 
-        {/* Error Message */}
+        {/* Error Message: Responsive padding */}
         {error && (
           <div className="p-3 sm:p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
-            <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+            <p className="text-red-800 dark:text-red-200 text-sm line-clamp-2">{error}</p>
           </div>
         )}
 
-        {/* Submit Button - Stack on mobile */}
+        {/* Submit Button: Stack on mobile */}
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-6">
           <button
             type="button"
             onClick={() => router.back()}
-            className="w-full sm:flex-1 px-4 sm:px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium"
+            className="w-full sm:flex-1 px-4 py-3 sm:px-6 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading || handleAvailable === false || !form.handle || form.handle.length < 3}
-            className="w-full sm:flex-1 px-4 sm:px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2"
+            className="w-full sm:flex-1 px-4 py-3 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
