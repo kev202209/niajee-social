@@ -125,6 +125,64 @@
   color: inherit !important;
 }
 
+/* The following styles are for embedding responsive iframes, videos, etc. and for better prose styling in blog posts  */
+/* Embed container styles */
+.embed-container {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.embed-container iframe,
+.embed-container object,
+.embed-container embed {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Custom prose styles for better readability */
+.prose {
+  color: inherit;
+}
+
+.prose p {
+  margin-bottom: 1rem;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: rgb(17 24 39);
+}
+
+.dark .prose strong {
+  color: rgb(243 244 246);
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose code {
+  background: rgb(243 244 246);
+  color: rgb(220 38 127);
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.dark .prose code {
+  background: rgb(55 65 81);
+  color: rgb(251 113 133);
+}
+
+
+
+
    /* Shadcn colors */
 
 
@@ -155,6 +213,24 @@
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
+
+
+    /* Header background (equivalent to white/80) */
+    --header-bg: rgba(255, 255, 255, 0.8);
+    /* Header border (equivalent to gray-200) */
+    --header-border: hsl(214, 32%, 91%);
+    /* Register button background (equivalent to blue-500) */
+    --register-button-bg: hsl(217, 91%, 60%);
+    /* Register button hover (equivalent to blue-600) */
+    --register-button-hover: hsl(217, 91%, 50%);
+    /* Hero background (equivalent to gray-50) */
+    --hero-bg: hsl(210, 40%, 98%);
+    /* Hero beta badge background (equivalent to blue-200) */
+    --hero-beta-badge-bg: hsl(217, 91%, 85%);
+    /* Hero button background (equivalent to gray-800/90) */
+    --hero-button-bg: rgba(31, 41, 55, 0.9);
+    /* Hero button hover (equivalent to gray-900) */
+    --hero-button-hover: hsl(220, 13%, 9%);
   }
   .dark {
     --background: 222.2 84% 4.9%;
@@ -181,6 +257,23 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    /* Header background (equivalent to gray-800/80) */
+  --header-bg: rgba(31, 41, 55, 0.8);
+  /* Header border (equivalent to gray-700) */
+  --header-border: hsl(215, 28%, 17%);
+  /* Register button background (equivalent to blue-600) */
+  --register-button-bg: hsl(217, 91%, 50%);
+  /* Register button hover (equivalent to blue-700) */
+  --register-button-hover: hsl(217, 91%, 40%);
+  /* Hero background (equivalent to gray-950) */
+  --hero-bg: hsl(222, 84%, 5%);
+  /* Hero beta badge background (equivalent to gray-600/50) */
+  --hero-beta-badge-bg: rgba(75, 85, 99, 0.5);
+  /* Hero button background (equivalent to gray-950/10) */
+  --hero-button-bg: rgba(3, 7, 18, 0.1);
+  /* Hero button hover (equivalent to gray-950/50) */
+  --hero-button-hover: rgba(3, 7, 18, 0.5);
   }
 }
 
