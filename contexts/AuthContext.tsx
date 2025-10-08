@@ -79,10 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('CSRF token fetched successfully');
         setCsrfToken(data.csrfToken);
-      } else {
-        console.error('Failed to fetch CSRF token:', response.status);
       }
     } catch (err) {
       console.error('CSRF fetch error:', err);
@@ -91,11 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Update ensureCsrf to add retry logic
   const ensureCsrf = async () => {
-  console.log('[ensureCsrf] Starting...');
   
   const token = await getCsrf();
   
-  console.log('[ensureCsrf] Token obtained:', token );
     if (!csrfToken) {
       await getCsrf();
     }
@@ -193,7 +188,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       await ensureCsrf();
 
-      console.log('Login attempt with CSRF token:', csrfToken ? 'present' : 'missing');
 
       const response = await fetch(`${api_link}/auth/login`, {
         method: 'POST',
