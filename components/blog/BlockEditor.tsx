@@ -37,18 +37,16 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
   const editorRef = useRef<HTMLDivElement>(null);
   const isInitialized = useRef(false);
   const isMounted = useRef(true);
+  const editorId = useRef(`editor-${Math.random().toString(36).substr(2, 9)}`);
 
-  // expose the EditorJS instance to parent ref (non-null assertion)
-  // parent code should guard/ref-check before usage
+  // Expose the EditorJS instance to parent ref
   useImperativeHandle(ref, () => ejInstance.current!);
 
-  // NOTE: moved initialization logic into the effect to avoid initEditor deps lint
+  // Initialize editor only once
   useEffect(() => {
     isMounted.current = true;
 
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    const init = async () => {
+    const initEditor = async () => {
       // Prevent multiple initializations
       if (isInitialized.current || !editorRef.current) {
         return;
@@ -61,14 +59,13 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
         }
 
         const editor = new EditorJS({
-          holder: editorRef.current,
+          holder: editorId.current,
           onReady: () => {
             if (isMounted.current) {
               ejInstance.current = editor;
               isInitialized.current = true;
             }
           },
-          // remove unused 'event' param from signature
           onChange: async (api) => {
             if (onChange && isMounted.current) {
               try {
@@ -85,7 +82,6 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
           data: value || { blocks: [] },
           minHeight: 0,
           tools: {
-            // Typography
             header: {
               class: Header as unknown as ToolConstructable,
               inlineToolbar: ['marker', 'link'],
@@ -102,8 +98,6 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
                 placeholder: 'Start writing...'
               }
             },
-
-            // Lists
             list: {
               class: List as unknown as ToolConstructable,
               inlineToolbar: true,
@@ -115,8 +109,6 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
               class: Checklist as unknown as ToolConstructable,
               inlineToolbar: true,
             },
-
-            // Media
             image: {
               class: Image,
               config: {
@@ -196,8 +188,6 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
               }
             },
             simpleImage: SimpleImage as unknown as ToolConstructable,
-
-            // Code
             code: {
               class: Code as unknown as ToolConstructable,
               config: {
@@ -208,8 +198,6 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
               class: InlineCode,
               shortcut: 'CMD+SHIFT+M',
             },
-
-            // Links & Embeds
             linkTool: {
               class: LinkTool as unknown as ToolConstructable,
               config: {
@@ -228,14 +216,10 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
                 }
               }
             },
-
-            // Formatting
             marker: {
               class: Marker as unknown as ToolConstructable,
               shortcut: 'CMD+SHIFT+H',
             },
-
-            // Layout
             delimiter: Delimiter as unknown as ToolConstructable,
             table: {
               class: Table as unknown as ToolConstructable,
@@ -254,17 +238,18 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
       }
     };
 
-    timeoutId = setTimeout(() => {
+    // Delay initialization slightly to ensure DOM is ready
+    const timeoutId = setTimeout(() => {
       if (editorRef.current && !isInitialized.current && isMounted.current) {
-        void init();
+        void initEditor();
       }
     }, 100);
 
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
       isMounted.current = false;
       
-      // Cleanup editor
+      // Cleanup editor only on unmount
       if (ejInstance.current && ejInstance.current.destroy) {
         try {
           ejInstance.current.destroy();
@@ -275,26 +260,31 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
       }
       isInitialized.current = false;
     };
-    // init and dependencies intentionally local to effect
-  }, [value, placeholder, readOnly, onChange]);
+  }, []); // Empty dependency array - only run once on mount
 
   return (
     <div className="block-editor-wrapper">
       <div 
         ref={editorRef}
         className="block-editor"
-        id={`editor-${Math.random().toString(36).substr(2, 9)}`} // Unique ID
+        id={editorId.current}
       />
       
       <style jsx global>{`
         /* Editor.js Container */
         .block-editor {
-          min-height: 400px;
+          min-height: 300px;
           border: 1px solid rgb(209 213 219);
           border-radius: 0.5rem;
           background: white;
           padding: 1rem;
           transition: border-color 0.2s;
+        }
+
+        @media (min-width: 640px) {
+          .block-editor {
+            min-height: 400px;
+          }
         }
 
         .dark .block-editor {
@@ -581,6 +571,8 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
           border-collapse: collapse;
           width: 100%;
           margin: 1rem 0;
+          overflow-x: auto;
+          display: block;
         }
 
         .tc-table__cell {
@@ -588,6 +580,7 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
           padding: 0.75rem !important;
           background: white !important;
           color: rgb(55 65 81) !important;
+          min-width: 100px;
         }
 
         .dark .tc-table__cell {
@@ -604,6 +597,7 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
         .image-tool__image {
           border-radius: 0.5rem;
           overflow: hidden;
+          max-width: 100%;
         }
 
         .image-tool__caption {
@@ -740,6 +734,28 @@ const BlockEditor = forwardRef<EditorJS, BlockEditorProps>(({
           to {
             opacity: 1;
             transform: translateY(0);
+          }
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 640px) {
+          .ce-toolbar__plus,
+          .ce-toolbar__settings-btn {
+            width: 32px !important;
+            height: 32px !important;
+          }
+
+          .ce-popover {
+            max-width: calc(100vw - 2rem) !important;
+          }
+
+          .tc-table {
+            font-size: 14px;
+          }
+
+          .tc-table__cell {
+            padding: 0.5rem !important;
+            min-width: 80px;
           }
         }
       `}</style>
