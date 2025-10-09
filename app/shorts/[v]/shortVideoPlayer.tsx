@@ -3,6 +3,7 @@ import { FaVolumeMute, FaVolumeDown, FaVolumeUp, FaPause, FaPlay } from 'react-i
 import Hls from 'hls.js';
 import ShortsProgressBar from './ShortsProgressBar';
 import ViewTrackingService from '@/utils/ViewTrackingService';
+import { getDeviceInfo, DeviceInfo } from '@/utils/deviceInfo';
 
 interface Channel {
   name: string;
@@ -10,7 +11,7 @@ interface Channel {
 }
 
 interface VideoPlayerProps {
-  videoId: string; // Add videoId to props
+  videoId: string;
   videoRef: React.RefObject<HTMLVideoElement> | null;
   videoSrc: string;
   isMuted: boolean;
@@ -19,7 +20,7 @@ interface VideoPlayerProps {
   onVolumeChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   toggleMute: () => void;
   togglePlayPause: () => void;
-  channel: Channel; // currently unused (reserved for future channel overlay)
+  channel: Channel;
   caption: string;
   song: string;
 }
@@ -52,7 +53,12 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [viewRecorded, setViewRecorded] = useState(false); // UI state
-  const viewRecordedRef = useRef(false); // ref to avoid stale closure in handler
+  
+  // Progress tracking refs
+  const viewRecordedRef = useRef(false);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastProgressUpdateRef = useRef<number>(0);
+  const deviceInfoRef = useRef<DeviceInfo | null>(null);
   const volumeRef = useRef(volume);
   const mutedRef = useRef(isMuted);
   const videoIdRef = useRef(videoId);
@@ -62,6 +68,120 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
   useEffect(() => { mutedRef.current = isMuted; }, [isMuted]);
   useEffect(() => { videoIdRef.current = videoId; }, [videoId]);
   useEffect(() => { viewRecordedRef.current = viewRecorded; }, [viewRecorded]);
+
+  // Get device info on mount
+  useEffect(() => {
+    const fetchDeviceInfo = async () => {
+      try {
+        deviceInfoRef.current = await getDeviceInfo();
+      } catch (error) {
+        console.error('Error fetching device info:', error);
+      }
+    };
+    
+    fetchDeviceInfo();
+  }, []);
+
+  // Function to send progress update to backend
+  const sendProgressUpdate = async (positionSec: number, durationSec: number, completed: boolean) => {
+    // Don't send duplicate updates within 5 seconds
+    const now = Date.now();
+    if (!completed && now - lastProgressUpdateRef.current < 5000) {
+      return;
+    }
+    
+    lastProgressUpdateRef.current = now;
+
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoIdRef.current}/progress`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            positionSec: Math.floor(positionSec),
+            durationSec: Math.floor(durationSec),
+            completed,
+            device: deviceInfoRef.current || {
+              deviceName: 'Unknown',
+              browser: 'Unknown',
+              operatingSystem: 'Unknown',
+            }
+          })
+        }
+      );
+    } catch (error) {
+      console.error('Error sending progress update:', error);
+    }
+  };
+
+  // Set up periodic progress tracking
+  useEffect(() => {
+    const video = videoRef?.current;
+    if (!video || !duration || duration === 0) return;
+
+    // Send progress every 10 seconds for shorts
+    progressIntervalRef.current = setInterval(() => {
+      if (!video.paused && currentTime > 0) {
+        // For shorts, consider 80% watched as completed since they're shorter
+        const completed = currentTime >= duration * 0.8;
+        sendProgressUpdate(currentTime, duration, completed);
+      }
+    }, 10000);
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, [currentTime, duration, videoRef]);
+
+  // Send progress on pause
+  useEffect(() => {
+    const video = videoRef?.current;
+    if (!video) return;
+
+    const handlePause = () => {
+      if (duration && currentTime > 0) {
+        const completed = currentTime >= duration * 0.8;
+        sendProgressUpdate(currentTime, duration, completed);
+      }
+    };
+
+    video.addEventListener('pause', handlePause);
+    return () => {
+      video.removeEventListener('pause', handlePause);
+    };
+  }, [currentTime, duration, videoRef]);
+
+  // Send final progress on video change or unmount
+  useEffect(() => {
+    return () => {
+      if (duration && currentTime > 0) {
+        const completed = currentTime >= duration * 0.8;
+        // Use sendBeacon for more reliable tracking on page unload
+        const data = JSON.stringify({
+          positionSec: Math.floor(currentTime),
+          durationSec: Math.floor(duration),
+          completed,
+          device: deviceInfoRef.current || {
+            deviceName: 'Unknown',
+            browser: 'Unknown',
+            operatingSystem: 'Unknown',
+          }
+        });
+        
+        navigator.sendBeacon(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoIdRef.current}/progress`,
+          new Blob([data], { type: 'application/json' })
+        );
+      }
+    };
+  }, [currentTime, duration]);
 
   useEffect(() => {
     const video = videoRef?.current;
@@ -168,7 +288,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
           });
         });
 
-        hls.on(Hls.Events.ERROR, (event, data) => {
+        hls.on(Hls.Events.ERROR, (_event, data) => {
           console.error('HLS Error:', data);
           if (data.fatal) {
             setIsBuffering(false);
@@ -266,6 +386,12 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
     if (video) {
       setIsBuffering(true);
       video.currentTime = time;
+      
+      // Send progress update on seek
+      if (duration > 0) {
+        const completed = time >= duration * 0.8;
+        sendProgressUpdate(time, duration, completed);
+      }
     }
   };
 

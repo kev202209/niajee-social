@@ -11,6 +11,7 @@ import VideoMeta from './VideoMeta';
 import Hls from 'hls.js';
 import BufferingSpinner from './BufferingSpinner';
 import { getFullUrl } from '@/utils/videourl';
+import { getDeviceInfo, DeviceInfo } from '@/utils/deviceInfo';
 
 interface VideoProps {
   video: mVideo;
@@ -27,9 +28,11 @@ const getBestQualityUrl = (videoUrl: Record<string, string>) => {
   return keys.length > 0 ? videoUrl[keys[0]] : null;
 };
 
-
 export default function VideoPlayer({ video }: VideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastProgressUpdateRef = useRef<number>(0);
+  const deviceInfoRef = useRef<DeviceInfo | null>(null);
 
   // Use master playlist if available, otherwise use best quality
   const streamUrl = getFullUrl(
@@ -47,8 +50,121 @@ export default function VideoPlayer({ video }: VideoProps) {
     videoId: video.id,
   }) as ReturnType<typeof useVideoPlayer> & { setHlsInstance?: (hls: Hls) => void };
 
-  // Destructure the specific values we need so we don't have to include the whole `controls` object in deps
-  const { buffering, setBuffering, hlsInstance, setHlsInstance, containerRef } = controls;
+  // Destructure the specific values we need
+  const { buffering, setBuffering, hlsInstance, setHlsInstance, containerRef, currentTime, duration } = controls;
+
+  // Get device info on mount
+  useEffect(() => {
+    const fetchDeviceInfo = async () => {
+      try {
+        deviceInfoRef.current = await getDeviceInfo();
+      } catch (error) {
+        console.error('Error fetching device info:', error);
+      }
+    };
+    
+    fetchDeviceInfo();
+  }, []);
+
+  // Function to send progress update to backend
+  const sendProgressUpdate = async (positionSec: number, durationSec: number, completed: boolean) => {
+    // Don't send duplicate updates within 5 seconds
+    const now = Date.now();
+    if (!completed && now - lastProgressUpdateRef.current < 5000) {
+      return;
+    }
+    
+    lastProgressUpdateRef.current = now;
+
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/videos/${video.id}/progress`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            positionSec: Math.floor(positionSec),
+            durationSec: Math.floor(durationSec),
+            completed,
+            device: deviceInfoRef.current || {
+              deviceName: 'Unknown',
+              browser: 'Unknown',
+              operatingSystem: 'Unknown',
+            }
+          })
+        }
+      );
+    } catch (error) {
+      console.error('Error sending progress update:', error);
+    }
+  };
+
+  // Set up periodic progress tracking
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement || !duration || duration === 0) return;
+
+    // Send progress every 10 seconds
+    progressIntervalRef.current = setInterval(() => {
+      if (!videoElement.paused && currentTime > 0) {
+        const completed = currentTime >= duration * 0.9; // Consider 90% watched as completed
+        sendProgressUpdate(currentTime, duration, completed);
+      }
+    }, 10000);
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+      }
+    };
+  }, [currentTime, duration, video.id]);
+
+  // Send progress on pause
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const handlePause = () => {
+      if (duration && currentTime > 0) {
+        const completed = currentTime >= duration * 0.9;
+        sendProgressUpdate(currentTime, duration, completed);
+      }
+    };
+
+    videoElement.addEventListener('pause', handlePause);
+    return () => {
+      videoElement.removeEventListener('pause', handlePause);
+    };
+  }, [currentTime, duration, video.id]);
+
+  // Send final progress on unmount or before navigation
+  useEffect(() => {
+    return () => {
+      if (duration && currentTime > 0) {
+        const completed = currentTime >= duration * 0.9;
+        // Use sendBeacon for more reliable tracking on page unload
+        const data = JSON.stringify({
+          positionSec: Math.floor(currentTime),
+          durationSec: Math.floor(duration),
+          completed,
+          device: deviceInfoRef.current || {
+            deviceName: 'Unknown',
+            browser: 'Unknown',
+            operatingSystem: 'Unknown',
+          }
+        });
+        
+        navigator.sendBeacon(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/videos/${video.id}/progress`,
+          new Blob([data], { type: 'application/json' })
+        );
+      }
+    };
+  }, [currentTime, duration, video.id]);
 
   useEffect(() => {
     const videoElement = videoRef.current;
@@ -117,11 +233,9 @@ export default function VideoPlayer({ video }: VideoProps) {
     } else {
       console.error('HLS not supported and no native support');
     }
-  // Intentionally ONLY depend on streamUrl to prevent destroy/recreate loop
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [streamUrl]);
 
-  // Add event listeners to video element for debugging
+  // Add event listeners to video element
   useEffect(() => {
     const videoElement = videoRef.current;
     if (!videoElement) return;
