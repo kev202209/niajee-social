@@ -33,7 +33,6 @@ const CreateChannelPage: FC = () => {
   const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null);
   const [isHandleManuallyEdited, setIsHandleManuallyEdited] = useState(false);
   
-  // Use ref to manage timeout for debouncing
   const handleCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const categories = [
@@ -41,13 +40,12 @@ const CreateChannelPage: FC = () => {
     'Technology', 'Comedy', 'News', 'Lifestyle', 'Travel', 'Other'
   ];
 
-  // Generate handle from name
   const generateHandleFromName = (name: string): string => {
     return name
       .toLowerCase()
       .trim()
-      .replace(/[^a-z0-9]/g, '') // Remove spaces and special characters
-      .substring(0, 20); // Limit to 20 characters
+      .replace(/[^a-z0-9]/g, '')
+      .substring(0, 20);
   };
 
   const checkHandleAvailability = async (handle: string) => {
@@ -63,7 +61,12 @@ const CreateChannelPage: FC = () => {
         `${process.env.NEXT_PUBLIC_API_URL}/api/channels/check-handle/${encodeURIComponent(formattedHandle)}`,
         { credentials: 'include' }
       );
-      const data = await response.json();
+      
+      interface HandleCheckResponse {
+        available: boolean;
+      }
+      
+      const data = await response.json() as HandleCheckResponse;
       setHandleAvailable(data.available);
     } catch (error) {
       console.error('Error checking handle:', error);
@@ -73,16 +76,13 @@ const CreateChannelPage: FC = () => {
     }
   };
 
-  // Debounced handle checking
   const debouncedCheckHandle = (handle: string) => {
-    // Clear existing timeout
     if (handleCheckTimeoutRef.current) {
       clearTimeout(handleCheckTimeoutRef.current);
     }
 
-    // Set new timeout
     handleCheckTimeoutRef.current = setTimeout(() => {
-      checkHandleAvailability(handle);
+      void checkHandleAvailability(handle);
     }, 500);
   };
 
@@ -94,15 +94,12 @@ const CreateChannelPage: FC = () => {
       setForm(prev => ({ ...prev, [name]: checked }));
     } else {
       if (name === 'name') {
-        // Update the name
         setForm(prev => ({ ...prev, [name]: value }));
         
-        // Auto-generate handle from name only if handle hasn't been manually edited
         if (!isHandleManuallyEdited) {
           const generatedHandle = generateHandleFromName(value);
           setForm(prev => ({ ...prev, handle: generatedHandle }));
           
-          // Check availability of generated handle if it's long enough
           if (generatedHandle.length >= 3) {
             debouncedCheckHandle(generatedHandle);
           } else {
@@ -110,20 +107,15 @@ const CreateChannelPage: FC = () => {
           }
         }
       } else if (name === 'handle') {
-        // Mark handle as manually edited
         setIsHandleManuallyEdited(true);
-        
-        // Update handle
         setForm(prev => ({ ...prev, [name]: value }));
         
-        // Check availability when handle is manually changed
         if (value.length >= 3) {
           debouncedCheckHandle(value);
         } else {
           setHandleAvailable(null);
         }
       } else {
-        // For other fields
         setForm(prev => ({ ...prev, [name]: value }));
       }
     }
@@ -134,15 +126,23 @@ const CreateChannelPage: FC = () => {
     if (file) {
       setForm(prev => ({ ...prev, avatar: file }));
       const reader = new FileReader();
-      reader.onload = (e) => setAvatarPreview(e.target?.result as string);
+      reader.onload = (readerEvent) => {
+        const result = readerEvent.target?.result;
+        if (result) {
+          setAvatarPreview(result as string);
+        }
+      };
       reader.readAsDataURL(file);
     }
   };
 
-  // Handle avatar upload using presigned URL
   const uploadAvatar = async (channelId: string, file: File): Promise<boolean> => {
     try {
-      // 1. Get presigned URL
+      interface PresignedUrlResponse {
+        s3Key: string;
+        presignedUrl: string;
+      }
+
       const presignedResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/presigned-upload`, {
         method: 'POST',
         credentials: 'include',
@@ -158,9 +158,8 @@ const CreateChannelPage: FC = () => {
         throw new Error('Failed to get presigned URL');
       }
 
-      const { s3Key, presignedUrl } = await presignedResponse.json();
+      const { s3Key, presignedUrl } = await presignedResponse.json() as PresignedUrlResponse;
 
-      // 2. Upload to S3
       const uploadResponse = await fetch(presignedUrl, {
         method: 'PUT',
         body: file,
@@ -173,7 +172,6 @@ const CreateChannelPage: FC = () => {
         throw new Error('Failed to upload image');
       }
 
-      // 3. Start processing
       const processResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/start-image-processing`, {
         method: 'POST',
         credentials: 'include',
@@ -213,8 +211,12 @@ const CreateChannelPage: FC = () => {
     setError('');
 
     try {
-      // 1. Create channel first (without avatar)
       const formattedHandle = form.handle.startsWith('@') ? form.handle : `@${form.handle}`;
+      
+      interface CreateChannelResponse {
+        id: string;
+        message?: string;
+      }
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels`, {
         method: 'POST',
@@ -231,35 +233,31 @@ const CreateChannelPage: FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json() as CreateChannelResponse;
         setError(errorData.message || 'Failed to create channel');
         return;
       }
 
-      const data = await response.json();
+      const data = await response.json() as CreateChannelResponse;
       const channelId = data.id;
 
-      // 2. Upload avatar if provided
       if (form.avatar) {
         try {
           await uploadAvatar(channelId, form.avatar);
-        } catch (error) {
-          console.error('Error uploading avatar:', error);
-          // Don't fail the whole process if avatar upload fails
+        } catch (uploadError) {
+          console.error('Error uploading avatar:', uploadError);
         }
       }
 
-      // 3. Navigate to channel overview
       router.push(`/create/channels/${channelId}`);
-    } catch (error) {
-      console.error('Error creating channel:', error);
+    } catch (err) {
+      console.error('Error creating channel:', err);
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (handleCheckTimeoutRef.current) {
@@ -269,277 +267,279 @@ const CreateChannelPage: FC = () => {
   }, []);
 
   return (
-    // Updated root container: Responsive padding
-    <div className="p-4 sm:p-6 lg:p-8 max-w-2xl mx-auto">
-      {/* Updated header: Responsive text */}
-      <header className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Create New Channel
-        </h1>
-        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-          Set up your channel to start sharing content with the world
-        </p>
-      </header>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-3 sm:p-6 lg:p-8">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <header className="mb-4 sm:mb-6 lg:mb-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">
+            Create New Channel
+          </h1>
+          <p className="text-xs sm:text-sm lg:text-base text-gray-600 dark:text-gray-400">
+            Set up your channel to start sharing content with the world
+          </p>
+        </header>
 
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-        {/* Avatar Upload: Smaller on mobile */}
-        <div className="flex flex-col items-center space-y-4">
-          <div className="relative">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
-              {avatarPreview ? (
-                <Image
-                  src={avatarPreview}
-                  alt="Channel avatar"
-                  fill
-                  className="object-cover"
-                  sizes="96px"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder.png';
-                  }}
-                />
-              ) : (
-                <FiUpload className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-              )}
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-4 sm:space-y-6">
+          {/* Avatar Upload */}
+          <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+            <div className="relative">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
+                {avatarPreview ? (
+                  <Image
+                    src={avatarPreview}
+                    alt="Channel avatar"
+                    fill
+                    className="object-cover"
+                    sizes="96px"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.png';
+                    }}
+                  />
+                ) : (
+                  <FiUpload className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+                )}
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                aria-label="Upload channel avatar"
+              />
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarChange}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-            />
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center">
+              Click to upload channel avatar (optional)
+            </p>
           </div>
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center px-4">
-            Click to upload channel avatar (optional)
-          </p>
-        </div>
 
-        {/* Channel Name */}
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Channel Name *
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            value={form.name}
-            onChange={handleInputChange}
-            placeholder="Enter your channel name"
-            className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm sm:text-base"
-            required
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Your handle will be automatically generated from this name
-          </p>
-        </div>
-
-        {/* Channel Handle */}
-        <div>
-          <label htmlFor="handle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Channel Handle *
-          </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-500 dark:text-gray-400">@</span>
-            </div>
+          {/* Channel Name */}
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Channel Name *
+            </label>
             <input
               type="text"
-              id="handle"
-              name="handle"
-              value={form.handle}
+              id="name"
+              name="name"
+              value={form.name}
               onChange={handleInputChange}
-              placeholder="channelhandle"
-              className={`w-full pl-8 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white transition-colors text-sm sm:text-base ${
-                form.handle && handleAvailable === false 
-                  ? 'border-red-500 dark:border-red-400' 
-                  : form.handle && handleAvailable === true
-                  ? 'border-green-500 dark:border-green-400'
-                  : 'border-gray-300 dark:border-gray-600'
-              }`}
+              placeholder="Enter your channel name"
+              className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm sm:text-base"
               required
             />
-            {form.handle && (
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
-                {handleChecking ? (
-                  <FiLoader className="w-4 h-4 text-gray-400 animate-spin" />
-                ) : handleAvailable === true ? (
-                  <FiCheck className="w-4 h-4 text-green-500" />
-                ) : handleAvailable === false ? (
-                  <FiX className="w-4 h-4 text-red-500" />
-                ) : null}
-              </div>
-            )}
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+              Your handle will be automatically generated from this name
+            </p>
           </div>
-          
-          {/* Handle feedback: Responsive text */}
-          <div className="mt-2 space-y-1">
-            {form.handle && handleChecking && (
-              <div className="flex items-center space-x-2">
-                <FiLoader className="w-3 h-3 text-blue-500 animate-spin" />
-                <p className="text-xs text-blue-600 dark:text-blue-400">
-                  Checking availability...
-                </p>
-              </div>
-            )}
-            
-            {form.handle && !handleChecking && handleAvailable === false && (
-              <div className="flex items-center space-x-2">
-                <FiX className="w-3 h-3 text-red-500" />
-                <p className="text-xs text-red-600 dark:text-red-400 line-clamp-2">
-                  Handle &quot;@{form.handle}&quot; is not available. Try a different one.
-                </p>
-              </div>
-            )}
-            
-            {form.handle && !handleChecking && handleAvailable === true && (
-              <div className="flex items-center space-x-2">
-                <FiCheck className="w-3 h-3 text-green-500" />
-                <p className="text-xs text-green-600 dark:text-green-400">
-                  Handle &quot;@{form.handle}&quot; is available!
-                </p>
-              </div>
-            )}
-            
-            {form.handle && !handleChecking && handleAvailable === null && form.handle.length < 3 && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Handle must be at least 3 characters long
-              </p>
-            )}
-            
-            {!form.handle && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Your unique channel handle (e.g., @amazingchannel)
-              </p>
-            )}
-            
-            {!isHandleManuallyEdited && form.handle && (
-              <p className="text-xs text-blue-600 dark:text-blue-400">
-                💡 Auto-generated from your channel name. You can edit this handle to customize it.
-              </p>
-            )}
-            
-            {isHandleManuallyEdited && (
-              <div className="flex items-center space-x-1">
-                <span className="text-xs">✏️</span>
-                <p className="text-xs text-blue-600 dark:text-blue-400">
-                  Great! You&apos;ve customized your handle.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
 
-        {/* Description */}
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Description
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={form.description}
-            onChange={handleInputChange}
-            placeholder="Tell people what your channel is about"
-            rows={4}
-            className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none text-sm sm:text-base"
-          />
-        </div>
-
-        {/* Category */}
-        <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Category
-          </label>
-          <select
-            id="category"
-            name="category"
-            value={form.category}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 sm:px-4 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm sm:text-base"
-          >
-            <option value="">Select a category</option>
-            {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Settings: Responsive padding */}
-        <div className="space-y-4">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Channel Settings</h3>
-          
-          <div className="flex items-center justify-between p-3 sm:p-0">
-            <div className="flex-1">
-              <label htmlFor="isPublic" className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                Public Channel
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Anyone can find and view your channel
-              </p>
+          {/* Channel Handle */}
+          <div>
+            <label htmlFor="handle" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Channel Handle *
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <span className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">@</span>
+              </div>
+              <input
+                type="text"
+                id="handle"
+                name="handle"
+                value={form.handle}
+                onChange={handleInputChange}
+                placeholder="channelhandle"
+                className={`w-full pl-7 sm:pl-8 pr-10 py-2 sm:py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-colors text-sm sm:text-base ${
+                  form.handle && handleAvailable === false 
+                    ? 'border-red-500 dark:border-red-400' 
+                    : form.handle && handleAvailable === true
+                    ? 'border-green-500 dark:border-green-400'
+                    : 'border-gray-300 dark:border-gray-600'
+                }`}
+                required
+              />
+              {form.handle && (
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                  {handleChecking ? (
+                    <FiLoader className="w-4 h-4 text-gray-400 animate-spin" />
+                  ) : handleAvailable === true ? (
+                    <FiCheck className="w-4 h-4 text-green-500" />
+                  ) : handleAvailable === false ? (
+                    <FiX className="w-4 h-4 text-red-500" />
+                  ) : null}
+                </div>
+              )}
             </div>
-            <input
-              type="checkbox"
-              id="isPublic"
-              name="isPublic"
-              checked={form.isPublic}
+            
+            {/* Handle feedback */}
+            <div className="mt-2 space-y-1">
+              {form.handle && handleChecking && (
+                <div className="flex items-center space-x-2">
+                  <FiLoader className="w-3 h-3 text-blue-500 animate-spin flex-shrink-0" />
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    Checking availability...
+                  </p>
+                </div>
+              )}
+              
+              {form.handle && !handleChecking && handleAvailable === false && (
+                <div className="flex items-start space-x-2">
+                  <FiX className="w-3 h-3 text-red-500 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    Handle &quot;@{form.handle}&quot; is not available. Try a different one.
+                  </p>
+                </div>
+              )}
+              
+              {form.handle && !handleChecking && handleAvailable === true && (
+                <div className="flex items-center space-x-2">
+                  <FiCheck className="w-3 h-3 text-green-500 flex-shrink-0" />
+                  <p className="text-xs text-green-600 dark:text-green-400">
+                    Handle &quot;@{form.handle}&quot; is available!
+                  </p>
+                </div>
+              )}
+              
+              {form.handle && !handleChecking && handleAvailable === null && form.handle.length < 3 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Handle must be at least 3 characters long
+                </p>
+              )}
+              
+              {!form.handle && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Your unique channel handle (e.g., @amazingchannel)
+                </p>
+              )}
+              
+              {!isHandleManuallyEdited && form.handle && (
+                <p className="text-xs text-blue-600 dark:text-blue-400">
+                  💡 Auto-generated from your channel name. You can edit this handle to customize it.
+                </p>
+              )}
+              
+              {isHandleManuallyEdited && (
+                <div className="flex items-center space-x-1">
+                  <span className="text-xs">✏️</span>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    Great! You&apos;ve customized your handle.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={form.description}
               onChange={handleInputChange}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 ml-4 flex-shrink-0"
+              placeholder="Tell people what your channel is about"
+              rows={4}
+              className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none text-sm sm:text-base"
             />
           </div>
 
-          <div className="flex items-center justify-between p-3 sm:p-0">
-            <div className="flex-1">
-              <label htmlFor="allowComments" className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
-                Allow Comments
-              </label>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Viewers can comment on your videos
-              </p>
-            </div>
-            <input
-              type="checkbox"
-              id="allowComments"
-              name="allowComments"
-              checked={form.allowComments}
+          {/* Category */}
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Category
+            </label>
+            <select
+              id="category"
+              name="category"
+              value={form.category}
               onChange={handleInputChange}
-              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 ml-4 flex-shrink-0"
-            />
+              className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm sm:text-base"
+            >
+              <option value="">Select a category</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
           </div>
-        </div>
 
-        {/* Error Message: Responsive padding */}
-        {error && (
-          <div className="p-3 sm:p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
-            <p className="text-red-800 dark:text-red-200 text-sm line-clamp-2">{error}</p>
+          {/* Settings */}
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-sm sm:text-base font-semibold text-gray-900 dark:text-white">Channel Settings</h3>
+            
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <div className="flex-1 pr-4">
+                <label htmlFor="isPublic" className="text-sm font-medium text-gray-700 dark:text-gray-300 block cursor-pointer">
+                  Public Channel
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Anyone can find and view your channel
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                id="isPublic"
+                name="isPublic"
+                checked={form.isPublic}
+                onChange={handleInputChange}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0 cursor-pointer"
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+              <div className="flex-1 pr-4">
+                <label htmlFor="allowComments" className="text-sm font-medium text-gray-700 dark:text-gray-300 block cursor-pointer">
+                  Allow Comments
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Viewers can comment on your videos
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                id="allowComments"
+                name="allowComments"
+                checked={form.allowComments}
+                onChange={handleInputChange}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 flex-shrink-0 cursor-pointer"
+              />
+            </div>
           </div>
-        )}
 
-        {/* Submit Button: Stack on mobile */}
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-6">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="w-full sm:flex-1 px-4 py-3 sm:px-6 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading || handleAvailable === false || !form.handle || form.handle.length < 3}
-            className="w-full sm:flex-1 px-4 py-3 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <>
-                <FiLoader className="w-4 h-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              'Create Channel'
-            )}
-          </button>
-        </div>
-      </form>
+          {/* Error Message */}
+          {error && (
+            <div className="p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2 sm:pt-4">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="w-full sm:flex-1 px-4 py-2.5 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition font-medium text-sm sm:text-base"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || handleAvailable === false || !form.handle || form.handle.length < 3}
+              className="w-full sm:flex-1 px-4 py-2.5 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-blue-300 dark:disabled:bg-blue-800 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
+            >
+              {loading ? (
+                <>
+                  <FiLoader className="w-4 h-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Channel'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

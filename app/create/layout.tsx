@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import CreateHeader from '@/components/create/Header'
 import Link from 'next/link'
 import {
@@ -14,64 +13,37 @@ const sidebarItems = [
   { label: 'Dashboard', icon: Home, href: '/create' },
   { label: 'Channels', icon: Film, href: '/create/channels' },
   { label: 'Create Channel', icon: Plus, href: '/create/channels/new' },
-]
+] as const
 
 export default function CreateLayout({ children }: { children: React.ReactNode }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false) // Default closed on mobile
-  const [isMobile, setIsMobile] = useState(false)
   const pathname = usePathname()
 
-  // Check screen size
-  useEffect(() => {
-    const checkScreenSize = () => {
-      const mobile = window.innerWidth < 1024 // lg breakpoint
-      setIsMobile(mobile)
-      if (!mobile) {
-        setIsSidebarOpen(true) // Auto-open on desktop
-      }
-    }
-
-    checkScreenSize()
-    window.addEventListener('resize', checkScreenSize)
-    return () => window.removeEventListener('resize', checkScreenSize)
-  }, [])
-
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
-
-  // Check if we're in a channel-specific route
-  const isChannelRoute = pathname.match(/^\/create\/channels\/[^\/]+/)
+  // Check if we're in ANY channel-specific route (but NOT /new or /channels root)
+  // This includes: /create/channels/{id}, /create/channels/{id}/upload, etc.
+  const isChannelSpecificRoute = Boolean(
+    pathname.match(/^\/create\/channels\/[^/]+/) && 
+    !pathname.endsWith('/new') &&
+    pathname !== '/create/channels'
+  )
   
-  // If we're in a channel route, just render children without the layout
-  if (isChannelRoute) {
+  // If we're in any channel-specific route, render without this layout
+  // The channel-specific layout will handle it instead
+  if (isChannelSpecificRoute) {
     return <>{children}</>
   }
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Mobile overlay */}
-      {isMobile && isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-30"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
+      {/* Desktop Sidebar */}
       <aside
-        className={`
-          fixed top-0 left-0 h-screen pt-16 z-40
-          bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700
-          transition-all duration-300 ease-in-out
-          ${isSidebarOpen ? 'w-64' : 'w-0 lg:w-16'}
-          ${isMobile && !isSidebarOpen ? '-translate-x-full' : ''}
-        `}
+        className="hidden lg:block fixed top-0 left-0 h-screen pt-16 z-40 w-64
+          bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700"
       >
         <nav className="flex flex-col pt-6 h-full px-4 overflow-hidden">
           {sidebarItems.map(({ label, icon: Icon, href }) => (
             <Link
               key={label}
               href={href}
-              onClick={() => isMobile && setIsSidebarOpen(false)}
               className={`flex items-center p-3 rounded-lg font-medium transition mb-1
                 ${pathname === href
                   ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300'
@@ -79,12 +51,7 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
               `}
             >
               <Icon className="w-5 h-5 flex-shrink-0" />
-              <span
-                className={`
-                  ml-3 whitespace-nowrap transition-all duration-300
-                  ${isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0 overflow-hidden lg:opacity-0'}
-                `}
-              >
+              <span className="ml-3 whitespace-nowrap">
                 {label}
               </span>
             </Link>
@@ -95,17 +62,34 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
       {/* Main content wrapper */}
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
-        <CreateHeader toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+        <CreateHeader toggleSidebar={() => {}} isSidebarOpen={false} />
 
         {/* Page content */}
         <main
-          className={`
-            pt-16 h-full overflow-y-auto transition-all duration-300
-            ${isSidebarOpen && !isMobile ? 'ml-64' : 'ml-0 lg:ml-16'}
-          `}
+          className="pt-16 pb-20 lg:pb-0 h-full overflow-y-auto lg:ml-64"
         >
           {children}
         </main>
+
+        {/* Mobile Bottom Navigation */}
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 safe-bottom">
+          <div className="grid grid-cols-3 h-16">
+            {sidebarItems.map(({ label, icon: Icon, href }) => (
+              <Link
+                key={label}
+                href={href}
+                className={`flex flex-col items-center justify-center gap-1 transition
+                  ${pathname === href
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}
+                `}
+              >
+                <Icon className="w-6 h-6" />
+                <span className="text-xs font-medium">{label}</span>
+              </Link>
+            ))}
+          </div>
+        </nav>
       </div>
     </div>
   )

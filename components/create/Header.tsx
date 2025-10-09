@@ -63,11 +63,11 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
       <div className="flex items-center h-16 px-4 justify-between">
         {/* Left section */}
         <div className="flex items-center gap-4">
-          {/* Only show toggle if we have the toggleSidebar function */}
+          {/* Only show toggle if we have the toggleSidebar function - hidden on mobile */}
           {toggleSidebar && (
             <button
               onClick={toggleSidebar}
-              className="text-gray-900 dark:text-gray-100 focus:outline-none"
+              className="hidden lg:block text-gray-900 dark:text-gray-100 focus:outline-none"
             >
               {isSidebarOpen ? (
                 <SquareChevronLeft className="w-6 h-6" />
