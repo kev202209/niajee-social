@@ -43,6 +43,23 @@ async function backendSessionValid(request: NextRequest, hasToken: boolean): Pro
   }
 }
 
+// Security function to validate redirect URLs (prevents open redirects)
+function isValidRedirectUrl(url: string, request: NextRequest): boolean {
+  if (!url) return false;
+  // Allow same-origin relative paths
+  if (url.startsWith('/')) return true;
+  try {
+    const parsedUrl = new URL(url);
+    const allowedDomains = [
+      process.env.NEXT_PUBLIC_FRONTEND_A_URL,
+      process.env.NEXT_PUBLIC_FRONTEND_B_URL,
+    ].filter((d): d is string => Boolean(d));
+    return allowedDomains.some(domain => parsedUrl.origin.includes(domain));
+  } catch {
+    return false;
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   if (publicAssets.test(pathname)) return NextResponse.next();
@@ -89,7 +106,13 @@ export async function middleware(request: NextRequest) {
   // Auth pages logic
   if (isAuthPage) {
     if (validSession) {
-      return NextResponse.redirect(new URL('/', request.url));
+      // Check for redirect parameter and validate it
+      const redirectParam = request.nextUrl.searchParams.get('redirect');
+      if (redirectParam && isValidRedirectUrl(redirectParam, request)) {
+        return NextResponse.redirect(new URL(redirectParam, request.url));
+      } else {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
     }
     return response;
   }
