@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useState, useEffect, useRef, useCallback } from "react";
 import Header from "@/components/home/Header";
 import Sidebar from "@/components/home/Sidebar";
+import MobileBottomNav from "@/components/home/MobileBottomNav";
 import VideoPlayer from "./shortVideoPlayer";
 import ShortsSkeleton from './ShortSkeleton';
 import VideoActions from "./VideoActions";
@@ -476,6 +477,7 @@ const ShortVideoPage = () => {
         videoId={currentVideo.id}
         videoTitle={currentVideo.title}
       />
+      <MobileBottomNav />
     </div>
   );
 };
