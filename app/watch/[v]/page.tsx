@@ -6,6 +6,7 @@ import Header from "@/components/home/Header";
 import SuggestedVideos from "./SuggestedVideos";
 import CommentsSection from "./CommentSection";
 import Sidebar from "@/components/home/Sidebar";
+import MobileBottomNav from "@/components/home/MobileBottomNav";
 import { mVideo as Video } from "../../../types";
 import { FiAlertCircle, FiWifi, FiRefreshCw, FiVideo } from "react-icons/fi";
 
@@ -309,6 +310,7 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
           </div>
         </main>
       </div>
+      <MobileBottomNav /> {/* Added mobile bottom navigation */}
     </div>
   );
 }

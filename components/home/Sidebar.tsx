@@ -77,13 +77,13 @@ const Sidebar: FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Toggle button (click mode only) */}
+      {/* Toggle button (click mode only) - Hidden on small screens */}
       {interaction === "click" && !isExpanded && (
         <button
           ref={toggleBtnRef}
           aria-label="Open sidebar"
           onClick={() => setIsExpanded(true)}
-          className="fixed left-2 top-20 z-[60] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full p-2 shadow hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="fixed left-2 top-20 z-[60] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-full p-2 shadow hover:bg-gray-100 dark:hover:bg-gray-800 hidden lg:block" // Added hidden lg:block
         >
           <ChevronRight className="w-5 h-5" />
         </button>
