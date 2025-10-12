@@ -3,7 +3,7 @@
 import React, { useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from 'next/navigation';
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaGoogle, FaEyeSlash } from "react-icons/fa";
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
@@ -219,8 +219,8 @@ export default function RegisterPage() {
               >
                 {isEmailLoading ? <LoadingDots /> : "Continue"}
               </button>
-              {/* uncomment this after google oauth verification approval */}
-              {/* <div className="flex items-center my-4">
+              
+              <div className="flex items-center my-4">
                 <div className="flex-grow border-t border-gray-300"></div>
                 <span className="mx-2 text-gray-500">or</span>
                 <div className="flex-grow border-t border-gray-300"></div>
@@ -232,7 +232,7 @@ export default function RegisterPage() {
                 >
                   <FaGoogle /> Sign up with Google
                 </button>
-              </div> */}
+              </div>
             </div>
           )}
 
