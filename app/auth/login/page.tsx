@@ -60,6 +60,8 @@ export default function LoginPage() {
       const errorMessage = err instanceof Error ? err.message : "Login failed";
       if (errorMessage === "Invalid credentials") {
         toast.error("Invalid credentials");
+      } else if (errorMessage === "Please verify your email before logging in. Check your inbox for a verification link.") {
+        toast.error("Please verify your email before logging in. Check your inbox for a verification link.");
       } else {
         toast.error("Something went wrong, try again later.");
       }
