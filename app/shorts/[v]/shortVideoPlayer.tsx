@@ -23,6 +23,8 @@ interface VideoPlayerProps {
   channel: Channel;
   caption: string;
   song: string;
+  // NEW: notify parent when we had to fallback to muted due to autoplay policy
+  onAutoplayFallbackMuted?: () => void;
 }
 
 // Add BufferingSpinner component
@@ -44,6 +46,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
   togglePlayPause,
   caption,
   song,
+  onAutoplayFallbackMuted, // NEW
 }) => {
   const hlsRef = useRef<Hls | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
@@ -276,16 +279,27 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
         hls.loadSource(videoSrc);
         hls.attachMedia(video);
 
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          console.log('HLS manifest parsed, attempting to play');
+        hls.on(Hls.Events.MANIFEST_PARSED, async () => {
+          console.log('HLS manifest parsed, attempting to play (try unmuted first)');
           video.volume = volumeRef.current;
-          video.muted = mutedRef.current;
-          video.play().catch(err => {
-            console.error('HLS play failed:', err);
-            setHasError(true);
-            setErrorMessage('Failed to play video');
-            setIsBuffering(false);
-          });
+
+          // Try autoplay with sound first; if blocked, fallback to muted
+          try {
+            video.muted = false;
+            await video.play();
+          } catch (err) {
+            console.warn('Autoplay with sound blocked, falling back to muted:', err);
+            try {
+              video.muted = true;
+              onAutoplayFallbackMuted?.(); // inform parent to sync state
+              await video.play();
+            } catch (err2) {
+              console.error('HLS play failed after fallback:', err2);
+              setHasError(true);
+              setErrorMessage('Failed to play video');
+              setIsBuffering(false);
+            }
+          }
         });
 
         hls.on(Hls.Events.ERROR, (_event, data) => {
@@ -328,13 +342,25 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
         console.log('Using native HLS support');
         video.src = videoSrc;
         video.volume = volumeRef.current;
-        video.muted = mutedRef.current;
-        video.play().catch(err => {
-          console.error('Native HLS play failed:', err);
-          setHasError(true);
-          setErrorMessage('Failed to play video');
-          setIsBuffering(false);
-        });
+        // Try autoplay with sound first
+        (async () => {
+          try {
+            video.muted = false;
+            await video.play();
+          } catch (err) {
+            console.warn('Autoplay with sound blocked (native HLS), falling back to muted:', err);
+            try {
+              video.muted = true;
+              onAutoplayFallbackMuted?.();
+              await video.play();
+            } catch (err2) {
+              console.error('Native HLS play failed after fallback:', err2);
+              setHasError(true);
+              setErrorMessage('Failed to play video');
+              setIsBuffering(false);
+            }
+          }
+        })();
       } else {
         console.error('HLS is not supported in this browser');
         setHasError(true);
@@ -346,13 +372,25 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
       console.log('Using regular video source');
       video.src = videoSrc;
       video.volume = volumeRef.current;
-      video.muted = mutedRef.current;
-      video.play().catch(err => {
-        console.error('Regular video play failed:', err);
-        setHasError(true);
-        setErrorMessage('Failed to play video');
-        setIsBuffering(false);
-      });
+      // Try autoplay with sound first
+      (async () => {
+        try {
+          video.muted = false;
+          await video.play();
+        } catch (err) {
+          console.warn('Autoplay with sound blocked (MP4), falling back to muted:', err);
+          try {
+            video.muted = true;
+            onAutoplayFallbackMuted?.();
+            await video.play();
+          } catch (err2) {
+            console.error('Regular video play failed after fallback:', err2);
+            setHasError(true);
+            setErrorMessage('Failed to play video');
+            setIsBuffering(false);
+          }
+        }
+      })();
     }
 
     return () => {
@@ -436,7 +474,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
       
       {/* Buffering Spinner */}
       {isBuffering && !hasError && <BufferingSpinner />}
-      
+
       {/* Error State */}
       {hasError && (
         <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/80">
@@ -462,12 +500,13 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
       </div>
       
       <div className="absolute inset-0 flex flex-col justify-between z-20 pointer-events-none">
-        {/* Top controls */}
+        {/* Top controls (keep only play/pause) */}
         <div className="flex justify-between p-2 pointer-events-auto">
           <button
             onClick={togglePlayPause}
             className="bg-black bg-opacity-70 p-2 rounded-full transition-transform duration-300"
             disabled={isBuffering || hasError}
+            aria-label={isPaused ? 'Play' : 'Pause'}
           >
             {isPaused ? (
               <FaPlay className="text-white text-xl" />
