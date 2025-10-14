@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Channel, UploadItem, ProcessingStatus, getThumbnailSrc } from '@/types';
 import { 
@@ -31,6 +31,7 @@ const ManageUploadsPage = () => {
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const lastRefreshRef = useRef<number>(0);
 
   const fetchChannel = useCallback(async () => {
     try {
@@ -69,6 +70,12 @@ const ManageUploadsPage = () => {
   }, [channelId]);
 
   const refreshUploads = async () => {
+    const now = Date.now();
+    if (now - lastRefreshRef.current < 5000) { // 5-second cooldown
+      // toast.info('Please wait before refreshing again.');
+      return;
+    }
+    lastRefreshRef.current = now;
     setRefreshing(true);
     await fetchUploads();
   };
@@ -185,15 +192,16 @@ const ManageUploadsPage = () => {
 
     // Auto-refresh every 30 seconds for processing uploads
     const interval = setInterval(() => {
+      if (document.hidden) return; // Skip if tab is not active
       const hasProcessingUploads = uploads.some(upload => {
         const overallStatus = getOverallStatus(upload.processingStatus);
-        return overallStatus === 'processing' || overallStatus === 'queued';
+        return overallStatus === 'processing'; // Only active processing, not queued
       });
       
       if (hasProcessingUploads) {
         fetchUploads();
       }
-    }, 30000);
+    }, 80000);
 
     return () => clearInterval(interval);
   }, [fetchChannel, fetchUploads, uploads]);
