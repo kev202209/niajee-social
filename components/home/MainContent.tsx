@@ -206,7 +206,7 @@ const MainContent: FC = () => {
 
   // Show content with optional refresh button in header
   return (
-    <div className="h-[calc(100vh-4rem)] overflow-y-auto">
+    <div className="h-[calc(100vh-4rem)] overflow-y-auto scrollbar-hide scrollbar-hide::-webkit-scrollbar">
       {/* Header with refresh button */}
       <div className="sticky top-0 z-10 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm p-4">
         <div className="flex items-center justify-between">
