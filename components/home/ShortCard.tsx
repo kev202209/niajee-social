@@ -1,4 +1,4 @@
-import { Short, getThumbnailSrc } from "@/types"; // Import getThumbnailSrc
+import { Short, getThumbnailSrc } from "@/types";
 import { getImageSrc } from "@/utils/imageUtils";
 import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiVolume, FiVolumeX, FiXCircle, FiUser } from "react-icons/fi";
