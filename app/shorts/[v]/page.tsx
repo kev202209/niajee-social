@@ -12,68 +12,22 @@ import ReportModal from "./ReportModal";
 import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import CommentsSection from "./CommentsSection";
 import { getFullUrl } from "@/utils/videourl";
+import { FullShortData, getImageSrcSafe } from '@/types'
 
-// Updated backend data structure for shorts
-interface ShortData {
-  id: string;
-  title: string;
-  description?: string;
-  videoUrl: {
-    [quality: string]: string;
-  } | string; // Handle both formats
-  videoSrc?: string; // Direct video source URL
-  masterPlaylist?: string;
-  qualities?: string[];
-  thumbnailUrl: string | null;
-  duration: number;
-  viewCount: number;
-  likeCount: number;
-  commentCount: number;
-  shareCount: number;
-  saveCount: number;
-  isPublic: boolean;
-  isLiked: boolean;
-  isSaved: boolean;
-  allowComments: boolean;
-  allowDuet: boolean;
-  monetization: {
-    enabled: boolean;
-    reason: string | null;
-  };
-  tags: string[];
-  mentions: string[];
-  location: string | null;
-  createdAt: string;
-  channel: {
-    id: string;
-    name: string;
-    handle: string;
-    avatar: string;
-    verified: boolean;
-    isFollowed: boolean;
-  };
-  user?: {
-    id: string;
-    username: string;
-    displayName: string;
-    profilePic: string;
-    verified: boolean;
-  };
-}
 
 const ShortVideoPage = () => {
   const params = useParams();
   const initialVideoId = Array.isArray(params?.v) ? params.v[0] : params?.v;
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
-  const [currentVideo, setCurrentVideo] = useState<ShortData | null>(null);
-  const [nextVideo, setNextVideo] = useState<ShortData | null>(null);
+  const [currentVideo, setCurrentVideo] = useState<FullShortData | null>(null);
+  const [nextVideo, setNextVideo] = useState<FullShortData | null>(null);
   // Track history of videos for "back" navigation.
-  const [videoHistory, setVideoHistory] = useState<ShortData[]>([]);
+  const [videoHistory, setVideoHistory] = useState<FullShortData[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Video control states.
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false); // default: try with sound first
   const [isPaused, setIsPaused] = useState(false);
   const [volume, setVolume] = useState(0.5);
   // New state: whether the comments panel is showing.
@@ -87,7 +41,7 @@ const ShortVideoPage = () => {
   const currentVideoRef = useRef<HTMLVideoElement>(null!);
 
   // Helper function to get the best video URL
-  const getBestVideoUrl = (video: ShortData): string => {
+  const getBestVideoUrl = (video: FullShortData): string => {
     // If videoSrc is provided, use it
     if (video.videoSrc) {
       return getFullUrl(video.videoSrc);
@@ -125,39 +79,44 @@ const ShortVideoPage = () => {
 
 
   // Fetch current video by ID or default.
-  const fetchCurrentVideo = async (videoId?: string): Promise<ShortData | null> => {
+  const fetchCurrentVideo = async (videoId?: string): Promise<FullShortData | null> => {
     try {
-      let apiData: ShortData;
+      let raw: unknown;
       if (videoId) {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`,
-          { credentials: "include" }
-        );
-        if (!res.ok) throw new Error('Failed to fetch video');
-        const data = await res.json();
-        apiData = data.short || data;
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`, { credentials: "include" });
+        if (!res.ok) return null;
+        raw = await res.json();
       } else {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`,
-          { credentials: "include" }
-        );
-        if (!res.ok) throw new Error('Failed to fetch videos');
-        const result = await res.json();
-        apiData = result.shorts[0] || result.data[0];
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts?limit=1`, { credentials: "include" });
+        if (!res.ok) return null;
+        const data = await res.json();
+        raw = (Array.isArray(data?.shorts) ? data.shorts[0] : Array.isArray(data?.data) ? data.data[0] : null) as unknown;
       }
+      if (!raw || typeof raw !== 'object') return null;
 
+      const o = raw as Record<string, unknown>;
+      const soundId =
+        (typeof o.soundId === 'string' && o.soundId) ||
+        (typeof o.soundId === 'string' && o.soundId) ||
+        (o.sound && typeof (o.sound as Record<string, unknown>).id === 'string'
+          ? (o.sound as Record<string, unknown>).id
+          : null) ||
+        null;
+
+      const apiData = raw as FullShortData;
       // Ensure user object exists (use channel data as fallback)
       if (!apiData.user && apiData.channel) {
         apiData.user = {
           id: apiData.channel.id,
-          username: apiData.channel.handle.replace('@', ''),
+          username: apiData.channel.handle,
           displayName: apiData.channel.name,
-          profilePic: apiData.channel.avatar,
-          verified: apiData.channel.verified
+          // Normalize avatar to a string URL
+          profilePic: getImageSrcSafe(apiData.channel.avatar),
+          verified: apiData.channel.verified,
         };
       }
-
-      return apiData;
+      // Preserve soundId
+      return { ...apiData, soundId: soundId };
     } catch (err) {
       console.error(err);
       return null;
@@ -165,28 +124,40 @@ const ShortVideoPage = () => {
   };
 
   // Fetch next video.
-  const fetchNextVideo = useCallback(async (): Promise<ShortData | null> => {
+  const fetchNextVideo = useCallback(async (): Promise<FullShortData | null> => {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`,
         { credentials: "include" }
       );
-      if (!res.ok) throw new Error('Failed to fetch next video');
+      if (!res.ok) return null;
       const result = await res.json();
-      const apiData = result.shorts[0] || result.data[0];
-      
+      const raw = (result.shorts?.[0] ?? result.data?.[0]) as unknown;
+      if (!raw || typeof raw !== 'object') return null;
+
+      const o = raw as Record<string, unknown>;
+      const soundId =
+        (typeof o.soundId === 'string' && o.soundId) ||
+        (typeof o.soundId === 'string' && o.soundId) ||
+        (o.sound && typeof (o.sound as Record<string, unknown>).id === 'string'
+          ? (o.sound as Record<string, unknown>).id
+          : null) ||
+        null;
+
+      const apiData = raw as FullShortData;
+
       // Ensure user object exists
       if (!apiData.user && apiData.channel) {
         apiData.user = {
           id: apiData.channel.id,
-          username: apiData.channel.handle.replace('@', ''),
+          username: apiData.channel.handle,
           displayName: apiData.channel.name,
-          profilePic: apiData.channel.avatar,
-          verified: apiData.channel.verified
+          // Normalize avatar to a string URL
+          profilePic: getImageSrcSafe(apiData.channel.avatar),
+          verified: apiData.channel.verified,
         };
       }
-
-      return apiData;
+      return { ...apiData, soundId: soundId };
     } catch (err) {
       console.error(err);
       return null;
@@ -396,10 +367,12 @@ const ShortVideoPage = () => {
                   togglePlayPause={togglePlayPause}
                   channel={{
                     name: currentVideo.channel.name,
-                    icon: currentVideo.channel.avatar,
+                    // Normalize avatar to a string URL for icon
+                    icon: getImageSrcSafe(currentVideo.channel.avatar),
                   }}
                   caption={currentVideo.description || currentVideo.title || ""}
                   song="Original Audio"
+                  onAutoplayFallbackMuted={() => setIsMuted(true)}
                 />
               </div>
 
@@ -410,6 +383,26 @@ const ShortVideoPage = () => {
                   onToggleComments={toggleComments}
                   onShowReport={handleShowReport}
                 />
+              </div>
+
+              {/* Navigation arrows (moved inside the video container so they aren't under the sidebar) */}
+              <div className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 flex-col items-center space-y-4 z-30">
+                <button
+                  onClick={handleScrollUp}
+                  disabled={videoHistory.length === 0}
+                  className="bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed p-3 rounded-full transition-all duration-200"
+                  aria-label="Previous video"
+                >
+                  <FaArrowUp className="w-5 h-5 text-white" />
+                </button>
+                <button
+                  onClick={handleScrollDown}
+                  disabled={!nextVideo}
+                  className="bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed p-3 rounded-full transition-all duration-200"
+                  aria-label="Next video"
+                >
+                  <FaArrowDown className="w-5 h-5 text-white" />
+                </button>
               </div>
 
               {/* Comments Section */}
@@ -437,7 +430,8 @@ const ShortVideoPage = () => {
                   togglePlayPause={() => {}}
                   channel={{
                     name: nextVideo.channel.name,
-                    icon: nextVideo.channel.avatar,
+                    // Normalize avatar to a string URL for icon
+                    icon: getImageSrcSafe(nextVideo.channel.avatar),
                   }}
                   caption={nextVideo.description || nextVideo.title || ""}
                   song="Original Audio"
@@ -449,25 +443,7 @@ const ShortVideoPage = () => {
           </div>
         </div>
 
-        {/* Navigation arrows */}
-        <div className="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 flex-col items-center space-y-4 z-10">
-          <button
-            onClick={handleScrollUp}
-            disabled={videoHistory.length === 0}
-            className="bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed p-3 rounded-full transition-all duration-200"
-            aria-label="Previous video"
-          >
-            <FaArrowUp className="w-5 h-5 text-white" />
-          </button>
-          <button
-            onClick={handleScrollDown}
-            disabled={!nextVideo}
-            className="bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed p-3 rounded-full transition-all duration-200"
-            aria-label="Next video"
-          >
-            <FaArrowDown className="w-5 h-5 text-white" />
-          </button>
-        </div>
+        {/* Removed old absolute arrows at page level to avoid overlap with sidebar */}
       </div>
 
       {/* Report Modal - Rendered at page level */}
