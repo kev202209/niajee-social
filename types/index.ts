@@ -453,3 +453,4 @@ export const getThumbnailSrc = (
 
 export * from './blog.types';
 export * from './post.types';
+export * from './shorts'
