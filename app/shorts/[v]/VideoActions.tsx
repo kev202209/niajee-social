@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type RefObject } from 'react';
+import { useState, useRef, useEffect, type RefObject, useMemo } from 'react';
 import {
   MessageCircle,
   Share2,
@@ -7,8 +7,10 @@ import {
   Plus,
   Flag,
   EyeOff,
+  Music2,
 } from 'lucide-react';
 import Link from 'next/link'
+import { getFullUrl } from '@/utils/videourl'
 import LikeButton from "@/components/LikeButton";
 import { toast } from "sonner";
 import useOutsideClick from "@/hooks/useOutsideClick";
@@ -18,34 +20,49 @@ import ShareService from '@/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";
 import { getImageSrc } from '@/utils/imageUtils';
 import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
+import { ShortData, SoundMeta, getImageSrcSafe } from '@/types'
 
-// Define the video data structure here or import it from a shared types file
-interface ShortData {
-  id: string;
-  title: string;
-  description?: string;
-  likeCount: number;
-  commentCount: number;
-  shareCount: number;
-  saveCount: number;
-  isLiked: boolean;
-  isSaved: boolean;
-  allowComments: boolean;
-  channel: {
-    id: string;
-    name: string;
-    avatar: string;
-    verified: boolean;
-    isFollowed: boolean;
-    handle: string;
-  };
-}
 
 interface VideoActionsProps {
   video: ShortData;
   onToggleComments: () => void;
   onShowReport: () => void;
 }
+
+
+// Safe normalizer for backend response (supports sounds endpoint shape)
+const normalizeSoundMeta = (raw: unknown, fallbackId: string): SoundMeta => {
+  const o = (raw && typeof raw === 'object') ? (raw as Record<string, unknown>) : {};
+  const id = typeof o.id === 'string' ? o.id : fallbackId;
+  const title =
+    (typeof o.title === 'string' && o.title) ||
+    (typeof o.name === 'string' && o.name) ||
+    'Original audio';
+
+  let coverArt: string | undefined;
+  const cover = (o as Record<string, unknown>).cover;
+  if (typeof cover === 'string') coverArt = cover;
+  if (!coverArt && typeof o.coverArt === 'string') coverArt = o.coverArt;
+  if (!coverArt && typeof o.thumbnail === 'string') coverArt = o.thumbnail;
+
+  let audioUrl: string | undefined;
+  const audio = (o as Record<string, unknown>).audio;
+  if (audio && typeof audio === 'object') {
+    const av = (audio as Record<string, unknown>).variants;
+    const originalKey = (audio as Record<string, unknown>).originalKey;
+    if (av && typeof av === 'object') {
+      const mp3 = (av as Record<string, unknown>).mp3;
+      if (typeof mp3 === 'string') audioUrl = getFullUrl(mp3);
+    }
+    if (!audioUrl && typeof originalKey === 'string') audioUrl = getFullUrl(originalKey);
+  }
+  if (!audioUrl) {
+    const audioUrlRaw = (o as Record<string, unknown>).audioUrl;
+    if (typeof audioUrlRaw === 'string') audioUrl = audioUrlRaw;
+  }
+
+  return { id, title, coverArt, audioUrl };
+};
 
 const VideoActions = ({ 
   video,
@@ -295,6 +312,77 @@ const VideoActions = ({
     }
   };
 
+  // unified sound id (supports soundId or sound_id)
+  const effectiveSoundId = useMemo(() => {
+    if (typeof video.soundId === 'string' && video.soundId) return video.soundId;
+    const raw = video as unknown as Record<string, unknown>;
+    return typeof raw['sound_id'] === 'string' ? (raw['sound_id'] as string) : null;
+  }, [video]);
+
+  // Fetch sound meta for label/cover
+  const [soundMeta, setSoundMeta] = useState<SoundMeta | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!effectiveSoundId) { setSoundMeta(null); return; }
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/sounds/${effectiveSoundId}`,
+          { credentials: 'include', headers: { Accept: 'application/json' } }
+        );
+        if (!res.ok) {
+          if (!cancelled) setSoundMeta({ id: effectiveSoundId, title: 'Original audio' });
+          return;
+        }
+        const data = await res.json();
+        if (!cancelled) setSoundMeta(normalizeSoundMeta(data, effectiveSoundId));
+      } catch {
+        if (!cancelled) setSoundMeta({ id: effectiveSoundId, title: 'Original audio' });
+      }
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [effectiveSoundId]);
+
+  // resolve image: sound cover -> channel avatar -> placeholder
+  const soundImageSrc = useMemo(() => {
+    if (soundMeta?.coverArt && typeof soundMeta.coverArt === 'string') return soundMeta.coverArt;
+    const avatar = getImageSrcSafe(video.channel.avatar);
+    if (avatar) return avatar;
+    return '/placeholder.png';
+  }, [soundMeta?.coverArt, video.channel.avatar]);
+
+  // inline audio playback for the sound icon
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isSoundPlaying, setIsSoundPlaying] = useState(false);
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onEnd = () => setIsSoundPlaying(false);
+    const onPause = () => setIsSoundPlaying(false);
+    const onPlay = () => setIsSoundPlaying(true);
+    el.addEventListener('ended', onEnd);
+    el.addEventListener('pause', onPause);
+    el.addEventListener('play', onPlay);
+    return () => {
+      el.removeEventListener('ended', onEnd);
+      el.removeEventListener('pause', onPause);
+      el.removeEventListener('play', onPlay);
+    };
+  }, [audioRef.current]);
+
+  const toggleSoundPlay = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const el = audioRef.current;
+    if (!el) return;
+    if (el.paused) {
+      void el.play();
+    } else {
+      el.pause();
+    }
+  };
+
   return (
     <>
       <div className="flex flex-col items-center space-y-4">
@@ -305,9 +393,9 @@ const VideoActions = ({
               <AuthenticatedImage
                 mediaKey={getImageSrc(channel.avatar, '480w') || ""}
                 alt={channel.name}
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-full border-2 border-white object-cover"
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full border-2 border-white object-cover"
                 fallbackSrc="/placeholder.png"
               />
             </Link>
@@ -316,7 +404,7 @@ const VideoActions = ({
               <button
                 onClick={handleFollowToggle}
                 disabled={loading.follow}
-                className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors disabled:opacity-50"
+                className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors disabled:opacity-50"
               >
                 {loading.follow ? (
                   <div className="w-3 h-3 animate-spin rounded-full border border-white border-t-transparent"></div>
@@ -435,6 +523,60 @@ const VideoActions = ({
             </div>
           )}
         </div>
+
+        {/* Sound Action (bottom) */}
+        {effectiveSoundId && (
+          <div className="group mt-1 flex flex-col items-center">
+            {/* clickable to sound page */}
+            <Link
+              href={`/shorts/sounds/${effectiveSoundId}`}
+              className="relative"
+              title={soundMeta?.title || 'Original audio'}
+            >
+              <div className="w-9 h-9 rounded-full border-2 border-white overflow-hidden relative bg-gray-800 flex items-center justify-center animate-spin [animation-duration:6s]">
+                <img
+                  src={soundImageSrc}
+                  alt={soundMeta?.title || 'Original audio'}
+                  className="w-full h-full object-cover"
+                />
+                {/* center hole */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-1.5 h-1.5 bg-white/90 rounded-full" />
+                </div>
+
+                {/* Play overlay button (top-right) */}
+                {soundMeta?.audioUrl && (
+                  <button
+                    onClick={toggleSoundPlay}
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                    aria-label={isSoundPlaying ? 'Pause audio' : 'Play audio'}
+                  >
+                    {isSoundPlaying ? (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
+                    ) : (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    )}
+                  </button>
+                )}
+              </div>
+            </Link>
+
+            {/* label */}
+            <div className="mt-1 max-w-[80px] text-center">
+              <div className="flex items-center justify-center gap-1 text-[10px] text-white/90">
+                <Music2 className="w-3 h-3" />
+                <span className="truncate" title={soundMeta?.title || 'Original audio'}>
+                  {soundMeta?.title || 'Original audio'}
+                </span>
+              </div>
+            </div>
+
+            {/* hidden audio element */}
+            {soundMeta?.audioUrl && (
+              <audio ref={audioRef} src={soundMeta.audioUrl} preload="none" />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Share Modal */}
