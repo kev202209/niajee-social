@@ -10,7 +10,7 @@ export interface FullShortData {
   videoSrc?: string; // Direct video source URL
   masterPlaylist?: string;
   qualities?: string[];
-  thumbnailUrl: string | null;
+  thumbnail: string | null;
   duration: number;
   viewCount: number;
   likeCount: number;
@@ -70,20 +70,24 @@ export interface ShortData {
   };
 }
 
-// Lightweight sound meta (no any)
+// Lightweight sound meta (matches raw API shape, no normalization)
 export interface SoundMeta {
   id: string;
   title: string;
-  coverArt?: string;
-  audioUrl?: string;
+  cover?: ProcessedImage;
+  audio?: {
+    variants: { mp3: string };
+    originalKey: string;
+  };
   durationSec?: number;
+  usageCount?: number;
 }
 
 export interface SoundShortItem {
   id: string;
   title?: string;
   // match the actual API shape (ProcessedImage container)
-  thumbnailUrl?: {
+  thumbnail?: {
     data: ProcessedImage;
     type: 'auto-generated' | 'user-uploaded';
     status: 'queued' | 'processing' | 'complete' | 'failed';
