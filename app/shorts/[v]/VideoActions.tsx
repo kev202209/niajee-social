@@ -352,37 +352,6 @@ const VideoActions = ({
     return '/placeholder.png';
   }, [soundMeta?.coverArt, video.channel.avatar]);
 
-  // inline audio playback for the sound icon
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [isSoundPlaying, setIsSoundPlaying] = useState(false);
-  useEffect(() => {
-    const el = audioRef.current;
-    if (!el) return;
-    const onEnd = () => setIsSoundPlaying(false);
-    const onPause = () => setIsSoundPlaying(false);
-    const onPlay = () => setIsSoundPlaying(true);
-    el.addEventListener('ended', onEnd);
-    el.addEventListener('pause', onPause);
-    el.addEventListener('play', onPlay);
-    return () => {
-      el.removeEventListener('ended', onEnd);
-      el.removeEventListener('pause', onPause);
-      el.removeEventListener('play', onPlay);
-    };
-  }, [audioRef.current]);
-
-  const toggleSoundPlay = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const el = audioRef.current;
-    if (!el) return;
-    if (el.paused) {
-      void el.play();
-    } else {
-      el.pause();
-    }
-  };
-
   return (
     <>
       <div className="flex flex-col items-center space-y-4">
@@ -527,54 +496,21 @@ const VideoActions = ({
         {/* Sound Action (bottom) */}
         {effectiveSoundId && (
           <div className="group mt-1 flex flex-col items-center">
-            {/* clickable to sound page */}
             <Link
               href={`/shorts/sounds/${effectiveSoundId}`}
               className="relative"
               title={soundMeta?.title || 'Original audio'}
             >
               <div className="w-9 h-9 rounded-full border-2 border-white overflow-hidden relative bg-gray-800 flex items-center justify-center animate-spin [animation-duration:6s]">
-                <img
-                  src={soundImageSrc}
+                <AuthenticatedImage
+                  mediaKey={soundImageSrc != null ? getImageSrc(soundImageSrc, '480w') : getImageSrc(channel.avatar, '480w') || ""}
                   alt={soundMeta?.title || 'Original audio'}
+                  width={40}
+                  height={40}
                   className="w-full h-full object-cover"
                 />
-                {/* center hole */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-1.5 h-1.5 bg-white/90 rounded-full" />
-                </div>
-
-                {/* Play overlay button (top-right) */}
-                {soundMeta?.audioUrl && (
-                  <button
-                    onClick={toggleSoundPlay}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
-                    aria-label={isSoundPlaying ? 'Pause audio' : 'Play audio'}
-                  >
-                    {isSoundPlaying ? (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14"/><rect x="14" y="5" width="4" height="14"/></svg>
-                    ) : (
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                    )}
-                  </button>
-                )}
               </div>
             </Link>
-
-            {/* label */}
-            <div className="mt-1 max-w-[80px] text-center">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-white/90">
-                <Music2 className="w-3 h-3" />
-                <span className="truncate" title={soundMeta?.title || 'Original audio'}>
-                  {soundMeta?.title || 'Original audio'}
-                </span>
-              </div>
-            </div>
-
-            {/* hidden audio element */}
-            {soundMeta?.audioUrl && (
-              <audio ref={audioRef} src={soundMeta.audioUrl} preload="none" />
-            )}
           </div>
         )}
       </div>
