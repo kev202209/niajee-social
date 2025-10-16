@@ -33,6 +33,7 @@ interface AuthContextType {
   setCsrfToken: (token: string | null) => void;
   getCsrf: () => Promise<void>;
   ensureCsrf: () => Promise<void>;
+  checkAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -417,6 +418,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setCsrfToken,
         getCsrf,
         ensureCsrf,
+        checkAuth,
       }}
     >
       {children}
