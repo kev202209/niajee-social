@@ -16,7 +16,7 @@ interface RawHistoryChannel {
 interface RawHistoryItem {
   id: string;
   title?: string;
-  thumbnailUrl?: string | null;
+  thumbnail?: string | null;
   duration?: number | null;
   channel?: RawHistoryChannel;
   history?: {
@@ -94,7 +94,7 @@ export default function HistoryClient() {
       type: 'video' as const,
       id: v.id,
       title: v.title ?? '',
-      thumbnailUrl: v.thumbnailUrl ?? null,
+      thumbnail: v.thumbnail ?? null,
       duration: v.duration ?? null,
       channel: {
         id: v.channel?.id ?? '',
@@ -109,7 +109,7 @@ export default function HistoryClient() {
       type: 'short' as const,
       id: s.id,
       title: s.title ?? '',
-      thumbnailUrl: s.thumbnailUrl ?? null,
+      thumbnail: s.thumbnail ?? null,
       duration: s.duration ?? null,
       channel: {
         id: s.channel?.id ?? '',

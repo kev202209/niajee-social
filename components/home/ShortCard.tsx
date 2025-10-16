@@ -200,7 +200,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
         >
            {/* Thumbnail */}
            <AuthenticatedImage
-             mediaKey={getThumbnailSrc(short.thumbnailUrl)}
+             mediaKey={getThumbnailSrc(short.thumbnail)}
              alt={short.title}
              fill
              className="absolute inset-0 object-cover w-full h-full"

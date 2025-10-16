@@ -349,10 +349,10 @@ function ShortCard({ short }: { short: SuggestedContent }) {
     <Link href={`/shorts/${short.id}`} className="flex-shrink-0 w-32">
       <div className="cursor-pointer group">
         <div className="relative aspect-[9/16] rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 mb-2">
-          {short.thumbnailUrl && short.thumbnailUrl.status === 'complete' ? (
+          {short.thumbnail && short.thumbnail.status === 'complete' ? (
             <HoverPreviewPlayer
               source={hasVideoSrc(short) ? (short.videoSrc ?? '') : ''}
-              poster={getThumbnailSrc(short.thumbnailUrl)}
+              poster={getThumbnailSrc(short.thumbnail)}
               durationSeconds={durationSeconds}
               durationLabel={short.duration != null ? String(short.duration) : ''}
               className="w-full h-full"
@@ -417,10 +417,10 @@ function SuggestedVideoCard({ video }: { video: SuggestedContent }) {
     <Link href={`/watch/${video.id}`}>
       <div className="flex items-start gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 p-2 rounded">
         <div className="relative w-40 h-24 flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
-          {video.thumbnailUrl ? (
+          {video.thumbnail ? (
             <HoverPreviewPlayer
               source={hasVideoSrc(video) ? (video.videoSrc ?? '') : ''}
-              poster={getThumbnailSrc(video.thumbnailUrl)}
+              poster={getThumbnailSrc(video.thumbnail)}
               durationSeconds={durationSeconds}
               durationLabel={video.duration != null ? String(video.duration) : ''}
               className="w-full h-full"

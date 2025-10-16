@@ -84,7 +84,7 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
               </div>
 
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {formatCount(video.views)} views • {timeAgo(video.createdAt)}
+                {formatCount(video.views)} {video.views === 1 ? 'view' : 'views'} • {timeAgo(video.createdAt)}
               </p>
             </div>
 
