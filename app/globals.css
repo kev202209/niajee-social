@@ -49,6 +49,59 @@
 
 
 
+
+
+/* Apply custom scrollbar to html and body by default */
+html, body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.5) rgba(30, 58, 138, 0.2);
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  width: 6px;
+}
+
+html::-webkit-scrollbar-track, body::-webkit-scrollbar-track {
+  background: rgba(30, 58, 138, 0.2);
+  border-radius: 10px;
+}
+
+html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+  background-color: rgba(59, 130, 246, 0.5);
+  border-radius: 10px;
+  transition: background-color 0.3s;
+}
+
+html::-webkit-scrollbar-thumb:hover, body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(59, 130, 246, 0.8);
+}
+
+/* Dark mode scrollbar for html and body */
+.dark html, .dark body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(59, 130, 246, 0.5) rgba(15, 23, 42, 0.3);
+}
+
+.dark html::-webkit-scrollbar, .dark body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dark html::-webkit-scrollbar-track, .dark body::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.3);
+  border-radius: 10px;
+}
+
+.dark html::-webkit-scrollbar-thumb, .dark body::-webkit-scrollbar-thumb {
+  background-color: rgba(59, 130, 246, 0.5);
+  border-radius: 10px;
+  transition: background-color 0.3s;
+}
+
+.dark html::-webkit-scrollbar-thumb:hover, .dark body::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(59, 130, 246, 0.8);
+}
+
+
 /* Standard scrollbar hide class */
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */
