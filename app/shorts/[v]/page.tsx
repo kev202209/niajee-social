@@ -123,11 +123,16 @@ const ShortVideoPage = () => {
     }
   };
 
-  // Fetch next video.
-  const fetchNextVideo = useCallback(async (): Promise<FullShortData | null> => {
+  // Fetch next video - exclude current and viewed videos
+  const fetchNextVideo = useCallback(async (excludeIds: string[] = []): Promise<FullShortData | null> => {
     try {
+      // Build exclusion query - exclude provided IDs only
+      const excludeParam = excludeIds.length > 0 
+        ? `&exclude=${excludeIds.join(',')}`
+        : '';
+      
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/feed?limit=1${excludeParam}`,
         { credentials: "include" }
       );
       if (!res.ok) return null;
@@ -152,7 +157,6 @@ const ShortVideoPage = () => {
           id: apiData.channel.id,
           username: apiData.channel.handle,
           displayName: apiData.channel.name,
-          // Normalize avatar to a string URL
           profilePic: getImageSrcSafe(apiData.channel.avatar),
           verified: apiData.channel.verified,
         };
@@ -162,7 +166,7 @@ const ShortVideoPage = () => {
       console.error(err);
       return null;
     }
-  }, []);
+  }, []); // Remove currentVideo?.id dependency
 
 
 
@@ -182,11 +186,19 @@ const ShortVideoPage = () => {
       if (currentVideoRef.current) {
         currentVideoRef.current.muted = true;
       }
-      const newNext = await fetchNextVideo();
+      
+      // Get IDs to exclude: current video + all history + the video we're moving to
+      const excludeIds = [
+        ...videoHistory.map(v => v.id),
+        currentVideo.id,
+        nextVideo.id
+      ];
+      
+      const newNext = await fetchNextVideo(excludeIds);
       setNextVideo(newNext);
       scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
     }, 600);
-  }, [nextVideo, currentVideo, fetchNextVideo]);
+  }, [nextVideo, currentVideo, videoHistory, fetchNextVideo]);
 
   // Navigation: scroll up to previous video.
   const handleScrollUp = useCallback(() => {
@@ -273,14 +285,14 @@ const ShortVideoPage = () => {
       if (current) {
         setCurrentVideo(current);
         updateUrl(current.id);
-        const next = await fetchNextVideo();
+        // Exclude the current video when fetching next
+        const next = await fetchNextVideo([current.id]);
         setNextVideo(next);
         setLoading(false);
       }
     };
     init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialVideoId]);
+  }, [initialVideoId]); // Remove fetchNextVideo from dependencies
 
   // Video control functions.
   const toggleMute = () => {
