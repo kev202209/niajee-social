@@ -374,6 +374,9 @@ const ShortVideoPage = () => {
                   }}
                   caption={nextVideo.description || nextVideo.title || ""}
                   song="Original Audio"
+                  // NEW: preload without autoplay so it's ready instantly
+                  shouldAutoPlay={false}
+                  preloadMode="auto"
                 />
               ) : (
                 <ShortsSkeleton />
