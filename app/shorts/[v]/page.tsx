@@ -9,8 +9,10 @@ import VideoPlayer from "./shortVideoPlayer";
 import ShortsSkeleton from './ShortSkeleton';
 import VideoActions from "./VideoActions";
 import ReportModal from "./ReportModal"; 
-import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import CommentsSection from "./CommentsSection";
+import { FaArrowUp, FaArrowDown } from "react-icons/fa";
+import { MoreHorizontal, Flag, EyeOff } from 'lucide-react';
+import useOutsideClick from "@/hooks/useOutsideClick";
 import { getFullUrl } from "@/utils/videourl";
 import { FullShortData, getImageSrcSafe } from '@/types'
 
@@ -31,9 +33,13 @@ const ShortVideoPage = () => {
   const [volume, setVolume] = useState(0.5);
   const [showComments, setShowComments] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [moreBusy, setMoreBusy] = useState(false);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentVideoRef = useRef<HTMLVideoElement>(null!);
+  const moreMenuRef = useRef<HTMLDivElement | null>(null);
+  useOutsideClick(moreMenuRef as unknown as React.RefObject<HTMLElement>, () => setShowMoreMenu(false));
 
   // Prefer HLS master, then explicit master key, then qualities, then any
   const getBestVideoUrl = (video: FullShortData): string => {
@@ -286,6 +292,42 @@ const ShortVideoPage = () => {
   const toggleComments = () => setShowComments(prev => !prev);
   const handleShowReport = () => setShowReport(true);
 
+  useEffect(() => {
+    // Close "More" menu when current video changes
+    setShowMoreMenu(false);
+  }, [currentVideo?.id]);
+
+  const handleNotInterested = async () => {
+    if (!currentVideo || moreBusy) return;
+    setMoreBusy(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${currentVideo.id}/not-interested`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        }
+      );
+      if (!res.ok) {
+        try {
+          const j = await res.json();
+          throw new Error(j?.message || 'Failed to mark as not interested');
+        } catch {
+          throw new Error('Failed to mark as not interested');
+        }
+      }
+      setShowMoreMenu(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setMoreBusy(false);
+    }
+  };
+
   if (loading || !currentVideo) return <ShortsSkeleton />;
 
   return (
@@ -295,36 +337,116 @@ const ShortVideoPage = () => {
 
       <div className="pt-10">
         <div ref={scrollContainerRef} className="h-screen overflow-hidden flex justify-center">
-          <div className="h[200vh] w-full max-w-[500px] relative">
+          <div className="h[200vh] w-full max-w-[500px] md:max-w-[760px] relative">
             {/* Current Video */}
             <div className="relative h-screen">
               <div className="flex items-center justify-center h-full">
-                <VideoPlayer
-                  videoRef={currentVideoRef}
-                  videoSrc={getBestVideoUrl(currentVideo)}
-                  videoId={currentVideo.id}
-                  isMuted={isMuted}
-                  isPaused={isPaused}
-                  volume={volume}
-                  onVolumeChange={handleVolumeChange}
-                  toggleMute={toggleMute}
-                  togglePlayPause={togglePlayPause}
-                  channel={{
-                    name: currentVideo.channel.name,
-                    icon: getImageSrcSafe(currentVideo.channel.avatar),
-                  }}
-                  caption={currentVideo.description || currentVideo.title || ""}
-                  song="Original Audio"
-                  onAutoplayFallbackMuted={() => setIsMuted(true)}
-                />
-              </div>
+                {/* Wrapper sized to the video box */}
+                <div className="relative inline-block">
+                  <VideoPlayer
+                    videoRef={currentVideoRef}
+                    videoSrc={getBestVideoUrl(currentVideo)}
+                    videoId={currentVideo.id}
+                    isMuted={isMuted}
+                    isPaused={isPaused}
+                    volume={volume}
+                    onVolumeChange={handleVolumeChange}
+                    toggleMute={toggleMute}
+                    togglePlayPause={togglePlayPause}
+                    channel={{
+                      name: currentVideo.channel.name,
+                      icon: getImageSrcSafe(currentVideo.channel.avatar),
+                    }}
+                    caption={currentVideo.description || currentVideo.title || ""}
+                    song="Original Audio"
+                    onAutoplayFallbackMuted={() => setIsMuted(true)}
+                  />
 
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
-                <VideoActions 
-                  video={currentVideo}
-                  onToggleComments={toggleComments}
-                  onShowReport={handleShowReport}
-                />
+                  {/* Mobile: More button inside video */}
+                  <div className="absolute top-4 right-4 z-[80] pointer-events-auto md:hidden">
+                    <button
+                      onClick={() => setShowMoreMenu(v => !v)}
+                      className="p-2 rounded-full bg-black/60 hover:bg-black/80 transition"
+                      aria-label="More options"
+                    >
+                      <MoreHorizontal className="w-5 h-5 text-white" />
+                    </button>
+                    {showMoreMenu && (
+                      <div
+                        ref={moreMenuRef}
+                        className="mt-2 right-0 absolute bg-black/90 border border-gray-700 rounded-lg p-2 min-w-48"
+                      >
+                        <button
+                          onClick={handleShowReport}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2"
+                        >
+                          <Flag size={16} />
+                          Report
+                        </button>
+                        <button
+                          onClick={handleNotInterested}
+                          disabled={moreBusy}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2 disabled:opacity-50"
+                        >
+                          <EyeOff size={16} />
+                          {moreBusy ? 'Processing...' : 'Not Interested'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mobile: actions overlay on the video */}
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 md:hidden">
+                    <VideoActions 
+                      video={currentVideo}
+                      onToggleComments={toggleComments}
+                      onShowReport={handleShowReport}
+                    />
+                  </div>
+                </div>
+
+                {/* Desktop/tablet: side column next to the video */}
+                <div className="hidden md:flex flex-col h-[85vh] ml-4">
+                  {/* Desktop More button, aligned above actions */}
+                  <div className="relative self-end">
+                    <button
+                      onClick={() => setShowMoreMenu(v => !v)}
+                      className="p-2 rounded-full bg-black/60 hover:bg-black/80 transition"
+                      aria-label="More options"
+                    >
+                      <MoreHorizontal className="w-5 h-5 text-white" />
+                    </button>
+                    {showMoreMenu && (
+                      <div
+                        ref={moreMenuRef}
+                        className="absolute right-0 mt-2 bg-black/90 border border-gray-700 rounded-lg p-2 min-w-48 z-[90]"
+                      >
+                        <button
+                          onClick={handleShowReport}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2"
+                        >
+                          <Flag size={16} />
+                          Report
+                        </button>
+                        <button
+                          onClick={handleNotInterested}
+                          disabled={moreBusy}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2 disabled:opacity-50"
+                        >
+                          <EyeOff size={16} />
+                          {moreBusy ? 'Processing...' : 'Not Interested'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 flex items-center justify-end">
+                    <VideoActions 
+                      video={currentVideo}
+                      onToggleComments={toggleComments}
+                      onShowReport={handleShowReport}
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 flex-col items-center space-y-4 z-30">
@@ -374,7 +496,6 @@ const ShortVideoPage = () => {
                   }}
                   caption={nextVideo.description || nextVideo.title || ""}
                   song="Original Audio"
-                  // NEW: preload without autoplay so it's ready instantly
                   shouldAutoPlay={false}
                   preloadMode="auto"
                 />

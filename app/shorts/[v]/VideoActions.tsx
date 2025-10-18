@@ -2,67 +2,26 @@ import { useState, useRef, useEffect, type RefObject, useMemo } from 'react';
 import {
   MessageCircle,
   Share2,
-  MoreHorizontal,
   Bookmark,
   Plus,
-  Flag,
-  EyeOff,
-  Music2,
 } from 'lucide-react';
 import Link from 'next/link'
-import { getFullUrl } from '@/utils/videourl'
 import LikeButton from "@/components/LikeButton";
 import { toast } from "sonner";
-import useOutsideClick from "@/hooks/useOutsideClick";
 import { formatCount } from '@/utils/formatCount';
 import ShareModal from '@/components/video/ShareModal';
 import ShareService from '@/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";
 import { getImageSrc } from '@/utils/imageUtils';
 import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
-import { ShortData, SoundMeta, getImageSrcSafe } from '@/types'
+import { ShortData, getImageSrcSafe } from '@/types'
 
 
 interface VideoActionsProps {
   video: ShortData;
   onToggleComments: () => void;
-  onShowReport: () => void;
+  onShowReport: () => void; // kept for compatibility, not used here anymore
 }
-
-
-// Safe normalizer for backend response (supports sounds endpoint shape)
-const normalizeSoundMeta = (raw: unknown, fallbackId: string): SoundMeta => {
-  const o = (raw && typeof raw === 'object') ? (raw as Record<string, unknown>) : {};
-  const id = typeof o.id === 'string' ? o.id : fallbackId;
-  const title =
-    (typeof o.title === 'string' && o.title) ||
-    (typeof o.name === 'string' && o.name) ||
-    'Original audio';
-
-  let coverArt: string | undefined;
-  const cover = (o as Record<string, unknown>).cover;
-  if (typeof cover === 'string') coverArt = cover;
-  if (!coverArt && typeof o.coverArt === 'string') coverArt = o.coverArt;
-  if (!coverArt && typeof o.thumbnail === 'string') coverArt = o.thumbnail;
-
-  let audioUrl: string | undefined;
-  const audio = (o as Record<string, unknown>).audio;
-  if (audio && typeof audio === 'object') {
-    const av = (audio as Record<string, unknown>).variants;
-    const originalKey = (audio as Record<string, unknown>).originalKey;
-    if (av && typeof av === 'object') {
-      const mp3 = (av as Record<string, unknown>).mp3;
-      if (typeof mp3 === 'string') audioUrl = getFullUrl(mp3);
-    }
-    if (!audioUrl && typeof originalKey === 'string') audioUrl = getFullUrl(originalKey);
-  }
-  if (!audioUrl) {
-    const audioUrlRaw = (o as Record<string, unknown>).audioUrl;
-    if (typeof audioUrlRaw === 'string') audioUrl = audioUrlRaw;
-  }
-
-  return { id, title, coverArt, audioUrl };
-};
 
 const VideoActions = ({ 
   video,
@@ -82,7 +41,6 @@ const VideoActions = ({
   } = video;
   const { id: channelId, isFollowed } = channel;
 
-  const [showMenu, setShowMenu] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   
   // State is now initialized directly from the video object's properties
@@ -109,18 +67,6 @@ const VideoActions = ({
     setCurrentSaveCount(video.saveCount);
     setCurrentShareCount(video.shareCount);
   }, [video]); // The only dependency needed is the video object itself.
-
-  // use a HTMLDivElement ref so it can be passed as a div ref without type errors
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  // useOutsideClick expects RefObject<HTMLElement> (or array). Cast to that shape without using `any`.
-  // We cast via `unknown` -> `RefObject<HTMLElement>` to satisfy the hook signature safely.
-  useOutsideClick(menuRef as unknown as RefObject<HTMLElement>, () => setShowMenu(false));
-
-  const handleReport = () => {
-    setShowMenu(false);
-    onShowReport();
-  };
 
   // Handle like toggle
   const handleLikeToggle = async (newLiked: boolean) => {
@@ -247,7 +193,7 @@ const VideoActions = ({
     if (loading.notInterested) return;
     
     setLoading(prev => ({ ...prev, notInterested: true }));
-    setShowMenu(false);
+    // setShowMenu(false);
     
     try {
       const response = await fetch(
@@ -319,38 +265,11 @@ const VideoActions = ({
     return typeof raw['sound_id'] === 'string' ? (raw['sound_id'] as string) : null;
   }, [video]);
 
-  // Fetch sound meta for label/cover
-  const [soundMeta, setSoundMeta] = useState<SoundMeta | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      if (!effectiveSoundId) { setSoundMeta(null); return; }
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/sounds/${effectiveSoundId}`,
-          { credentials: 'include', headers: { Accept: 'application/json' } }
-        );
-        if (!res.ok) {
-          if (!cancelled) setSoundMeta({ id: effectiveSoundId, title: 'Original audio' });
-          return;
-        }
-        const data = await res.json();
-        if (!cancelled) setSoundMeta(normalizeSoundMeta(data, effectiveSoundId));
-      } catch {
-        if (!cancelled) setSoundMeta({ id: effectiveSoundId, title: 'Original audio' });
-      }
-    };
-    void load();
-    return () => { cancelled = true; };
-  }, [effectiveSoundId]);
-
   // resolve image: sound cover -> channel avatar -> placeholder
   const soundImageSrc = useMemo(() => {
-    if (soundMeta?.coverArt && typeof soundMeta.coverArt === 'string') return soundMeta.coverArt;
     const avatar = getImageSrcSafe(video.channel.avatar);
-    if (avatar) return avatar;
-    return '/placeholder.png';
-  }, [soundMeta?.coverArt, video.channel.avatar]);
+    return avatar || '/placeholder.png';
+  }, [video.channel.avatar]);
 
   return (
     <>
@@ -360,8 +279,8 @@ const VideoActions = ({
           <div className="relative">
             <Link href={`/channels/${video.channel.handle}`}>
               <AuthenticatedImage
-                mediaKey={getImageSrc(channel.avatar, '480w') || ""}
-                alt={channel.name}
+                mediaKey={getImageSrc(video.channel.avatar, '480w') || ""}
+                alt={video.channel.name}
                 width={40}
                 height={40}
                 className="w-10 h-10 rounded-full border-2 border-white object-cover"
@@ -457,57 +376,22 @@ const VideoActions = ({
           </span>
         </div>
 
-        {/* More Button */}
-        <div className="relative flex flex-col items-center">
-          <button 
-            onClick={() => setShowMenu(!showMenu)} 
-            className="p-3 rounded-full transition-all hover:bg-black/20"
-          >
-            <MoreHorizontal 
-              size={26} 
-              className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" 
-            />
-          </button>
-          
-          {showMenu && (
-            <div 
-              ref={menuRef}
-              className="absolute bottom-full mb-2 right-0 bg-black/90 backdrop-blur-sm rounded-lg p-2 min-w-48 z-50 border border-gray-600"
-            >
-              <button 
-                onClick={handleReport}
-                className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2"
-              >
-                <Flag size={16} />
-                Report
-              </button>
-              <button 
-                onClick={handleNotInterested}
-                disabled={loading.notInterested}
-                className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2 disabled:opacity-50"
-              >
-                <EyeOff size={16} />
-                {loading.notInterested ? 'Processing...' : 'Not Interested'}
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Sound Action (bottom) */}
         {effectiveSoundId && (
           <div className="group mt-1 flex flex-col items-center">
             <Link
               href={`/shorts/sounds/${effectiveSoundId}`}
               className="relative"
-              title={soundMeta?.title || 'Original audio'}
+              title={'Original audio'}
             >
               <div className="w-9 h-9 rounded-full border-2 border-white overflow-hidden relative bg-gray-800 flex items-center justify-center animate-spin [animation-duration:6s]">
                 <AuthenticatedImage
-                  mediaKey={soundImageSrc != null ? getImageSrc(soundImageSrc, '480w') : getImageSrc(channel.avatar, '480w') || ""}
-                  alt={soundMeta?.title || 'Original audio'}
+                  mediaKey={getImageSrc(soundImageSrc, '480w') || ""}
+                  alt={'Original audio'}
                   width={40}
                   height={40}
                   className="w-full h-full object-cover"
+                  fallbackSrc="/placeholder.png"
                 />
               </div>
             </Link>
