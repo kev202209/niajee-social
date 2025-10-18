@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Header from "@/components/home/Header";
 import Sidebar from "@/components/home/Sidebar";
 import MobileBottomNav from "@/components/home/MobileBottomNav";
@@ -14,6 +14,7 @@ import CommentsSection from "./CommentsSection";
 import { getFullUrl } from "@/utils/videourl";
 import { FullShortData, getImageSrcSafe } from '@/types'
 
+const PREFETCH_AHEAD = 2;
 
 const ShortVideoPage = () => {
   const params = useParams();
@@ -21,302 +22,248 @@ const ShortVideoPage = () => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
   const [currentVideo, setCurrentVideo] = useState<FullShortData | null>(null);
-  const [nextVideo, setNextVideo] = useState<FullShortData | null>(null);
-  // Track history of videos for "back" navigation.
+  const [nextQueue, setNextQueue] = useState<FullShortData[]>([]); // buffer of upcoming shorts
   const [videoHistory, setVideoHistory] = useState<FullShortData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Video control states.
-  const [isMuted, setIsMuted] = useState(false); // default: try with sound first
+  const [isMuted, setIsMuted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [volume, setVolume] = useState(0.5);
-  // New state: whether the comments panel is showing.
   const [showComments, setShowComments] = useState(false);
-  
-  // Add report modal state
   const [showReport, setShowReport] = useState(false);
 
-  // Refs for the scroll container and current video element.
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentVideoRef = useRef<HTMLVideoElement>(null!);
 
-  // Helper function to get the best video URL
+  // Prefer HLS master, then explicit master key, then qualities, then any
   const getBestVideoUrl = (video: FullShortData): string => {
-    // If videoSrc is provided, use it
-    if (video.videoSrc) {
-      return getFullUrl(video.videoSrc);
-    }
-
-    // If masterPlaylist is provided, use it for HLS
-    if (video.masterPlaylist) {
-      return getFullUrl(video.masterPlaylist);
-    }
-
-    // If videoUrl is a string, return it
-    if (typeof video.videoUrl === 'string') {
-      return getFullUrl(video.videoUrl);
-    }
-
-    // If videoUrl is an object, pick the best quality
-    if (typeof video.videoUrl === 'object' && video.videoUrl) {
-      const preferredQualities = ['1080p', '720p', '480p', '360p', '240p'];
-      for (const quality of preferredQualities) {
-        const candidate = (video.videoUrl as Record<string, string>)[quality];
-        if (typeof candidate === 'string' && candidate) {
-          return getFullUrl(candidate);
-        }
+    if (video.videoSrc) return getFullUrl(video.videoSrc);
+    if (video.masterPlaylist) return getFullUrl(video.masterPlaylist);
+    if (typeof video.videoUrl === 'string') return getFullUrl(video.videoUrl);
+    if (video.videoUrl && typeof video.videoUrl === 'object') {
+      const order = ['master', '1080p', '720p', '480p', '360p', '240p', 'progressive'];
+      for (const key of order) {
+        const candidate = (video.videoUrl as Record<string, string>)[key];
+        if (typeof candidate === 'string' && candidate) return getFullUrl(candidate);
       }
-      // Fallback to first available quality
       const keys = Object.keys(video.videoUrl);
       if (keys.length > 0) {
         const first = (video.videoUrl as Record<string, string>)[keys[0]];
         if (typeof first === 'string') return getFullUrl(first);
       }
     }
- 
-     return '';
-   };
+    return '';
+  };
 
+  // Minimal type guard; no normalization
+  const isFullShort = (raw: unknown): raw is FullShortData => {
+    if (!raw || typeof raw !== 'object') return false;
+    const o = raw as Record<string, unknown>;
+    return typeof o.id === 'string';
+  };
 
-  // Fetch current video by ID or default.
+  // Fetch one by ID or any single
   const fetchCurrentVideo = async (videoId?: string): Promise<FullShortData | null> => {
     try {
-      let raw: unknown;
       if (videoId) {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`, { credentials: "include" });
         if (!res.ok) return null;
-        raw = await res.json();
+        const data = await res.json();
+        return isFullShort(data) ? data : null;
       } else {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts?limit=1`, { credentials: "include" });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/content/feed/shorts?limit=1`, { credentials: "include" });
         if (!res.ok) return null;
         const data = await res.json();
-        raw = (Array.isArray(data?.shorts) ? data.shorts[0] : Array.isArray(data?.data) ? data.data[0] : null) as unknown;
+        const raw = (data?.shorts?.[0] ?? data?.data?.[0]) as unknown;
+        return isFullShort(raw) ? raw : null;
       }
-      if (!raw || typeof raw !== 'object') return null;
-
-      const o = raw as Record<string, unknown>;
-      const soundId =
-        (typeof o.soundId === 'string' && o.soundId) ||
-        (typeof o.soundId === 'string' && o.soundId) ||
-        (o.sound && typeof (o.sound as Record<string, unknown>).id === 'string'
-          ? (o.sound as Record<string, unknown>).id
-          : null) ||
-        null;
-
-      const apiData = raw as FullShortData;
-      // Ensure user object exists (use channel data as fallback)
-      if (!apiData.user && apiData.channel) {
-        apiData.user = {
-          id: apiData.channel.id,
-          username: apiData.channel.handle,
-          displayName: apiData.channel.name,
-          // Normalize avatar to a string URL
-          profilePic: getImageSrcSafe(apiData.channel.avatar),
-          verified: apiData.channel.verified,
-        };
-      }
-      // Preserve soundId
-      return { ...apiData, soundId: soundId };
     } catch (err) {
       console.error(err);
       return null;
     }
   };
 
-  // Fetch next video - exclude current and viewed videos
-  const fetchNextVideo = useCallback(async (excludeIds: string[] = []): Promise<FullShortData | null> => {
-    try {
-      // Build exclusion query - exclude provided IDs only
-      const excludeParam = excludeIds.length > 0 
-        ? `&exclude=${excludeIds.join(',')}`
-        : '';
-      
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/feed?limit=1${excludeParam}`,
-        { credentials: "include" }
-      );
-      if (!res.ok) return null;
-      const result = await res.json();
-      const raw = (result.shorts?.[0] ?? result.data?.[0]) as unknown;
-      if (!raw || typeof raw !== 'object') return null;
-
-      const o = raw as Record<string, unknown>;
-      const soundId =
-        (typeof o.soundId === 'string' && o.soundId) ||
-        (typeof o.soundId === 'string' && o.soundId) ||
-        (o.sound && typeof (o.sound as Record<string, unknown>).id === 'string'
-          ? (o.sound as Record<string, unknown>).id
-          : null) ||
-        null;
-
-      const apiData = raw as FullShortData;
-
-      // Ensure user object exists
-      if (!apiData.user && apiData.channel) {
-        apiData.user = {
-          id: apiData.channel.id,
-          username: apiData.channel.handle,
-          displayName: apiData.channel.name,
-          profilePic: getImageSrcSafe(apiData.channel.avatar),
-          verified: apiData.channel.verified,
-        };
+  // Fetch a batch from feed with exclusions (no normalization)
+  const fetchFeedBatch = async (limit: number, excludeIds: string[]): Promise<FullShortData[]> => {
+    const excludeParam = excludeIds.length ? `&exclude=${excludeIds.join(',')}` : '';
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/content/feed/shorts?limit=${limit}${excludeParam}`,
+      { credentials: 'include' }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const items = (data?.shorts ?? data?.data ?? []) as unknown[];
+    const filtered = items.filter(isFullShort) as FullShortData[];
+    // de-duplicate by id
+    const seen = new Set<string>();
+    const unique: FullShortData[] = [];
+    for (const s of filtered) {
+      if (!seen.has(s.id)) {
+        seen.add(s.id);
+        unique.push(s);
       }
-      return { ...apiData, soundId: soundId };
-    } catch (err) {
-      console.error(err);
-      return null;
     }
-  }, []); // Remove currentVideo?.id dependency
+    return unique;
+  };
 
-
-
-     // Navigation: scroll down to next video.
-  const handleScrollDown = useCallback(async () => {
-    if (!nextVideo || !scrollContainerRef.current || !currentVideo) return;
-    scrollContainerRef.current.scrollTo({
-      top: window.innerHeight,
-      behavior: "smooth",
-    });
-    setTimeout(async () => {
-      setVideoHistory((prev) => [...prev, currentVideo]);
-      setCurrentVideo(nextVideo);
-      updateUrl(nextVideo.id);
-      setIsPaused(false);
-      setIsMuted(true);
-      if (currentVideoRef.current) {
-        currentVideoRef.current.muted = true;
-      }
-      
-      // Get IDs to exclude: current video + all history + the video we're moving to
-      const excludeIds = [
-        ...videoHistory.map(v => v.id),
-        currentVideo.id,
-        nextVideo.id
-      ];
-      
-      const newNext = await fetchNextVideo(excludeIds);
-      setNextVideo(newNext);
-      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    }, 600);
-  }, [nextVideo, currentVideo, videoHistory, fetchNextVideo]);
-
-  // Navigation: scroll up to previous video.
-  const handleScrollUp = useCallback(() => {
-    if (videoHistory.length === 0 || !scrollContainerRef.current || !currentVideo)
-      return;
-    const prevVideo = videoHistory[videoHistory.length - 1];
-    scrollContainerRef.current.scrollTo({ top: window.innerHeight, behavior: "auto" });
-    scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    setTimeout(() => {
-      setVideoHistory((prev) => prev.slice(0, -1));
-      setCurrentVideo(prevVideo);
-      updateUrl(prevVideo.id);
-      setIsPaused(false);
-      setIsMuted(true);
-      if (currentVideoRef.current) {
-        currentVideoRef.current.muted = true;
-      }
-    }, 600);
-  }, [videoHistory, currentVideo]);
-
-  // Add keyboard navigation handler
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "ArrowUp") {
-        handleScrollUp();
-      } else if (event.key === "ArrowDown") {
-        handleScrollDown();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleScrollUp, handleScrollDown]);
- 
-  useEffect(() => {
-    const handleScroll = (event: WheelEvent) => {
-      if (event.deltaY > 0) {
-        handleScrollDown();
-      } else if (event.deltaY < 0) {
-        handleScrollUp();
-      }
-    };
-
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener("wheel", handleScroll);
-      return () => container.removeEventListener("wheel", handleScroll);
+  // Fill queue to target size
+  const fillQueue = useCallback(async () => {
+    if (!currentVideo) return;
+    const exclude = new Set<string>([
+      currentVideo.id,
+      ...videoHistory.map(v => v.id),
+      ...nextQueue.map(v => v.id),
+    ]);
+    const need = Math.max(0, PREFETCH_AHEAD - nextQueue.length);
+    if (need === 0) return;
+    const batch = await fetchFeedBatch(PREFETCH_AHEAD, Array.from(exclude));
+    // Keep only new items not already in queue
+    const newOnes = batch.filter(b => !exclude.has(b.id));
+    if (newOnes.length) {
+      setNextQueue(prev => {
+        const existing = new Set(prev.map(v => v.id));
+        const merged = [...prev, ...newOnes.filter(n => !existing.has(n.id))];
+        return merged.slice(0, PREFETCH_AHEAD); // cap buffer
+      });
     }
-  }, [handleScrollDown, handleScrollUp]);
+  }, [currentVideo, videoHistory, nextQueue]);
 
-  // On mount, read the saved volume from localStorage.
+  // Init
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      const current = await fetchCurrentVideo(initialVideoId);
+      if (!current) {
+        setLoading(false);
+        return;
+      }
+      setCurrentVideo(current);
+      updateUrl(current.id);
+      // prime buffer
+      const batch = await fetchFeedBatch(PREFETCH_AHEAD, [current.id]);
+      setNextQueue(batch);
+      setLoading(false);
+    };
+    void init();
+  }, [initialVideoId]);
+
+  // Refill when queue shrinks
+  useEffect(() => {
+    if (currentVideo) void fillQueue();
+  }, [currentVideo, nextQueue.length, fillQueue]);
+
+  // Volume persistence
   useEffect(() => {
     try {
       const savedVolume = localStorage.getItem('video-volume');
       if (savedVolume) {
-        const volValue = parseFloat(savedVolume);
-        if (!isNaN(volValue) && volValue >= 0 && volValue <= 1) {
-          setVolume(volValue);
-        }
+        const vol = parseFloat(savedVolume);
+        if (!isNaN(vol) && vol >= 0 && vol <= 1) setVolume(vol);
       }
-    } catch (error) {
-      console.warn('Failed to read volume from localStorage:', error);
+    } catch (e) {
+      console.warn('Failed to read volume from localStorage:', e);
     }
   }, []);
-
-  // Update volume in localStorage
   const updateVolumeStorage = (vol: number) => {
-    try {
-      localStorage.setItem('video-volume', vol.toString());
-    } catch (error) {
-      console.warn('Failed to save volume to localStorage:', error);
-    }
+    try { localStorage.setItem('video-volume', vol.toString()); } catch {}
   };
 
-
-  // Helper: update URL with current short id.
   const updateUrl = (id: string) => {
     window.history.pushState(null, '', `/shorts/${id}`);
   };
 
-  useEffect(() => {
-    const init = async () => {
-      const current = await fetchCurrentVideo(initialVideoId);
-      if (current) {
-        setCurrentVideo(current);
-        updateUrl(current.id);
-        // Exclude the current video when fetching next
-        const next = await fetchNextVideo([current.id]);
-        setNextVideo(next);
-        setLoading(false);
-      }
-    };
-    init();
-  }, [initialVideoId]); // Remove fetchNextVideo from dependencies
+  // Derived next video from queue
+  const nextVideo = useMemo(() => nextQueue[0] ?? null, [nextQueue]);
 
-  // Video control functions.
+  // Navigation: next
+  const handleScrollDown = useCallback(async () => {
+    if (!nextVideo || !scrollContainerRef.current || !currentVideo) return;
+    scrollContainerRef.current.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+    setTimeout(async () => {
+      setVideoHistory(prev => [...prev, currentVideo]);
+      const newCurrent = nextVideo;
+      setCurrentVideo(newCurrent);
+      updateUrl(newCurrent.id);
+      setIsPaused(false);
+      setIsMuted(true);
+      if (currentVideoRef.current) currentVideoRef.current.muted = true;
+
+      // drop head and refill
+      setNextQueue(prev => prev.slice(1));
+      // Refill in background using latest snapshot
+      const exclude = [
+        ...videoHistory.map(v => v.id),
+        currentVideo.id,
+        newCurrent.id,
+        ...nextQueue.slice(1).map(v => v.id),
+      ];
+      const refill = await fetchFeedBatch(PREFETCH_AHEAD, exclude);
+      setNextQueue(prev => {
+        const existing = new Set(prev.map(v => v.id));
+        const merged = [...prev, ...refill.filter(n => !existing.has(n.id))];
+        return merged.slice(0, PREFETCH_AHEAD);
+      });
+
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    }, 600);
+  }, [nextVideo, currentVideo, videoHistory, nextQueue]);
+
+  // Navigation: previous
+  const handleScrollUp = useCallback(() => {
+    if (videoHistory.length === 0 || !scrollContainerRef.current || !currentVideo) return;
+    const prevVideo = videoHistory[videoHistory.length - 1];
+    scrollContainerRef.current.scrollTo({ top: window.innerHeight, behavior: "auto" });
+    scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => {
+      setVideoHistory(prev => prev.slice(0, -1));
+      setCurrentVideo(prevVideo);
+      updateUrl(prevVideo.id);
+      setIsPaused(false);
+      setIsMuted(true);
+      if (currentVideoRef.current) currentVideoRef.current.muted = true;
+    }, 600);
+  }, [videoHistory, currentVideo]);
+
+  // Keyboard and wheel
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp") handleScrollUp();
+      else if (e.key === "ArrowDown") handleScrollDown();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleScrollUp, handleScrollDown]);
+
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY > 0) handleScrollDown();
+      else if (e.deltaY < 0) handleScrollUp();
+    };
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.addEventListener("wheel", onWheel);
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [handleScrollDown, handleScrollUp]);
+
   const toggleMute = () => {
-    setIsMuted((prev) => {
-      const newMuted = !prev;
-      if (currentVideoRef.current) {
-        currentVideoRef.current.muted = newMuted;
-      }
-      return newMuted;
+    setIsMuted(prev => {
+      const next = !prev;
+      if (currentVideoRef.current) currentVideoRef.current.muted = next;
+      return next;
     });
   };
 
   const togglePlayPause = () => {
-    if (currentVideoRef.current) {
-      if (isPaused) {
-        currentVideoRef.current.volume = volume;
-        setIsMuted(false);
-        currentVideoRef.current.muted = false;
-        currentVideoRef.current.play();
-      } else {
-        currentVideoRef.current.pause();
-      }
-      setIsPaused((prev) => !prev);
+    if (!currentVideoRef.current) return;
+    if (isPaused) {
+      currentVideoRef.current.volume = volume;
+      setIsMuted(false);
+      currentVideoRef.current.muted = false;
+      currentVideoRef.current.play();
+    } else {
+      currentVideoRef.current.pause();
     }
+    setIsPaused(p => !p);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -336,21 +283,10 @@ const ShortVideoPage = () => {
     }
   };
 
+  const toggleComments = () => setShowComments(prev => !prev);
+  const handleShowReport = () => setShowReport(true);
 
-
-  // Toggle comments panel visibility.
-  const toggleComments = () => {
-    setShowComments((prev) => !prev);
-  };
-
-  // Handle show report modal
-  const handleShowReport = () => {
-    setShowReport(true);
-  };
-
-  if (loading || !currentVideo) {
-    return <ShortsSkeleton />;
-  }
+  if (loading || !currentVideo) return <ShortsSkeleton />;
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 relative">
@@ -358,14 +294,10 @@ const ShortVideoPage = () => {
       <Header />
 
       <div className="pt-10">
-        <div
-          ref={scrollContainerRef}
-          className="h-screen overflow-hidden flex justify-center"
-        >
-          <div className="h-[200vh] w-full max-w-[500px] relative">
-            {/* Current Video Container */}
+        <div ref={scrollContainerRef} className="h-screen overflow-hidden flex justify-center">
+          <div className="h[200vh] w-full max-w-[500px] relative">
+            {/* Current Video */}
             <div className="relative h-screen">
-              {/* Video Player Container */}
               <div className="flex items-center justify-center h-full">
                 <VideoPlayer
                   videoRef={currentVideoRef}
@@ -379,7 +311,6 @@ const ShortVideoPage = () => {
                   togglePlayPause={togglePlayPause}
                   channel={{
                     name: currentVideo.channel.name,
-                    // Normalize avatar to a string URL for icon
                     icon: getImageSrcSafe(currentVideo.channel.avatar),
                   }}
                   caption={currentVideo.description || currentVideo.title || ""}
@@ -388,7 +319,6 @@ const ShortVideoPage = () => {
                 />
               </div>
 
-              {/* Video Actions */}
               <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
                 <VideoActions 
                   video={currentVideo}
@@ -397,7 +327,6 @@ const ShortVideoPage = () => {
                 />
               </div>
 
-              {/* Navigation arrows (moved inside the video container so they aren't under the sidebar) */}
               <div className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 flex-col items-center space-y-4 z-30">
                 <button
                   onClick={handleScrollUp}
@@ -417,7 +346,6 @@ const ShortVideoPage = () => {
                 </button>
               </div>
 
-              {/* Comments Section */}
               {showComments && (
                 <CommentsSection
                   shortId={currentVideo.id}
@@ -427,7 +355,7 @@ const ShortVideoPage = () => {
               )}
             </div>
 
-            {/* Next Video Preview */}
+            {/* Next Preview (first in queue) */}
             <div className="h-screen flex items-center justify-center">
               {nextVideo ? (
                 <VideoPlayer
@@ -442,7 +370,6 @@ const ShortVideoPage = () => {
                   togglePlayPause={() => {}}
                   channel={{
                     name: nextVideo.channel.name,
-                    // Normalize avatar to a string URL for icon
                     icon: getImageSrcSafe(nextVideo.channel.avatar),
                   }}
                   caption={nextVideo.description || nextVideo.title || ""}
@@ -454,11 +381,8 @@ const ShortVideoPage = () => {
             </div>
           </div>
         </div>
-
-        {/* Removed old absolute arrows at page level to avoid overlap with sidebar */}
       </div>
 
-      {/* Report Modal - Rendered at page level */}
       <ReportModal
         isOpen={showReport}
         onClose={() => setShowReport(false)}

@@ -11,7 +11,7 @@ const ShortsPage = () => {
     const fetchAndRedirect = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/feed?limit=1`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/content/feed/shorts?limit=1`,
           { credentials: 'include' }
         );
 
