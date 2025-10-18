@@ -1,9 +1,11 @@
 import { FC, useEffect, useRef, useState } from 'react';
-import { FaVolumeMute, FaVolumeDown, FaVolumeUp, FaPause, FaPlay } from 'react-icons/fa';
+import { FaVolumeMute, FaVolumeDown, FaVolumeUp, } from 'react-icons/fa';
+import { LuPause, LuPlay } from "react-icons/lu";
 import Hls from 'hls.js';
 import ShortsProgressBar from './ShortsProgressBar';
 import ViewTrackingService from '@/utils/ViewTrackingService';
 import { getDeviceInfo, DeviceInfo } from '@/utils/deviceInfo';
+import BufferingSpinner from '@/components/video/BufferingSpinner';
 
 interface Channel {
   name: string;
@@ -28,13 +30,6 @@ interface VideoPlayerProps {
   shouldAutoPlay?: boolean; // defaults to true
   preloadMode?: 'auto' | 'metadata' | 'none'; // defaults to 'auto'
 }
-
-// Add BufferingSpinner component
-const BufferingSpinner = () => (
-  <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/20">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-  </div>
-);
 
 const VideoPlayer: FC<VideoPlayerProps> = ({
   videoId,
@@ -63,7 +58,9 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
   const [hasError, setHasError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [viewRecorded, setViewRecorded] = useState(false);
-  
+  const [showTapIcon, setShowTapIcon] = useState(false); // NEW
+  const tapTimerRef = useRef<number | null>(null);       // NEW
+
   const viewRecordedRef = useRef(false);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastProgressUpdateRef = useRef<number>(0);
@@ -427,6 +424,15 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
 
   const showSpinner = isBuffering && !hasError && shouldAutoPlay;
 
+  const handleCenterTap = () => { // NEW: tap to toggle + flash icon
+    // Flash icon briefly based on the state after toggle
+    const willBePaused = !isPaused;
+    setShowTapIcon(true);
+    if (tapTimerRef.current) window.clearTimeout(tapTimerRef.current);
+    tapTimerRef.current = window.setTimeout(() => setShowTapIcon(false), 600);
+    togglePlayPause();
+  };
+
   return (
     <div
       className="relative rounded-md overflow-hidden bg-black"
@@ -454,7 +460,12 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
         }}
       />
       
-      {showSpinner && <BufferingSpinner />}
+      {/* Buffering overlay using shared component */}
+      {showSpinner && (
+        <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/20">
+          <BufferingSpinner size={48} />
+        </div>
+      )}
 
       {hasError && (
         <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/80">
@@ -474,30 +485,34 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
       {/* Central click region */}
       <div className="absolute inset-0 flex items-center justify-center z-10">
         <div
-          onClick={togglePlayPause}
+          onClick={handleCenterTap}
           className="w-1/2 h-1/2 cursor-pointer"
-        ></div>
+        />
       </div>
+
+      {/* Tap indicator (briefly shows Play/Pause icon) */}
+      {showTapIcon && (
+        <div className="absolute inset-0 flex items-center justify-center z-40">
+          {isPaused ? (
+            <LuPlay className="text-white text-6xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]" />
+          ) : (
+            <LuPause className="text-white text-6xl drop-shadow-[0_2px_6px_rgba(0,0,0,0.6)]" />
+          )}
+        </div>
+      )}
       
       <div className="absolute inset-0 flex flex-col justify-between z-20 pointer-events-none">
         {/* Top controls */}
-        <div className="flex justify-between p-2 pointer-events-auto">
-          <button
-            onClick={togglePlayPause}
-            className="bg-black bg-opacity-70 p-2 rounded-full transition-transform duration-300"
-            disabled={isBuffering || hasError}
-            aria-label={isPaused ? 'Play' : 'Pause'}
-          >
-            {isPaused ? (
-              <FaPlay className="text-white text-xl" />
-            ) : (
-              <FaPause className="text-white text-xl" />
-            )}
-          </button>
-          
+        <div className="flex justify-start p-2 pointer-events-auto">
+          {/* Volume control moved to top-left; expands to the right */}
           <div className="relative group">
-            <div className="flex items-center bg-black bg-opacity-70 rounded-full overflow-hidden transition-all duration-300 w-12 group-hover:w-48">
-              <button onClick={toggleMute} className="p-2" disabled={hasError}>
+            <div className="flex items-center bg-black/70 rounded-full overflow-hidden transition-all duration-300 w-12 group-hover:w-48">
+              <button
+                onClick={toggleMute}
+                className="p-2"
+                disabled={hasError}
+                aria-label={isMuted ? 'Unmute' : 'Mute'}
+              >
                 {getVolumeIcon()}
               </button>
               <input
@@ -507,8 +522,9 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
                 step="0.01"
                 value={volume}
                 onChange={onVolumeChange}
-                className="w-32 hidden group-hover:block"
+                className="w-32 h-2 hidden group-hover:block ml-1"
                 disabled={hasError}
+                aria-label="Volume"
               />
             </div>
           </div>
