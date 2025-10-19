@@ -212,10 +212,10 @@ export default function BlogsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
-      <div className="flex pt-16">
+      <div className="pt-16">
         <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
-        
-        <main className="flex-1 min-w-0">
+        {/* Reserve collapsed sidebar width on lg+ (w-20) */}
+        <main className="flex-1 min-w-0 relative z-0 lg:pl-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
             {/* Header Section - Stack on mobile */}
             <div className="flex flex-col gap-4 mb-6 sm:mb-8">
