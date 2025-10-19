@@ -66,7 +66,7 @@ export const HistoryVideoCard: React.FC<HistoryVideoProps> = ({ data }) => {
     title: data.title ?? '',
     // VideoCard expects `thumbnail` (not thumbnail) and `thumbnail` should be a key for your image utility
     thumbnail: typeof raw.thumbnail === 'string' ? raw.thumbnail : String(data.thumbnail ?? ''),
-    thumbnail: String(data.thumbnail ?? ''),
+    // thumbnail: String(data.thumbnail ?? ''),
     duration: data.duration ?? 0,
     // numeric stats
     views: typeof raw.views === 'number' ? raw.views : Number(raw.views ?? 0),
@@ -136,7 +136,7 @@ export const HistoryShortCard: React.FC<HistoryShortProps> = ({ data }) => {
         : (typeof rawShort.videoUrl === 'string' ? rawShort.videoUrl : ''),
     title: data.title ?? '',
     thumbnail: typeof rawShort.thumbnail === 'string' ? rawShort.thumbnail : String(data.thumbnail ?? ''),
-    thumbnail: String(data.thumbnail ?? ''),
+    // thumbnail: String(data.thumbnail ?? ''),
     duration: data.duration ?? 0,
     views: typeof rawShort.views === 'number' ? rawShort.views : Number(rawShort.views ?? 0),
     likes: typeof rawShort.likes === 'number' ? rawShort.likes : Number(rawShort.likes ?? 0),

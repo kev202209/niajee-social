@@ -128,7 +128,7 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
       {/* Main content wrapper */}
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
-        <CreateHeader toggleSidebar={() => {}} isSidebarOpen={false} />
+        <CreateHeader toggleSidebar={() => {}} />
 
         {/* Page content */}
         <main className="pt-16 pb-20 lg:pb-0 h-full overflow-y-auto lg:ml-64">

@@ -14,7 +14,7 @@ interface CreateHeaderProps {
   toggleSidebar?: () => void
 }
 
-const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar }) => {
+const CreateHeader: FC<CreateHeaderProps> = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()

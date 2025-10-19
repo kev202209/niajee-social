@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type RefObject, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   MessageCircle,
   Share2,
@@ -26,7 +26,6 @@ interface VideoActionsProps {
 const VideoActions = ({ 
   video,
   onToggleComments,
-  onShowReport,
 }: VideoActionsProps) => {
   // Destructure properties from the video object
   const { 
@@ -189,39 +188,39 @@ const VideoActions = ({
   };
 
   // Handle not interested
-  const handleNotInterested = async () => {
-    if (loading.notInterested) return;
+  // const handleNotInterested = async () => {
+  //   if (loading.notInterested) return;
     
-    setLoading(prev => ({ ...prev, notInterested: true }));
-    // setShowMenu(false);
+  //   setLoading(prev => ({ ...prev, notInterested: true }));
+  //   // setShowMenu(false);
     
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}/not-interested`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          }
-        }
-      );
+  //   try {
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}/not-interested`,
+  //       {
+  //         method: 'POST',
+  //         credentials: 'include',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           'Accept': 'application/json',
+  //         }
+  //       }
+  //     );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to mark as not interested');
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.message || 'Failed to mark as not interested');
+  //     }
 
-      toast.success('We\'ll show you fewer videos like this');
+  //     toast.success('We\'ll show you fewer videos like this');
       
-    } catch (error) {
-      console.error('Error marking as not interested:', error);
-      toast.error(GENERIC_ERROR_MESSAGE);
-    } finally {
-      setLoading(prev => ({ ...prev, notInterested: false }));
-    }
-  };
+  //   } catch (error) {
+  //     console.error('Error marking as not interested:', error);
+  //     toast.error(GENERIC_ERROR_MESSAGE);
+  //   } finally {
+  //     setLoading(prev => ({ ...prev, notInterested: false }));
+  //   }
+  // };
 
   // Handle share with proper native share timing
   const handleShare = async () => {

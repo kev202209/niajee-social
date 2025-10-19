@@ -426,7 +426,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
 
   const handleCenterTap = () => { // NEW: tap to toggle + flash icon
     // Flash icon briefly based on the state after toggle
-    const willBePaused = !isPaused;
+    // const willBePaused = !isPaused;
     setShowTapIcon(true);
     if (tapTimerRef.current) window.clearTimeout(tapTimerRef.current);
     tapTimerRef.current = window.setTimeout(() => setShowTapIcon(false), 600);

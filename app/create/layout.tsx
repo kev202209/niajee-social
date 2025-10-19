@@ -62,7 +62,7 @@ export default function CreateLayout({ children }: { children: React.ReactNode }
       {/* Main content wrapper */}
       <div className="flex flex-col flex-1 min-w-0">
         {/* Header */}
-        <CreateHeader toggleSidebar={() => {}} isSidebarOpen={false} />
+        <CreateHeader toggleSidebar={() => {}} />
 
         {/* Page content */}
         <main
