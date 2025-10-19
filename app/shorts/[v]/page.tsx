@@ -1,338 +1,275 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Header from "@/components/home/Header";
 import Sidebar from "@/components/home/Sidebar";
+import MobileBottomNav from "@/components/home/MobileBottomNav";
 import VideoPlayer from "./shortVideoPlayer";
 import ShortsSkeleton from './ShortSkeleton';
 import VideoActions from "./VideoActions";
 import ReportModal from "./ReportModal"; 
-import { FaArrowUp, FaArrowDown } from "react-icons/fa";
 import CommentsSection from "./CommentsSection";
+import { FaArrowUp, FaArrowDown } from "react-icons/fa";
+import { MoreHorizontal, Flag, EyeOff } from 'lucide-react';
+import useOutsideClick from "@/hooks/useOutsideClick";
 import { getFullUrl } from "@/utils/videourl";
+import { FullShortData, getImageSrcSafe } from '@/types'
 
-// Updated backend data structure for shorts
-interface ShortData {
-  id: string;
-  title: string;
-  description?: string;
-  videoUrl: {
-    [quality: string]: string;
-  } | string; // Handle both formats
-  videoSrc?: string; // Direct video source URL
-  masterPlaylist?: string;
-  qualities?: string[];
-  thumbnailUrl: string | null;
-  duration: number;
-  viewCount: number;
-  likeCount: number;
-  commentCount: number;
-  shareCount: number;
-  saveCount: number;
-  isPublic: boolean;
-  isLiked: boolean;
-  isSaved: boolean;
-  allowComments: boolean;
-  allowDuet: boolean;
-  monetization: {
-    enabled: boolean;
-    reason: string | null;
-  };
-  tags: string[];
-  mentions: string[];
-  location: string | null;
-  createdAt: string;
-  channel: {
-    id: string;
-    name: string;
-    handle: string;
-    avatar: string;
-    verified: boolean;
-    isFollowed: boolean;
-  };
-  user?: {
-    id: string;
-    username: string;
-    displayName: string;
-    profilePic: string;
-    verified: boolean;
-  };
-}
+const PREFETCH_AHEAD = 2;
 
 const ShortVideoPage = () => {
   const params = useParams();
   const initialVideoId = Array.isArray(params?.v) ? params.v[0] : params?.v;
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
-  const [currentVideo, setCurrentVideo] = useState<ShortData | null>(null);
-  const [nextVideo, setNextVideo] = useState<ShortData | null>(null);
-  // Track history of videos for "back" navigation.
-  const [videoHistory, setVideoHistory] = useState<ShortData[]>([]);
+  const [currentVideo, setCurrentVideo] = useState<FullShortData | null>(null);
+  const [nextQueue, setNextQueue] = useState<FullShortData[]>([]); // buffer of upcoming shorts
+  const [videoHistory, setVideoHistory] = useState<FullShortData[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Video control states.
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [volume, setVolume] = useState(0.5);
-  // New state: whether the comments panel is showing.
   const [showComments, setShowComments] = useState(false);
-  
-  // Add report modal state
   const [showReport, setShowReport] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [moreBusy, setMoreBusy] = useState(false);
 
-  // Refs for the scroll container and current video element.
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentVideoRef = useRef<HTMLVideoElement>(null!);
+  const moreMenuRef = useRef<HTMLDivElement | null>(null);
+  useOutsideClick(moreMenuRef as unknown as React.RefObject<HTMLElement>, () => setShowMoreMenu(false));
 
-  // Helper function to get the best video URL
-  const getBestVideoUrl = (video: ShortData): string => {
-    // If videoSrc is provided, use it
-    if (video.videoSrc) {
-      return getFullUrl(video.videoSrc);
-    }
-
-    // If masterPlaylist is provided, use it for HLS
-    if (video.masterPlaylist) {
-      return getFullUrl(video.masterPlaylist);
-    }
-
-    // If videoUrl is a string, return it
-    if (typeof video.videoUrl === 'string') {
-      return getFullUrl(video.videoUrl);
-    }
-
-    // If videoUrl is an object, pick the best quality
-    if (typeof video.videoUrl === 'object' && video.videoUrl) {
-      const preferredQualities = ['1080p', '720p', '480p', '360p', '240p'];
-      for (const quality of preferredQualities) {
-        const candidate = (video.videoUrl as Record<string, string>)[quality];
-        if (typeof candidate === 'string' && candidate) {
-          return getFullUrl(candidate);
-        }
+  // Prefer HLS master, then explicit master key, then qualities, then any
+  const getBestVideoUrl = (video: FullShortData): string => {
+    if (video.videoSrc) return getFullUrl(video.videoSrc);
+    if (video.masterPlaylist) return getFullUrl(video.masterPlaylist);
+    if (typeof video.videoUrl === 'string') return getFullUrl(video.videoUrl);
+    if (video.videoUrl && typeof video.videoUrl === 'object') {
+      const order = ['master', '1080p', '720p', '480p', '360p', '240p', 'progressive'];
+      for (const key of order) {
+        const candidate = (video.videoUrl as Record<string, string>)[key];
+        if (typeof candidate === 'string' && candidate) return getFullUrl(candidate);
       }
-      // Fallback to first available quality
       const keys = Object.keys(video.videoUrl);
       if (keys.length > 0) {
         const first = (video.videoUrl as Record<string, string>)[keys[0]];
         if (typeof first === 'string') return getFullUrl(first);
       }
     }
- 
-     return '';
-   };
+    return '';
+  };
 
+  // Minimal type guard; no normalization
+  const isFullShort = (raw: unknown): raw is FullShortData => {
+    if (!raw || typeof raw !== 'object') return false;
+    const o = raw as Record<string, unknown>;
+    return typeof o.id === 'string';
+  };
 
-  // Fetch current video by ID or default.
-  const fetchCurrentVideo = async (videoId?: string): Promise<ShortData | null> => {
+  // Fetch one by ID or any single
+  const fetchCurrentVideo = async (videoId?: string): Promise<FullShortData | null> => {
     try {
-      let apiData: ShortData;
       if (videoId) {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`,
-          { credentials: "include" }
-        );
-        if (!res.ok) throw new Error('Failed to fetch video');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`, { credentials: "include" });
+        if (!res.ok) return null;
         const data = await res.json();
-        apiData = data.short || data;
+        return isFullShort(data) ? data : null;
       } else {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`,
-          { credentials: "include" }
-        );
-        if (!res.ok) throw new Error('Failed to fetch videos');
-        const result = await res.json();
-        apiData = result.shorts[0] || result.data[0];
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/content/feed/shorts?limit=1`, { credentials: "include" });
+        if (!res.ok) return null;
+        const data = await res.json();
+        const raw = (data?.shorts?.[0] ?? data?.data?.[0]) as unknown;
+        return isFullShort(raw) ? raw : null;
       }
-
-      // Ensure user object exists (use channel data as fallback)
-      if (!apiData.user && apiData.channel) {
-        apiData.user = {
-          id: apiData.channel.id,
-          username: apiData.channel.handle.replace('@', ''),
-          displayName: apiData.channel.name,
-          profilePic: apiData.channel.avatar,
-          verified: apiData.channel.verified
-        };
-      }
-
-      return apiData;
     } catch (err) {
       console.error(err);
       return null;
     }
   };
 
-  // Fetch next video.
-  const fetchNextVideo = useCallback(async (): Promise<ShortData | null> => {
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts?page=1&limit=1`,
-        { credentials: "include" }
-      );
-      if (!res.ok) throw new Error('Failed to fetch next video');
-      const result = await res.json();
-      const apiData = result.shorts[0] || result.data[0];
-      
-      // Ensure user object exists
-      if (!apiData.user && apiData.channel) {
-        apiData.user = {
-          id: apiData.channel.id,
-          username: apiData.channel.handle.replace('@', ''),
-          displayName: apiData.channel.name,
-          profilePic: apiData.channel.avatar,
-          verified: apiData.channel.verified
-        };
+  // Fetch a batch from feed with exclusions (no normalization)
+  const fetchFeedBatch = async (limit: number, excludeIds: string[]): Promise<FullShortData[]> => {
+    const excludeParam = excludeIds.length ? `&exclude=${excludeIds.join(',')}` : '';
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/content/feed/shorts?limit=${limit}${excludeParam}`,
+      { credentials: 'include' }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    const items = (data?.shorts ?? data?.data ?? []) as unknown[];
+    const filtered = items.filter(isFullShort) as FullShortData[];
+    // de-duplicate by id
+    const seen = new Set<string>();
+    const unique: FullShortData[] = [];
+    for (const s of filtered) {
+      if (!seen.has(s.id)) {
+        seen.add(s.id);
+        unique.push(s);
       }
-
-      return apiData;
-    } catch (err) {
-      console.error(err);
-      return null;
     }
-  }, []);
+    return unique;
+  };
 
-
-
-     // Navigation: scroll down to next video.
-  const handleScrollDown = useCallback(async () => {
-    if (!nextVideo || !scrollContainerRef.current || !currentVideo) return;
-    scrollContainerRef.current.scrollTo({
-      top: window.innerHeight,
-      behavior: "smooth",
-    });
-    setTimeout(async () => {
-      setVideoHistory((prev) => [...prev, currentVideo]);
-      setCurrentVideo(nextVideo);
-      updateUrl(nextVideo.id);
-      setIsPaused(false);
-      setIsMuted(true);
-      if (currentVideoRef.current) {
-        currentVideoRef.current.muted = true;
-      }
-      const newNext = await fetchNextVideo();
-      setNextVideo(newNext);
-      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    }, 600);
-  }, [nextVideo, currentVideo, fetchNextVideo]);
-
-  // Navigation: scroll up to previous video.
-  const handleScrollUp = useCallback(() => {
-    if (videoHistory.length === 0 || !scrollContainerRef.current || !currentVideo)
-      return;
-    const prevVideo = videoHistory[videoHistory.length - 1];
-    scrollContainerRef.current.scrollTo({ top: window.innerHeight, behavior: "auto" });
-    scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    setTimeout(() => {
-      setVideoHistory((prev) => prev.slice(0, -1));
-      setCurrentVideo(prevVideo);
-      updateUrl(prevVideo.id);
-      setIsPaused(false);
-      setIsMuted(true);
-      if (currentVideoRef.current) {
-        currentVideoRef.current.muted = true;
-      }
-    }, 600);
-  }, [videoHistory, currentVideo]);
-
-  // Add keyboard navigation handler
-  useEffect(() => {
-    const handleKeyPress = (event: KeyboardEvent) => {
-      if (event.key === "ArrowUp") {
-        handleScrollUp();
-      } else if (event.key === "ArrowDown") {
-        handleScrollDown();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [handleScrollUp, handleScrollDown]);
- 
-  useEffect(() => {
-    const handleScroll = (event: WheelEvent) => {
-      if (event.deltaY > 0) {
-        handleScrollDown();
-      } else if (event.deltaY < 0) {
-        handleScrollUp();
-      }
-    };
-
-    const container = scrollContainerRef.current;
-    if (container) {
-      container.addEventListener("wheel", handleScroll);
-      return () => container.removeEventListener("wheel", handleScroll);
+  // Fill queue to target size
+  const fillQueue = useCallback(async () => {
+    if (!currentVideo) return;
+    const exclude = new Set<string>([
+      currentVideo.id,
+      ...videoHistory.map(v => v.id),
+      ...nextQueue.map(v => v.id),
+    ]);
+    const need = Math.max(0, PREFETCH_AHEAD - nextQueue.length);
+    if (need === 0) return;
+    const batch = await fetchFeedBatch(PREFETCH_AHEAD, Array.from(exclude));
+    // Keep only new items not already in queue
+    const newOnes = batch.filter(b => !exclude.has(b.id));
+    if (newOnes.length) {
+      setNextQueue(prev => {
+        const existing = new Set(prev.map(v => v.id));
+        const merged = [...prev, ...newOnes.filter(n => !existing.has(n.id))];
+        return merged.slice(0, PREFETCH_AHEAD); // cap buffer
+      });
     }
-  }, [handleScrollDown, handleScrollUp]);
+  }, [currentVideo, videoHistory, nextQueue]);
 
-  // On mount, read the saved volume from localStorage.
+  // Init
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      const current = await fetchCurrentVideo(initialVideoId);
+      if (!current) {
+        setLoading(false);
+        return;
+      }
+      setCurrentVideo(current);
+      updateUrl(current.id);
+      // prime buffer
+      const batch = await fetchFeedBatch(PREFETCH_AHEAD, [current.id]);
+      setNextQueue(batch);
+      setLoading(false);
+    };
+    void init();
+  }, [initialVideoId]);
+
+  // Refill when queue shrinks
+  useEffect(() => {
+    if (currentVideo) void fillQueue();
+  }, [currentVideo, nextQueue.length, fillQueue]);
+
+  // Volume persistence
   useEffect(() => {
     try {
       const savedVolume = localStorage.getItem('video-volume');
       if (savedVolume) {
-        const volValue = parseFloat(savedVolume);
-        if (!isNaN(volValue) && volValue >= 0 && volValue <= 1) {
-          setVolume(volValue);
-        }
+        const vol = parseFloat(savedVolume);
+        if (!isNaN(vol) && vol >= 0 && vol <= 1) setVolume(vol);
       }
-    } catch (error) {
-      console.warn('Failed to read volume from localStorage:', error);
+    } catch (e) {
+      console.warn('Failed to read volume from localStorage:', e);
     }
   }, []);
-
-  // Update volume in localStorage
   const updateVolumeStorage = (vol: number) => {
-    try {
-      localStorage.setItem('video-volume', vol.toString());
-    } catch (error) {
-      console.warn('Failed to save volume to localStorage:', error);
-    }
+    try { localStorage.setItem('video-volume', vol.toString()); } catch {}
   };
 
-
-  // Helper: update URL with current short id.
   const updateUrl = (id: string) => {
     window.history.pushState(null, '', `/shorts/${id}`);
   };
 
-  useEffect(() => {
-    const init = async () => {
-      const current = await fetchCurrentVideo(initialVideoId);
-      if (current) {
-        setCurrentVideo(current);
-        updateUrl(current.id);
-        const next = await fetchNextVideo();
-        setNextVideo(next);
-        setLoading(false);
-      }
-    };
-    init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialVideoId]);
+  // Derived next video from queue
+  const nextVideo = useMemo(() => nextQueue[0] ?? null, [nextQueue]);
 
-  // Video control functions.
+  // Navigation: next
+  const handleScrollDown = useCallback(async () => {
+    if (!nextVideo || !scrollContainerRef.current || !currentVideo) return;
+    scrollContainerRef.current.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+    setTimeout(async () => {
+      setVideoHistory(prev => [...prev, currentVideo]);
+      const newCurrent = nextVideo;
+      setCurrentVideo(newCurrent);
+      updateUrl(newCurrent.id);
+      setIsPaused(false);
+      setIsMuted(true);
+      if (currentVideoRef.current) currentVideoRef.current.muted = true;
+
+      // drop head and refill
+      setNextQueue(prev => prev.slice(1));
+      // Refill in background using latest snapshot
+      const exclude = [
+        ...videoHistory.map(v => v.id),
+        currentVideo.id,
+        newCurrent.id,
+        ...nextQueue.slice(1).map(v => v.id),
+      ];
+      const refill = await fetchFeedBatch(PREFETCH_AHEAD, exclude);
+      setNextQueue(prev => {
+        const existing = new Set(prev.map(v => v.id));
+        const merged = [...prev, ...refill.filter(n => !existing.has(n.id))];
+        return merged.slice(0, PREFETCH_AHEAD);
+      });
+
+      scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    }, 600);
+  }, [nextVideo, currentVideo, videoHistory, nextQueue]);
+
+  // Navigation: previous
+  const handleScrollUp = useCallback(() => {
+    if (videoHistory.length === 0 || !scrollContainerRef.current || !currentVideo) return;
+    const prevVideo = videoHistory[videoHistory.length - 1];
+    scrollContainerRef.current.scrollTo({ top: window.innerHeight, behavior: "auto" });
+    scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => {
+      setVideoHistory(prev => prev.slice(0, -1));
+      setCurrentVideo(prevVideo);
+      updateUrl(prevVideo.id);
+      setIsPaused(false);
+      setIsMuted(true);
+      if (currentVideoRef.current) currentVideoRef.current.muted = true;
+    }, 600);
+  }, [videoHistory, currentVideo]);
+
+  // Keyboard and wheel
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowUp") handleScrollUp();
+      else if (e.key === "ArrowDown") handleScrollDown();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleScrollUp, handleScrollDown]);
+
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY > 0) handleScrollDown();
+      else if (e.deltaY < 0) handleScrollUp();
+    };
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    el.addEventListener("wheel", onWheel);
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [handleScrollDown, handleScrollUp]);
+
   const toggleMute = () => {
-    setIsMuted((prev) => {
-      const newMuted = !prev;
-      if (currentVideoRef.current) {
-        currentVideoRef.current.muted = newMuted;
-      }
-      return newMuted;
+    setIsMuted(prev => {
+      const next = !prev;
+      if (currentVideoRef.current) currentVideoRef.current.muted = next;
+      return next;
     });
   };
 
   const togglePlayPause = () => {
-    if (currentVideoRef.current) {
-      if (isPaused) {
-        currentVideoRef.current.volume = volume;
-        setIsMuted(false);
-        currentVideoRef.current.muted = false;
-        currentVideoRef.current.play();
-      } else {
-        currentVideoRef.current.pause();
-      }
-      setIsPaused((prev) => !prev);
+    if (!currentVideoRef.current) return;
+    if (isPaused) {
+      currentVideoRef.current.volume = volume;
+      setIsMuted(false);
+      currentVideoRef.current.muted = false;
+      currentVideoRef.current.play();
+    } else {
+      currentVideoRef.current.pause();
     }
+    setIsPaused(p => !p);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -352,21 +289,46 @@ const ShortVideoPage = () => {
     }
   };
 
+  const toggleComments = () => setShowComments(prev => !prev);
+  const handleShowReport = () => setShowReport(true);
 
+  useEffect(() => {
+    // Close "More" menu when current video changes
+    setShowMoreMenu(false);
+  }, [currentVideo?.id]);
 
-  // Toggle comments panel visibility.
-  const toggleComments = () => {
-    setShowComments((prev) => !prev);
+  const handleNotInterested = async () => {
+    if (!currentVideo || moreBusy) return;
+    setMoreBusy(true);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${currentVideo.id}/not-interested`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        }
+      );
+      if (!res.ok) {
+        try {
+          const j = await res.json();
+          throw new Error(j?.message || 'Failed to mark as not interested');
+        } catch {
+          throw new Error('Failed to mark as not interested');
+        }
+      }
+      setShowMoreMenu(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setMoreBusy(false);
+    }
   };
 
-  // Handle show report modal
-  const handleShowReport = () => {
-    setShowReport(true);
-  };
-
-  if (loading || !currentVideo) {
-    return <ShortsSkeleton />;
-  }
+  if (loading || !currentVideo) return <ShortsSkeleton />;
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 relative">
@@ -374,44 +336,138 @@ const ShortVideoPage = () => {
       <Header />
 
       <div className="pt-10">
-        <div
-          ref={scrollContainerRef}
-          className="h-screen overflow-hidden flex justify-center"
-        >
-          <div className="h-[200vh] w-full max-w-[500px] relative">
-            {/* Current Video Container */}
+        <div ref={scrollContainerRef} className="h-screen overflow-hidden flex justify-center">
+          <div className="h[200vh] w-full max-w-[500px] md:max-w-[760px] relative">
+            {/* Current Video */}
             <div className="relative h-screen">
-              {/* Video Player Container */}
               <div className="flex items-center justify-center h-full">
-                <VideoPlayer
-                  videoRef={currentVideoRef}
-                  videoSrc={getBestVideoUrl(currentVideo)}
-                  videoId={currentVideo.id}
-                  isMuted={isMuted}
-                  isPaused={isPaused}
-                  volume={volume}
-                  onVolumeChange={handleVolumeChange}
-                  toggleMute={toggleMute}
-                  togglePlayPause={togglePlayPause}
-                  channel={{
-                    name: currentVideo.channel.name,
-                    icon: currentVideo.channel.avatar,
-                  }}
-                  caption={currentVideo.description || currentVideo.title || ""}
-                  song="Original Audio"
-                />
+                {/* Wrapper sized to the video box */}
+                <div className="relative inline-block">
+                  <VideoPlayer
+                    videoRef={currentVideoRef}
+                    videoSrc={getBestVideoUrl(currentVideo)}
+                    videoId={currentVideo.id}
+                    isMuted={isMuted}
+                    isPaused={isPaused}
+                    volume={volume}
+                    onVolumeChange={handleVolumeChange}
+                    toggleMute={toggleMute}
+                    togglePlayPause={togglePlayPause}
+                    channel={{
+                      name: currentVideo.channel.name,
+                      icon: getImageSrcSafe(currentVideo.channel.avatar),
+                    }}
+                    caption={currentVideo.description || currentVideo.title || ""}
+                    song="Original Audio"
+                    onAutoplayFallbackMuted={() => setIsMuted(true)}
+                  />
+
+                  {/* Mobile: More button inside video */}
+                  <div className="absolute top-4 right-4 z-[80] pointer-events-auto md:hidden">
+                    <button
+                      onClick={() => setShowMoreMenu(v => !v)}
+                      className="p-2 rounded-full bg-black/60 hover:bg-black/80 transition"
+                      aria-label="More options"
+                    >
+                      <MoreHorizontal className="w-5 h-5 text-white" />
+                    </button>
+                    {showMoreMenu && (
+                      <div
+                        ref={moreMenuRef}
+                        className="mt-2 right-0 absolute bg-black/90 border border-gray-700 rounded-lg p-2 min-w-48"
+                      >
+                        <button
+                          onClick={handleShowReport}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2"
+                        >
+                          <Flag size={16} />
+                          Report
+                        </button>
+                        <button
+                          onClick={handleNotInterested}
+                          disabled={moreBusy}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2 disabled:opacity-50"
+                        >
+                          <EyeOff size={16} />
+                          {moreBusy ? 'Processing...' : 'Not Interested'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Mobile: actions overlay on the video */}
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 z-20 md:hidden">
+                    <VideoActions 
+                      video={currentVideo}
+                      onToggleComments={toggleComments}
+                      onShowReport={handleShowReport}
+                    />
+                  </div>
+                </div>
+
+                {/* Desktop/tablet: side column next to the video */}
+                <div className="hidden md:flex flex-col h-[85vh] ml-4">
+                  {/* Desktop More button, aligned above actions */}
+                  <div className="relative self-end">
+                    <button
+                      onClick={() => setShowMoreMenu(v => !v)}
+                      className="p-2 rounded-full bg-black/60 hover:bg-black/80 transition"
+                      aria-label="More options"
+                    >
+                      <MoreHorizontal className="w-5 h-5 text-white" />
+                    </button>
+                    {showMoreMenu && (
+                      <div
+                        ref={moreMenuRef}
+                        className="absolute right-0 mt-2 bg-black/90 border border-gray-700 rounded-lg p-2 min-w-48 z-[90]"
+                      >
+                        <button
+                          onClick={handleShowReport}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2"
+                        >
+                          <Flag size={16} />
+                          Report
+                        </button>
+                        <button
+                          onClick={handleNotInterested}
+                          disabled={moreBusy}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2 disabled:opacity-50"
+                        >
+                          <EyeOff size={16} />
+                          {moreBusy ? 'Processing...' : 'Not Interested'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 flex items-center justify-end">
+                    <VideoActions 
+                      video={currentVideo}
+                      onToggleComments={toggleComments}
+                      onShowReport={handleShowReport}
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Video Actions */}
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20">
-                <VideoActions 
-                  video={currentVideo}
-                  onToggleComments={toggleComments}
-                  onShowReport={handleShowReport}
-                />
+              <div className="hidden md:flex absolute left-4 top-1/2 -translate-y-1/2 flex-col items-center space-y-4 z-30">
+                <button
+                  onClick={handleScrollUp}
+                  disabled={videoHistory.length === 0}
+                  className="bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed p-3 rounded-full transition-all duration-200"
+                  aria-label="Previous video"
+                >
+                  <FaArrowUp className="w-5 h-5 text-white" />
+                </button>
+                <button
+                  onClick={handleScrollDown}
+                  disabled={!nextVideo}
+                  className="bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed p-3 rounded-full transition-all duration-200"
+                  aria-label="Next video"
+                >
+                  <FaArrowDown className="w-5 h-5 text-white" />
+                </button>
               </div>
 
-              {/* Comments Section */}
               {showComments && (
                 <CommentsSection
                   shortId={currentVideo.id}
@@ -421,7 +477,7 @@ const ShortVideoPage = () => {
               )}
             </div>
 
-            {/* Next Video Preview */}
+            {/* Next Preview (first in queue) */}
             <div className="h-screen flex items-center justify-center">
               {nextVideo ? (
                 <VideoPlayer
@@ -436,10 +492,12 @@ const ShortVideoPage = () => {
                   togglePlayPause={() => {}}
                   channel={{
                     name: nextVideo.channel.name,
-                    icon: nextVideo.channel.avatar,
+                    icon: getImageSrcSafe(nextVideo.channel.avatar),
                   }}
                   caption={nextVideo.description || nextVideo.title || ""}
                   song="Original Audio"
+                  shouldAutoPlay={false}
+                  preloadMode="auto"
                 />
               ) : (
                 <ShortsSkeleton />
@@ -447,35 +505,15 @@ const ShortVideoPage = () => {
             </div>
           </div>
         </div>
-
-        {/* Navigation arrows */}
-        <div className="hidden lg:flex absolute left-4 top-1/2 transform -translate-y-1/2 flex-col items-center space-y-4 z-10">
-          <button
-            onClick={handleScrollUp}
-            disabled={videoHistory.length === 0}
-            className="bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed p-3 rounded-full transition-all duration-200"
-            aria-label="Previous video"
-          >
-            <FaArrowUp className="w-5 h-5 text-white" />
-          </button>
-          <button
-            onClick={handleScrollDown}
-            disabled={!nextVideo}
-            className="bg-black/50 hover:bg-black/70 disabled:opacity-30 disabled:cursor-not-allowed p-3 rounded-full transition-all duration-200"
-            aria-label="Next video"
-          >
-            <FaArrowDown className="w-5 h-5 text-white" />
-          </button>
-        </div>
       </div>
 
-      {/* Report Modal - Rendered at page level */}
       <ReportModal
         isOpen={showReport}
         onClose={() => setShowReport(false)}
         videoId={currentVideo.id}
         videoTitle={currentVideo.title}
       />
+      <MobileBottomNav />
     </div>
   );
 };

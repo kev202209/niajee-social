@@ -4,7 +4,6 @@ import { FC, useRef, useState, useEffect } from "react"
 import AuthenticatedImage from "@/components/Image"
 import DarkModeToggle from "../DarkModeToggle"
 import useOutsideClick from "@/hooks/useOutsideClick"
-import { SquareChevronLeft, SquareChevronRight } from "lucide-react"
 import { useAuth } from "@/contexts/AuthContext"
 import { usePathname } from 'next/navigation'
 import ProfileMenu from "@/components/home/ProfileMenu"
@@ -13,10 +12,9 @@ import Logo  from '@/components/Logo'
 
 interface CreateHeaderProps {
   toggleSidebar?: () => void
-  isSidebarOpen?: boolean
 }
 
-const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) => {
+const CreateHeader: FC<CreateHeaderProps> = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement>(null)
   const pathname = usePathname()
@@ -63,20 +61,6 @@ const CreateHeader: FC<CreateHeaderProps> = ({ toggleSidebar, isSidebarOpen }) =
       <div className="flex items-center h-16 px-4 justify-between">
         {/* Left section */}
         <div className="flex items-center gap-4">
-          {/* Only show toggle if we have the toggleSidebar function */}
-          {toggleSidebar && (
-            <button
-              onClick={toggleSidebar}
-              className="text-gray-900 dark:text-gray-100 focus:outline-none"
-            >
-              {isSidebarOpen ? (
-                <SquareChevronLeft className="w-6 h-6" />
-              ) : (
-                <SquareChevronRight className="w-6 h-6" />
-              )}
-            </button>
-          )}
-
           <div className="flex items-center gap-2">
             <Logo className="h-8 w-auto" />
             <span className="text-xs text-white bg-blue-600 dark:bg-blue-500 rounded px-2 py-0.5 ml-1">

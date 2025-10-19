@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye,FaGoogle, FaEyeSlash } from "react-icons/fa";
 import { useRouter, useSearchParams } from 'next/navigation';
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
@@ -60,6 +60,8 @@ export default function LoginPage() {
       const errorMessage = err instanceof Error ? err.message : "Login failed";
       if (errorMessage === "Invalid credentials") {
         toast.error("Invalid credentials");
+      } else if (errorMessage === "Please verify your email before logging in. Check your inbox for a verification link.") {
+        toast.error("Please verify your email before logging in. Check your inbox for a verification link.");
       } else {
         toast.error("Something went wrong, try again later.");
       }
@@ -169,20 +171,20 @@ export default function LoginPage() {
           </button>
 
           {/* Centered OR divider */}
-          {/* <div className="flex items-center my-4">
+          <div className="flex items-center my-4">
             <div className="flex-grow border-t border-gray-300" />
             <span className="mx-2 text-gray-500">or</span>
             <div className="flex-grow border-t border-gray-300" />
-          </div> */}
+          </div>
 
           {/* OAuth Buttons with icons */}
           <div className="mt-4 flex flex-col gap-2">
-            {/* <button
+            <button
               onClick={handleGoogleLogin}
               className="w-full p-2 dark:bg-sky-500/10 bg-sky-600 hover:bg-sky-500/80 text-white dark:hover:bg-sky-500/80 dark:text-white rounded-xl flex items-center justify-center gap-2"
             >
               <FaGoogle /> Login with Google
-            </button> */}
+            </button>
             <Link
               href="/auth/forget-password"
               className="w-full p-2 text-blue-600 dark:text-white flex items-center justify-center gap-2"

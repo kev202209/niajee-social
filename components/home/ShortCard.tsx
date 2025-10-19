@@ -1,4 +1,4 @@
-import { Short, getThumbnailSrc } from "@/types"; // Import getThumbnailSrc
+import { Short, getThumbnailSrc } from "@/types";
 import { getImageSrc } from "@/utils/imageUtils";
 import { FC, useEffect, useMemo, useRef, useState } from "react";
 import { FiFlag, FiMessageCircle, FiMoreHorizontal, FiPlusCircle, FiVolume, FiVolumeX, FiXCircle, FiUser } from "react-icons/fi";
@@ -200,7 +200,7 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
         >
            {/* Thumbnail */}
            <AuthenticatedImage
-             mediaKey={getThumbnailSrc(short.thumbnailUrl)}
+             mediaKey={getThumbnailSrc(short.thumbnail)}
              alt={short.title}
              fill
              className="absolute inset-0 object-cover w-full h-full"

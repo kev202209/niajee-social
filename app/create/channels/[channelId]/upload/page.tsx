@@ -547,14 +547,20 @@ const ChannelUploadPage = () => {
         }}
       />
 
-      <div className="p-8 max-w-4xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Upload Content
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Share your videos and shorts with the world
-          </p>
+      {/* Updated root container: Responsive padding */}
+      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+        {/* Updated header: Stack on mobile */}
+        <header className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                Upload Content
+              </h1>
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                Share your videos and shorts with the world
+              </p>
+            </div>
+          </div>
         </header>
 
         <ContentTypeSelector
@@ -563,9 +569,10 @@ const ChannelUploadPage = () => {
           uploading={uploadState.uploading}
         />
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+          {/* Updated grid: Responsive gap */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+            <div className="space-y-4 sm:space-y-6">
               <VideoUploader
                 videoPreview={videoPreview}
                 handleVideoChange={handleVideoChange}
@@ -581,12 +588,12 @@ const ChannelUploadPage = () => {
                 clearThumbnail={clearThumbnail}
               />
 
-              {/* ✅ NEW: Thumbnail upload status */}
+              {/* Thumbnail upload status: Responsive padding */}
               {uploadState.thumbnailUploading && (
-                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <div className="flex items-center gap-2">
                     <FiLoader className="w-4 h-4 text-blue-600 animate-spin" />
-                    <p className="text-blue-800 dark:text-blue-200 text-sm">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
                       Uploading thumbnail...
                     </p>
                   </div>
@@ -594,10 +601,10 @@ const ChannelUploadPage = () => {
               )}
 
               {uploadState.thumbnailUploaded && (
-                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
                   <div className="flex items-center gap-2">
                     <FiCheck className="w-4 h-4 text-green-600" />
-                    <p className="text-green-800 dark:text-green-200 text-sm">
+                    <p className="text-sm text-green-800 dark:text-green-200">
                       Thumbnail uploaded successfully!
                     </p>
                   </div>
@@ -605,8 +612,8 @@ const ChannelUploadPage = () => {
               )}
 
               {uploadState.thumbnailError && (
-                <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                  <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+                <div className="p-3 sm:p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200 line-clamp-2">
                     ⚠️ {uploadState.thumbnailError}
                   </p>
                 </div>
@@ -642,11 +649,12 @@ const ChannelUploadPage = () => {
             />
           </div>
 
+          {/* Success/Error: Responsive padding */}
           {uploadState.success && (
-            <div className="p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg">
+            <div className="p-3 sm:p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg">
               <div className="flex items-center gap-2">
                 <FiCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
-                <p className="text-green-800 dark:text-green-200 text-sm">
+                <p className="text-sm text-green-800 dark:text-green-200">
                   {uploadState.success}
                 </p>
               </div>
@@ -654,19 +662,20 @@ const ChannelUploadPage = () => {
           )}
 
           {uploadState.error && (
-            <div className="p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
-              <p className="text-red-800 dark:text-red-200 text-sm">
+            <div className="p-3 sm:p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg">
+              <p className="text-sm text-red-800 dark:text-red-200 line-clamp-2">
                 {uploadState.error}
               </p>
             </div>
           )}
 
-          <div className="flex gap-4 pt-6">
+          {/* Updated buttons: Responsive padding and flex-wrap */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-4 sm:pt-6">
             <button
               type="button"
               onClick={() => uploadState.uploading ? cancelUpload() : window.history.back()}
               disabled={uploadState.isProcessing}
-              className={`flex-1 px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium ${
+              className={`flex-1 px-4 py-3 sm:px-6 sm:py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition font-medium ${
                 uploadState.isProcessing ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -677,7 +686,7 @@ const ChannelUploadPage = () => {
             <button
               type="submit"
               disabled={uploadState.uploading || !form.video || !form.title.trim()}
-              className={`flex-1 px-6 py-3 rounded-lg transition font-medium flex items-center justify-center gap-2 ${
+              className={`flex-1 px-4 py-3 sm:px-6 sm:py-3 rounded-lg transition font-medium flex items-center justify-center gap-2 ${
                 uploadState.uploading
                   ? (uploadState.isProcessing
                       ? 'bg-purple-500 text-white cursor-not-allowed'

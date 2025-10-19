@@ -17,7 +17,7 @@ export default function Header() {
   };
 
   return (
-    <header className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg px-6 py-3 max-w-5xl w-full border border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out flex-col ${isMobileMenuOpen ? 'rounded-b-lg' : 'rounded-full'}`}>
+    <header className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-header-bg backdrop-blur-md shadow-lg px-6 py-3 max-w-5xl w-full border border-gray-200 dark:border-gray-700 transition-all duration-300 ease-in-out flex-col ${isMobileMenuOpen ? 'rounded-b-lg' : 'rounded-full'}`}>
       {/* Main Header Bar */}
       <div className="flex justify-between items-center h-10">
         {/* Logo (left on mobile and desktop) */}

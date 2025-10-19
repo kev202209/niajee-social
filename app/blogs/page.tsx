@@ -160,6 +160,7 @@ export default function BlogsPage() {
     setFilters(prev => ({ ...prev, page }));
     setCurrentPage(page);
     updateURL({ page });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleTabChange = (tab: 'latest' | 'trending' | 'featured') => {
@@ -211,159 +212,171 @@ export default function BlogsPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
-      <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
-      
       <div className="pt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header Section */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Discover Amazing Blogs
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Read, learn, and share knowledge with our community
-              </p>
-            </div>
-            
-            {user && (
-              <Link
-                href="/blogs/create"
-                className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <FiPlus className="w-5 h-5 mr-2" />
-                Write a Blog
-              </Link>
-            )}
-          </div>
-
-          {/* Search and Filters */}
-          <div className="mb-8 space-y-4">
-            <BlogSearch onSearch={handleSearch} initialValue={filters.search} />
-            <BlogFilters
-              categories={CATEGORIES}
-              onFilterChange={handleFilterChange}
-              currentFilters={filters}
-              onClearFilters={clearFilters}
-            />
-          </div>
-
-          {/* Tab Navigation */}
-          <div className="mb-8">
-            <nav className="flex space-x-8">
-              <button
-                onClick={() => handleTabChange('latest')}
-                className={`flex items-center space-x-2 py-2 px-4 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'latest'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FiClock className="w-4 h-4" />
-                <span>Latest</span>
-              </button>
-              
-              <button
-                onClick={() => handleTabChange('trending')}
-                className={`flex items-center space-x-2 py-2 px-4 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'trending'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FiTrendingUp className="w-4 h-4" />
-                <span>Trending</span>
-              </button>
-              
-              <button
-                onClick={() => handleTabChange('featured')}
-                className={`flex items-center space-x-2 py-2 px-4 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === 'featured'
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                }`}
-              >
-                <FiStar className="w-4 h-4" />
-                <span>Featured</span>
-              </button>
-            </nav>
-          </div>
-
-          {/* Content */}
-          {activeTab === 'featured' ? (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Featured Blogs</h2>
-              {featuredLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[...Array(6)].map((_, i) => (
-                    <BlogSkeleton key={i} />
-                  ))}
+        <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
+        {/* Reserve collapsed sidebar width on lg+ (w-20) */}
+        <main className="flex-1 min-w-0 relative z-0 lg:pl-20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            {/* Header Section - Stack on mobile */}
+            <div className="flex flex-col gap-4 mb-6 sm:mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex-1">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                    Discover Amazing Blogs
+                  </h1>
+                  <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+                    Read, learn, and share knowledge with our community
+                  </p>
                 </div>
-              ) : featuredBlogs.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {featuredBlogs.map((blog) => (
-                    <BlogCard key={blog.id} blog={blog} featured />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <FiStar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500 dark:text-gray-400">No featured blogs available</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <>
-              {error ? (
-                <div className="text-center py-12">
-                  <div className="text-red-500 mb-4">{error}</div>
-                  <button
-                    onClick={fetchBlogs}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                
+                {user && (
+                  <Link
+                    href="/blogs/create"
+                    className="inline-flex items-center justify-center px-4 py-2.5 sm:px-5 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm sm:text-base shadow-sm whitespace-nowrap"
                   >
-                    Try Again
-                  </button>
-                </div>
-              ) : loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[...Array(12)].map((_, i) => (
-                    <BlogSkeleton key={i} />
-                  ))}
-                </div>
-              ) : blogs.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {blogs.map((blog) => (
-                      <BlogCard key={blog.id} blog={blog} />
+                    <FiPlus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                    Write a Blog
+                  </Link>
+                )}
+              </div>
+
+              {/* Search and Filters - Full width on mobile */}
+              <div className="space-y-3 sm:space-y-4">
+                <BlogSearch onSearch={handleSearch} initialValue={filters.search} />
+                <BlogFilters
+                  categories={CATEGORIES}
+                  onFilterChange={handleFilterChange}
+                  currentFilters={filters}
+                  onClearFilters={clearFilters}
+                />
+              </div>
+            </div>
+
+            {/* Tabs - Scrollable on mobile */}
+            <div className="mb-6 sm:mb-8 -mx-4 sm:mx-0">
+              <nav className="flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto px-4 sm:px-0 scrollbar-hide">
+                <button
+                  onClick={() => handleTabChange('latest')}
+                  className={`flex items-center space-x-2 py-3 px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                    activeTab === 'latest'
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <FiClock className="w-4 h-4" />
+                  <span>Latest</span>
+                </button>
+                
+                <button
+                  onClick={() => handleTabChange('trending')}
+                  className={`flex items-center space-x-2 py-3 px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                    activeTab === 'trending'
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <FiTrendingUp className="w-4 h-4" />
+                  <span>Trending</span>
+                </button>
+                
+                <button
+                  onClick={() => handleTabChange('featured')}
+                  className={`flex items-center space-x-2 py-3 px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                    activeTab === 'featured'
+                      ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                  }`}
+                >
+                  <FiStar className="w-4 h-4" />
+                  <span>Featured</span>
+                </button>
+              </nav>
+            </div>
+
+            {/* Content Area */}
+            {activeTab === 'featured' ? (
+              <div className="space-y-4 sm:space-y-6">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+                  Featured Blogs
+                </h2>
+                {featuredLoading ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {[...Array(6)].map((_, i) => (
+                      <BlogSkeleton key={i} />
                     ))}
                   </div>
-                  
-                  {totalPages > 1 && (
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      onPageChange={handlePageChange}
-                    />
-                  )}
-                </>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-gray-500 dark:text-gray-400 mb-4">
-                    No blogs found {filters.search && `for "${filters.search}"`}
+                ) : featuredBlogs.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {featuredBlogs.map((blog) => (
+                      <BlogCard key={blog.id} blog={blog} featured />
+                    ))}
                   </div>
-                  {(filters.search || filters.category || filters.tags?.length) && (
+                ) : (
+                  <div className="text-center py-12 sm:py-16">
+                    <FiStar className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
+                      No featured blogs available
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                {error ? (
+                  <div className="text-center py-12 sm:py-16">
+                    <div className="text-red-500 dark:text-red-400 mb-4 text-sm sm:text-base">
+                      {error}
+                    </div>
                     <button
-                      onClick={clearFilters}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      onClick={fetchBlogs}
+                      className="px-4 py-2 sm:px-6 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm sm:text-base"
                     >
-                      Clear Filters
+                      Try Again
                     </button>
-                  )}
-                </div>
-              )}
-            </>
-          )}
-        </div>
+                  </div>
+                ) : loading ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {[...Array(12)].map((_, i) => (
+                      <BlogSkeleton key={i} />
+                    ))}
+                  </div>
+                ) : blogs.length > 0 ? (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
+                      {blogs.map((blog) => (
+                        <BlogCard key={blog.id} blog={blog} />
+                      ))}
+                    </div>
+                    
+                    {totalPages > 1 && (
+                      <div className="mt-8 sm:mt-10">
+                        <Pagination
+                          currentPage={currentPage}
+                          totalPages={totalPages}
+                          onPageChange={handlePageChange}
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-12 sm:py-16">
+                    <div className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mb-4">
+                      No blogs found {filters.search && `for "${filters.search}"`}
+                    </div>
+                    {(filters.search || filters.category || filters.tags?.length) && (
+                      <button
+                        onClick={clearFilters}
+                        className="px-4 py-2 sm:px-6 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm sm:text-base"
+                      >
+                        Clear Filters
+                      </button>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );

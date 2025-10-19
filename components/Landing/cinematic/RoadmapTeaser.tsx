@@ -27,7 +27,7 @@ const phases = [
 
 export default function RoadmapTeaser() {
 	return (
-		<section className="relative py-36 bg-gray-50 dark:bg-gray-950 transition-colors">
+		<section className="relative py-36 bg-primary-bg transition-colors">
 			<div className="mx-auto max-w-6xl px-6 relative">
 				<h2 className="text-center text-4xl md:text-5xl font-bold mb-4  bg-clip-text text-blue-500 dark:text-gray-50">
 					The Road Ahead

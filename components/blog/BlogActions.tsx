@@ -158,90 +158,102 @@ export default function BlogActions({ blog }: BlogActionsProps) {
   };
 
   return (
-    <div className="flex items-center gap-4 relative">
+    <div className="flex items-center gap-2 sm:gap-4 relative">
       <button
-        className={`flex items-center gap-1 transition-colors ${
+        className={`flex items-center gap-1 text-sm transition-colors ${
           liked ? "text-red-500" : "text-gray-500 dark:text-gray-400 hover:text-red-500"
         } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
         onClick={handleLike}
         disabled={isLoading}
         aria-label={liked ? "Unlike" : "Like"}
       >
-        <FiHeart className={`w-5 h-5 ${liked ? "fill-current" : ""}`} />
-        <span className="flex items-center gap-1">
+        <FiHeart className={`w-4 h-4 sm:w-5 sm:h-5 ${liked ? "fill-current" : ""}`} />
+        <span className="flex items-center gap-1 text-xs sm:text-sm">
           {liked ? "Liked" : "Like"}
           {likeCount > 0 && (
-            <span className="text-sm text-gray-400">({likeCount})</span>
+            <span className="text-gray-400">({likeCount})</span>
           )}
         </span>
       </button>
       
       <button
-        className={`flex items-center gap-1 transition-colors ${
+        className={`flex items-center gap-1 text-sm transition-colors ${
           saved ? "text-yellow-500" : "text-gray-500 dark:text-gray-400 hover:text-yellow-500"
         } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
         onClick={handleSave}
         disabled={isLoading}
         aria-label={saved ? "Remove save" : "Save"}
       >
-        <FiBookmark className={`w-5 h-5 ${saved ? "fill-current" : ""}`} />
-        <span>{saved ? "Saved" : "Save"}</span>
+        <FiBookmark className={`w-4 h-4 sm:w-5 sm:h-5 ${saved ? "fill-current" : ""}`} />
+        <span className="text-xs sm:text-sm">{saved ? "Saved" : "Save"}</span>
       </button>
       
       <button
-        className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors"
+        className="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors text-sm"
         aria-label="Report"
         onClick={handleReport}
       >
-        <FiFlag className="w-5 h-5" />
-        <span>Report</span>
+        <FiFlag className="w-4 h-4 sm:w-5 sm:h-5" />
+        <span className="text-xs sm:text-sm">Report</span>
       </button>
 
-      {/* Report Popup */}
+      {/* Report Popup - Mobile responsive */}
       {showReport && (
-        <div className="absolute z-20 top-10 left-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 w-80">
-          <form onSubmit={submitReport} className="flex flex-col gap-3">
-            <div>
-              <label className="block text-sm font-medium mb-1">Reason <span className="text-red-500">*</span></label>
-              <input
-                className="w-full border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                value={reportReason}
-                onChange={e => setReportReason(e.target.value)}
-                required
-                disabled={reportSubmitting}
-                placeholder="Spam, inappropriate, etc."
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Description <span className="text-gray-400">(optional)</span></label>
-              <textarea
-                className="w-full border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                value={reportDescription}
-                onChange={e => setReportDescription(e.target.value)}
-                rows={3}
-                disabled={reportSubmitting}
-                placeholder="Add more details (optional)"
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                type="button"
-                className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
-                onClick={() => setShowReport(false)}
-                disabled={reportSubmitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-1 rounded bg-red-600 text-white hover:bg-red-700"
-                disabled={reportSubmitting}
-              >
-                {reportSubmitting ? "Reporting..." : "Report"}
-              </button>
-            </div>
-          </form>
-        </div>
+        <>
+          {/* Backdrop for mobile */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 sm:hidden"
+            onClick={() => setShowReport(false)}
+          />
+          
+          <div className="fixed sm:absolute z-50 inset-x-4 top-1/2 -translate-y-1/2 sm:inset-x-auto sm:top-10 sm:left-0 sm:translate-y-0 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 w-auto sm:w-80 max-w-md">
+            <form onSubmit={submitReport} className="flex flex-col gap-3">
+              <div>
+                <label className="block text-xs sm:text-sm font-medium mb-1">
+                  Reason <span className="text-red-500">*</span>
+                </label>
+                <input
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  value={reportReason}
+                  onChange={e => setReportReason(e.target.value)}
+                  required
+                  disabled={reportSubmitting}
+                  placeholder="Spam, inappropriate, etc."
+                />
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium mb-1">
+                  Description <span className="text-gray-400">(optional)</span>
+                </label>
+                <textarea
+                  className="w-full border border-gray-300 dark:border-gray-700 rounded px-2 py-1 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  value={reportDescription}
+                  onChange={e => setReportDescription(e.target.value)}
+                  rows={3}
+                  disabled={reportSubmitting}
+                  placeholder="Add more details (optional)"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button
+                  type="button"
+                  className="px-3 py-1.5 text-sm rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+                  onClick={() => setShowReport(false)}
+                  disabled={reportSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 text-sm rounded bg-red-600 text-white hover:bg-red-700"
+                  disabled={reportSubmitting}
+                >
+                  {reportSubmitting ? "Reporting..." : "Report"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </>
       )}
     </div>
   );

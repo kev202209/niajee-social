@@ -205,20 +205,23 @@ export default function SavedClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-indigo-950 text-gray-900 dark:text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-primary-bg text-gray-900 dark:text-gray-100 flex flex-col">
       <Header />
       <div className="flex pt-16">
         <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
         <main className="flex-1 min-w-0 pt-8 pb-24">
+          {/* Updated container: Responsive padding */}
           <div className="max-w-6xl mx-auto px-4 sm:px-6">
-            <h1 className="text-3xl font-bold tracking-tight mb-6">Saved</h1>
+            {/* Updated header: Responsive text */}
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-6">Saved</h1>
 
+            {/* Updated tabs: Responsive padding */}
             <div className="flex flex-wrap gap-3 mb-8">
               {(['all', 'videos', 'shorts', 'blogs'] as TabKey[]).map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`px-5 py-2.5 rounded-full text-sm font-medium border shadow-sm transition ${
+                  className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-sm font-medium border shadow-sm transition ${
                     tab === t
                       ? 'bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 text-white border-transparent'
                       : 'bg-white/80 dark:bg-gray-900/60 backdrop-blur border-gray-200 dark:border-white/10 hover:border-indigo-400/50'
@@ -229,17 +232,20 @@ export default function SavedClient() {
               ))}
             </div>
 
+            {/* Updated error: Responsive padding */}
             {error && (
               <div className="mb-6 text-sm bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
                 {error}
               </div>
             )}
 
+            {/* Updated empty state: Responsive text */}
             {visible.length === 0 && !loading && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">No saves yet.</p>
+              <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No saves yet.</p>
             )}
 
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {/* Updated grid: Responsive gap */}
+            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {visible.map(item => {
                 if (item.type === 'video')
                   return (
@@ -267,12 +273,13 @@ export default function SavedClient() {
               })}
             </div>
 
+            {/* Updated load more: Responsive padding and centering */}
             {canLoadMore && (
-              <div className="mt-12 flex justify-center">
+              <div className="mt-8 sm:mt-12 flex justify-center">
                 <button
                   onClick={loadMore}
                   disabled={loading}
-                  className="px-8 py-3 rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 bg-white/80 dark:bg-gray-900/60 backdrop-blur hover:border-indigo-400/60 dark:hover:border-indigo-400/40 transition disabled:opacity-50"
+                  className="px-6 py-3 sm:px-8 sm:py-3 rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 bg-white/80 dark:bg-gray-900/60 backdrop-blur hover:border-indigo-400/60 dark:hover:border-indigo-400/40 transition disabled:opacity-50"
                 >
                   {loading ? 'Loading…' : 'Load More'}
                 </button>

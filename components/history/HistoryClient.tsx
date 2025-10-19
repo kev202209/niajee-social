@@ -16,7 +16,7 @@ interface RawHistoryChannel {
 interface RawHistoryItem {
   id: string;
   title?: string;
-  thumbnailUrl?: string | null;
+  thumbnail?: string | null;
   duration?: number | null;
   channel?: RawHistoryChannel;
   history?: {
@@ -94,7 +94,7 @@ export default function HistoryClient() {
       type: 'video' as const,
       id: v.id,
       title: v.title ?? '',
-      thumbnailUrl: v.thumbnailUrl ?? null,
+      thumbnail: v.thumbnail ?? null,
       duration: v.duration ?? null,
       channel: {
         id: v.channel?.id ?? '',
@@ -109,7 +109,7 @@ export default function HistoryClient() {
       type: 'short' as const,
       id: s.id,
       title: s.title ?? '',
-      thumbnailUrl: s.thumbnailUrl ?? null,
+      thumbnail: s.thumbnail ?? null,
       duration: s.duration ?? null,
       channel: {
         id: s.channel?.id ?? '',
@@ -152,17 +152,20 @@ export default function HistoryClient() {
   return (
     <div className="w-full flex flex-col">
       <main className="flex-1 pt-8 pb-20">
+        {/* Updated container: Responsive padding */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          <h1 className="text-3xl font-bold tracking-tight mb-6">
+          {/* Updated header: Responsive text */}
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-6">
             Watch History
           </h1>
 
-            <div className="flex flex-wrap gap-3 mb-8">
+          {/* Updated tabs: Responsive padding and flex-wrap */}
+          <div className="flex flex-wrap gap-3 mb-8">
             {(['all','videos','shorts'] as TabKey[]).map(t => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium border transition shadow-sm ${
+                className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-sm font-medium border transition shadow-sm ${
                   tab === t
                     ? 'bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 text-white border-transparent'
                     : 'bg-white/80 dark:bg-gray-900/60 backdrop-blur border-gray-200 dark:border-white/10 hover:border-indigo-400/60'
@@ -173,19 +176,22 @@ export default function HistoryClient() {
             ))}
           </div>
 
+          {/* Updated error: Responsive padding */}
           {error && (
             <div className="mb-6 text-sm bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
 
+          {/* Updated empty state: Responsive text */}
           {visible.length === 0 && !loading && (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
               No history yet.
             </p>
           )}
 
-          <ul className="space-y-10">
+          {/* Updated list: Responsive spacing */}
+          <ul className="space-y-6 sm:space-y-10">
             {visible.map(item => (
               <li key={`${item.type}-${item.id}`}>
                 {item.type === 'video'
@@ -195,12 +201,13 @@ export default function HistoryClient() {
             ))}
           </ul>
 
+          {/* Updated load more: Responsive padding */}
           {canLoadMore && (
-            <div className="mt-10">
+            <div className="mt-8 sm:mt-10">
               <button
                 onClick={loadMore}
                 disabled={loading}
-                className="px-6 py-2.5 rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 bg-white dark:bg-gray-900 hover:border-indigo-400/60 dark:hover:border-indigo-400/40 transition disabled:opacity-50"
+                className="px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 bg-white dark:bg-gray-900 hover:border-indigo-400/60 dark:hover:border-indigo-400/40 transition disabled:opacity-50"
               >
                 {loading ? 'Loading…' : 'Load More'}
               </button>

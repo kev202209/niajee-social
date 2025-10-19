@@ -121,7 +121,7 @@ const TweetFeed: FC = () => {
   // Success state with posts
   return (
     <div className="h-[calc(100vh-4rem)] bg-gray-50 dark:bg-gray-900 ">
-      <div className="p-4 h-full flex flex-col pt-20"> {/* Increased pt-16 to pt-20 to clear the Header */}
+      <div className="p-4 h-full flex flex-col"> {/* Increased pt-16 to pt-20 to clear the Header */}
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Community Feed

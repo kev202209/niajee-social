@@ -44,7 +44,6 @@ export default function CreateBlogPage() {
     status: 'draft'
   });
   
-  // NEW: Store selected file without uploading immediately
   const [featuredImageFile, setFeaturedImageFile] = useState<File | null>(null);
   const [featuredImagePreview, setFeaturedImagePreview] = useState<string>('');
   const [isProcessingImages, setIsProcessingImages] = useState(false);
@@ -61,7 +60,6 @@ export default function CreateBlogPage() {
     }
   };
 
-  // NEW: Only store the file and create preview - don't upload yet
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -357,331 +355,338 @@ export default function CreateBlogPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header />
-      <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
-      
-      <div className="pt-16">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.back()}
-                className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                disabled={isLoading}
-              >
-                <FiArrowLeft className="w-5 h-5" />
-                <span>Back</span>
-              </button>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Create New Blog
-              </h1>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowPreview(!showPreview)}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50"
-                disabled={isLoading}
-              >
-                <FiEye className="w-4 h-4" />
-                <span>{showPreview ? 'Edit' : 'Preview'}</span>
-              </button>
-              
-              <button
-                onClick={() => handleSubmit('draft')}
-                disabled={isLoading}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
-              >
-                <FiBookmark className="w-4 h-4" />
-                <span>Save Draft</span>
-              </button>
-              
-              <Button
-                onClick={() => handleSubmit('published')}
-                disabled={isLoading}
-                className="flex items-center space-x-2"
-              >
-                {isLoading ? (
-                  <>
-                    <FiLoader className="w-4 h-4 animate-spin" />
-                    <span>
-                      {isSubmitting ? 'Publishing...' : 'Processing Images...'}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <FiBookmark className="w-4 h-4" />
-                    <span>Publish</span>
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {/* Progress indicator during image processing */}
-          {isProcessingImages && (
-            <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-              <div className="flex items-center space-x-3">
-                <FiLoader className="w-5 h-5 text-blue-600 animate-spin" />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
-                    Processing images...
-                  </p>
-                  <p className="text-xs text-blue-700 dark:text-blue-300">
-                    Your blog has been created. Images are being processed in the background.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Form */}
-          {!showPreview ? (
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-6">
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange('title', e.target.value)}
-                  placeholder="Enter your blog title..."
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      <div className="flex pt-16">
+        <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
+        
+        <main className="flex-1 min-w-0">
+          {/* Updated container: Responsive padding */}
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            {/* Updated header: Stack on mobile, responsive text */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <button
+                  onClick={() => router.back()}
+                  className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                   disabled={isLoading}
-                />
-                {errors.title && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.title}</p>
-                )}
-              </div>
-
-              {/* Excerpt */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Excerpt *
-                </label>
-                <textarea
-                  value={formData.excerpt}
-                  onChange={(e) => handleInputChange('excerpt', e.target.value)}
-                  placeholder="Write a brief description of your blog..."
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={isLoading}
-                />
-                {errors.excerpt && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.excerpt}</p>
-                )}
-              </div>
-
-              {/* Category and Featured Image Row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Category */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => handleInputChange('category', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={isLoading}
-                  >
-                    {CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Featured Image */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Featured Image
-                  </label>
-                  <div className="space-y-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                      className="hidden"
-                      disabled={isLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={isLoading}
-                      className="w-full flex items-center justify-center px-4 py-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50"
-                    >
-                      <FiUpload className="w-5 h-5 mr-2" />
-                      {featuredImageFile ? 'Change Image' : 'Select Image'}
-                    </button>
-                    {errors.featuredImage && (
-                      <p className="text-sm text-red-600 dark:text-red-400">{errors.featuredImage}</p>
-                    )}
-                    {featuredImageFile && (
-                      <p className="text-xs text-green-600 dark:text-green-400">
-                        Image selected: {featuredImageFile.name}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Featured Image Preview */}
-              {featuredImagePreview && (
-                <div className="relative">
-                  <div className="relative aspect-video rounded-lg overflow-hidden">
-                    <Image
-                      src={featuredImagePreview}
-                      alt="Featured image preview"
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
-                      <div className="bg-white dark:bg-gray-800 rounded-lg px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">
-                        Will be uploaded when you submit
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={removeImage}
-                    disabled={isLoading}
-                    className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors disabled:opacity-50"
-                  >
-                    <FiX className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-
-              {/* Tags */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Tags * (Press Enter to add)
-                </label>
-                <input
-                  type="text"
-                  value={tagInput}
-                  onChange={(e) => setTagInput(e.target.value)}
-                  onKeyDown={handleTagAdd}
-                  placeholder="Add tags for your blog..."
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={isLoading}
-                />
-                {(formData.tags ?? []).length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {(formData.tags ?? []).map((tag) => (
-                      <span
-                        key={tag}
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
-                      >
-                        #{tag}
-                        <button
-                          onClick={() => removeTag(tag)}
-                          className="ml-2 hover:text-blue-600 dark:hover:text-blue-400"
-                          disabled={isLoading}
-                        >
-                          <FiX className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {errors.tags && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.tags}</p>
-                )}
-              </div>
-
-              {/* Content Editor */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Content *
-                </label>
-                <BlockEditor
-                  value={formData.content}
-                  onChange={(data) => handleInputChange('content', data)}
-                  placeholder="Write your blog content here..."
-                  readOnly={isLoading}
-                />
-                {errors.content && (
-                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.content}</p>
-                )}
-              </div>
-
-              {/* Submit Error */}
-              {errors.submit && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm text-red-600 dark:text-red-400">{errors.submit}</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            /* Preview */
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="p-6">
-                {/* Preview Badge */}
-                <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-6">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200 text-center">
-                    📝 This is a preview of your blog. Click &quot;Edit&quot; to continue editing.
-                  </p>
-                </div>
-
-                {/* Category */}
-                <div className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm font-medium mb-4">
-                  {formData.category}
-                </div>
-
-                {/* Title */}
-                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-                  {formData.title || 'Your Blog Title'}
+                >
+                  <FiArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base">Back</span>
+                </button>
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white">
+                  Create New Blog
                 </h1>
+              </div>
+
+              {/* Action buttons: Better visual distinction */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                {/* Preview/Edit Button */}
+                <button
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50"
+                  disabled={isLoading}
+                >
+                  <FiEye className="w-4 h-4" />
+                  <span>{showPreview ? 'Edit' : 'Preview'}</span>
+                </button>
+                
+                {/* Save as Draft Button */}
+                <button
+                  onClick={() => handleSubmit('draft')}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 transition-colors"
+                >
+                  <FiBookmark className="w-4 h-4" />
+                  <span>Save Draft</span>
+                </button>
+                
+                {/* Publish Button */}
+                <Button
+                  onClick={() => handleSubmit('published')}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 text-sm px-4 py-2"
+                >
+                  {isLoading ? (
+                    <>
+                      <FiLoader className="w-4 h-4 animate-spin" />
+                      <span>
+                        {isSubmitting ? 'Publishing...' : 'Processing...'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <FiUpload className="w-4 h-4" />
+                      <span>Publish</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            {/* Progress indicator */}
+            {isProcessingImages && (
+              <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex items-center gap-3">
+                  <FiLoader className="w-5 h-5 text-blue-600 animate-spin flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                      Processing images...
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                      Your blog has been created. Images are being processed in the background.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Form */}
+            {!showPreview ? (
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6 space-y-4 sm:space-y-6">
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Title *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => handleInputChange('title', e.target.value)}
+                    placeholder="Enter your blog title..."
+                    className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isLoading}
+                  />
+                  {errors.title && (
+                    <p className="mt-1 text-xs sm:text-sm text-red-600 dark:text-red-400">{errors.title}</p>
+                  )}
+                </div>
 
                 {/* Excerpt */}
-                <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
-                  {formData.excerpt || 'Your blog excerpt will appear here...'}
-                </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Excerpt *
+                  </label>
+                  <textarea
+                    value={formData.excerpt}
+                    onChange={(e) => handleInputChange('excerpt', e.target.value)}
+                    placeholder="Write a brief description of your blog..."
+                    rows={3}
+                    className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isLoading}
+                  />
+                  {errors.excerpt && (
+                    <p className="mt-1 text-xs sm:text-sm text-red-600 dark:text-red-400">{errors.excerpt}</p>
+                  )}
+                </div>
 
-                {/* Featured Image */}
+                {/* Category and Featured Image Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  {/* Category */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Category *
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) => handleInputChange('category', e.target.value)}
+                      className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      disabled={isLoading}
+                    >
+                      {CATEGORIES.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Featured Image */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Featured Image
+                    </label>
+                    <div className="space-y-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isLoading}
+                        className="w-full flex items-center justify-center px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500 transition-colors disabled:opacity-50"
+                      >
+                        <FiUpload className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                        {featuredImageFile ? 'Change Image' : 'Select Image'}
+                      </button>
+                      {errors.featuredImage && (
+                        <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">{errors.featuredImage}</p>
+                      )}
+                      {featuredImageFile && (
+                        <p className="text-xs text-green-600 dark:text-green-400 truncate">
+                          Image selected: {featuredImageFile.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Featured Image Preview */}
                 {featuredImagePreview && (
-                  <div className="relative aspect-video rounded-lg overflow-hidden mb-6">
-                    <Image
-                      src={featuredImagePreview}
-                      alt="Featured image"
-                      fill
-                      className="object-cover"
-                    />
+                  <div className="relative">
+                    <div className="relative aspect-video rounded-lg overflow-hidden">
+                      <Image
+                        src={featuredImagePreview}
+                        alt="Featured image preview"
+                        fill
+                        className="object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                        <div className="bg-white dark:bg-gray-800 rounded-lg px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+                          Will be uploaded when you submit
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={removeImage}
+                      disabled={isLoading}
+                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors disabled:opacity-50"
+                    >
+                      <FiX className="w-3 h-3 sm:w-4 sm:h-4" />
+                    </button>
                   </div>
                 )}
 
-                {/* Content */}
-                <div 
-                  className="prose prose-lg dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ 
-                    __html: renderEditorContent(formData.content)
-                  }}
-                />
-
                 {/* Tags */}
-                {(formData.tags ?? []).length > 0 && (
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-                    <div className="flex flex-wrap gap-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Tags * (Press Enter to add)
+                  </label>
+                  <input
+                    type="text"
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleTagAdd}
+                    placeholder="Add tags for your blog..."
+                    className="w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={isLoading}
+                  />
+                  {(formData.tags ?? []).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
                       {(formData.tags ?? []).map((tag) => (
                         <span
                           key={tag}
-                          className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full text-sm"
+                          className="inline-flex items-center px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
                         >
                           #{tag}
+                          <button
+                            onClick={() => removeTag(tag)}
+                            className="ml-1.5 sm:ml-2 hover:text-blue-600 dark:hover:text-blue-400"
+                            disabled={isLoading}
+                          >
+                            <FiX className="w-3 h-3" />
+                          </button>
                         </span>
                       ))}
                     </div>
+                  )}
+                  {errors.tags && (
+                    <p className="mt-1 text-xs sm:text-sm text-red-600 dark:text-red-400">{errors.tags}</p>
+                  )}
+                </div>
+
+                {/* Content Editor */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Content *
+                  </label>
+                  <BlockEditor
+                    value={formData.content}
+                    onChange={(data) => handleInputChange('content', data)}
+                    placeholder="Write your blog content here..."
+                    readOnly={isLoading}
+                  />
+                  {errors.content && (
+                    <p className="mt-1 text-xs sm:text-sm text-red-600 dark:text-red-400">{errors.content}</p>
+                  )}
+                </div>
+
+                {/* Submit Error */}
+                {errors.submit && (
+                  <div className="p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <p className="text-xs sm:text-sm text-red-600 dark:text-red-400">{errors.submit}</p>
                   </div>
                 )}
               </div>
-            </div>
-          )}
-        </div>
+            ) : (
+              /* Preview */
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="p-4 sm:p-6">
+                  {/* Preview Badge */}
+                  <div className="bg-yellow-100 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-6">
+                    <p className="text-xs sm:text-sm text-yellow-800 dark:text-yellow-200 text-center">
+                      📝 This is a preview of your blog. Click &quot;Edit&quot; to continue editing.
+                    </p>
+                  </div>
+
+                  {/* Category */}
+                  <div className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-xs sm:text-sm font-medium mb-4">
+                    {formData.category}
+                  </div>
+
+                  {/* Title */}
+                  <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-4 break-words">
+                    {formData.title || 'Your Blog Title'}
+                  </h1>
+
+                  {/* Excerpt */}
+                  <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 mb-6 break-words">
+                    {formData.excerpt || 'Your blog excerpt will appear here...'}
+                  </p>
+
+                  {/* Featured Image */}
+                  {featuredImagePreview && (
+                    <div className="relative aspect-video rounded-lg overflow-hidden mb-6">
+                      <Image
+                        src={featuredImagePreview}
+                        alt="Featured image"
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  <div 
+                    className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-none break-words"
+                    dangerouslySetInnerHTML={{ 
+                      __html: renderEditorContent(formData.content)
+                    }}
+                  />
+
+                  {/* Tags */}
+                  {(formData.tags ?? []).length > 0 && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
+                      <div className="flex flex-wrap gap-2">
+                        {(formData.tags ?? []).map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-block bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-xs sm:text-sm"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
       </div>
     </div>
   );

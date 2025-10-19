@@ -253,21 +253,23 @@ const ChannelLivePage = () => {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
-      <header className="mb-8">
-        <div className="flex items-center justify-between">
+    // Updated root container: Responsive padding
+    <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+      {/* Updated header: Stack on mobile */}
+      <header className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-              <FiRadio className="w-8 h-8" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+              <FiRadio className="w-6 h-6 sm:w-8 sm:h-8" />
               Live Streaming
               {isLive && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                <span className="inline-flex items-center px-2 py-1 sm:px-3 rounded-full text-xs sm:text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
                   <span className="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
                   LIVE
                 </span>
               )}
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
               {isLive ? 'Your stream is currently live' : 'Start your live stream to connect with your audience'}
             </p>
           </div>
@@ -276,7 +278,7 @@ const ChannelLivePage = () => {
             <button
               onClick={startLiveStream}
               disabled={starting}
-              className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition font-medium flex items-center gap-2"
+              className="px-4 py-2 sm:px-6 sm:py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               {starting ? (
                 <>
@@ -294,7 +296,7 @@ const ChannelLivePage = () => {
             <button
               onClick={stopLiveStream}
               disabled={stopping}
-              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition font-medium flex items-center gap-2"
+              className="px-4 py-2 sm:px-6 sm:py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
             >
               {stopping ? (
                 <>
@@ -312,17 +314,18 @@ const ChannelLivePage = () => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Updated grid: Stack on mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
+        <div className="lg:col-span-2 space-y-6 sm:space-y-8">
           {/* Stream Settings */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-              <FiSettings className="w-5 h-5" />
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6 flex items-center gap-2">
+              <FiSettings className="w-4 h-4 sm:w-5 sm:h-5" />
               Stream Settings
             </h2>
             
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <div>
                 <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Stream Title *
@@ -440,7 +443,7 @@ const ChannelLivePage = () => {
           </div>
 
           {/* Stream Configuration */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
               Stream Configuration
             </h2>
@@ -494,7 +497,7 @@ const ChannelLivePage = () => {
           </div>
 
           {/* Setup Instructions */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
               Setup Instructions
             </h2>
@@ -527,7 +530,7 @@ const ChannelLivePage = () => {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Live Stats */}
           {isLive && (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -626,16 +629,16 @@ const ChannelLivePage = () => {
         </div>
       </div>
 
-      {/* Success/Error Messages */}
+      {/* Success/Error Messages: Responsive positioning */}
       {success && (
-        <div className="fixed bottom-4 right-4 p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg shadow-lg">
-          <p className="text-green-800 dark:text-green-200 text-sm">{success}</p>
+        <div className="fixed bottom-4 right-4 p-3 sm:p-4 bg-green-50 dark:bg-green-900 border border-green-200 dark:border-green-700 rounded-lg shadow-lg max-w-xs sm:max-w-sm">
+          <p className="text-xs sm:text-sm text-green-800 dark:text-green-200">{success}</p>
         </div>
       )}
 
       {error && (
-        <div className="fixed bottom-4 right-4 p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg shadow-lg">
-          <p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
+        <div className="fixed bottom-4 right-4 p-3 sm:p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded-lg shadow-lg max-w-xs sm:max-w-sm">
+          <p className="text-xs sm:text-sm text-red-800 dark:text-red-200">{error}</p>
         </div>
       )}
     </div>

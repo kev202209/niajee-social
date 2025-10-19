@@ -262,12 +262,12 @@ export default function ChannelOverview() {
   const { channel, stats, recentActivity } = overview
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <header className="mb-8">
-        <div className="flex items-start justify-between">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      {/* Updated header: Stack on mobile */}
+      <header className="mb-6 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {channel.name}
             </h1>
             <p className="text-gray-600 dark:text-gray-400 mb-1">
@@ -278,8 +278,8 @@ export default function ChannelOverview() {
             </p>
           </div>
           
-          {/* Channel Avatar */}
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+          {/* Channel Avatar: Smaller on mobile */}
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
             {channel.avatar ? (
               <AuthenticatedImage
                 mediaKey={getImageSrc(channel.avatar, '480w')}
@@ -290,26 +290,26 @@ export default function ChannelOverview() {
                 fallbackSrc="/placeholder.png"
               />
             ) : (
-              <FiVideo className="w-8 h-8 text-white" />
+              <FiVideo className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
             )}
           </div>
         </div>
         
-        {/* Channel Description */}
+        {/* Channel Description: Clamp text */}
         {channel.description && (
-          <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-            <p className="text-gray-700 dark:text-gray-300">{channel.description}</p>
+          <div className="mt-4 p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <p className="text-gray-700 dark:text-gray-300 line-clamp-3">{channel.description}</p>
           </div>
         )}
       </header>
 
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      {/* Key Metrics: Responsive grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Subscribers</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 {formatNumber(stats.totalSubscribers ?? 0)}
               </p>
               <p className={`text-xs mt-1 ${getGrowthColor(stats.subscriberGrowth)}`}>
@@ -324,7 +324,7 @@ export default function ChannelOverview() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Content</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 {formatNumber((stats.totalVideos ?? 0) + (stats.totalShorts ?? 0))}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -339,7 +339,7 @@ export default function ChannelOverview() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Views</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 {formatNumber(stats.totalViews ?? 0)}
               </p>
               <p className={`text-xs mt-1 ${getGrowthColor(stats.viewGrowth)}`}>
@@ -354,7 +354,7 @@ export default function ChannelOverview() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 dark:text-gray-400">Watch Time</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                 {formatWatchTime(stats.totalWatchTime ?? 0)}
               </p>
               <p className={`text-xs mt-1 ${getGrowthColor(stats.watchTimeGrowth)}`}>
@@ -366,16 +366,17 @@ export default function ChannelOverview() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Updated grid: Stack on mobile */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
         {/* Recent Activity */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <FiTrendingUp className="w-5 h-5" />
+          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+              <FiTrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
               Recent Activity
             </h2>
           </div>
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {recentActivity.length > 0 ? (
               <div className="space-y-4">
                 {recentActivity.slice(0, 5).map((activity) => (
@@ -407,16 +408,16 @@ export default function ChannelOverview() {
 
         {/* Quick Actions */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+          <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
               Quick Actions
             </h2>
           </div>
-          <div className="p-6">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 sm:p-6">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <button 
                 onClick={() => navigateToPage('/upload')}
-                className="p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition text-center group"
+                className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition text-center group"
               >
                 <FiVideo className="w-6 h-6 text-blue-600 dark:text-blue-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
                 <p className="text-sm font-medium text-blue-700 dark:text-blue-300">Upload Content</p>
@@ -424,7 +425,7 @@ export default function ChannelOverview() {
               
               <button 
                 onClick={() => navigateToPage('/analytics')}
-                className="p-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition text-center group"
+                className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition text-center group"
               >
                 <FiTrendingUp className="w-6 h-6 text-green-600 dark:text-green-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
                 <p className="text-sm font-medium text-green-700 dark:text-green-300">View Analytics</p>
@@ -432,7 +433,7 @@ export default function ChannelOverview() {
               
               <button 
                 onClick={() => navigateToPage('/live')}
-                className="p-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition text-center group"
+                className="p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition text-center group"
               >
                 <FiPlay className="w-6 h-6 text-red-600 dark:text-red-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
                 <p className="text-sm font-medium text-red-700 dark:text-red-300">Go Live</p>
@@ -440,7 +441,7 @@ export default function ChannelOverview() {
               
               <button 
                 onClick={() => navigateToPage('/settings')}
-                className="p-4 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition text-center group"
+                className="p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition text-center group"
               >
                 <FiUsers className="w-6 h-6 text-purple-600 dark:text-purple-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />
                 <p className="text-sm font-medium text-purple-700 dark:text-purple-300">Channel Settings</p>

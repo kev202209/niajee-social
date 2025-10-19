@@ -12,6 +12,17 @@ export default {
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
+
+			  // New custom standardized colors
+			'header-bg': 'var(--header-bg)',
+			'header-border': 'var(--header-border)',
+			'button-bg': 'var(--register-button-bg)',
+			'button-hover': 'var(--register-button-hover)',
+			'primary-bg': 'var(--hero-bg)',
+			'secondary-bg': 'var(--hero-beta-badge-bg)',
+			'secondary-button-bg': 'var(--hero-button-bg)',
+			'seconday-button-hover': 'var(--hero-button-hover)',
+
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
@@ -74,5 +85,7 @@ export default {
   		}
   	}
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+	require("tailwindcss-animate"),
+],
 } satisfies Config;

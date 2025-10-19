@@ -54,7 +54,7 @@ export interface Short {
   videoUrl: {
     [quality: string]: string; // e.g., "240p", "360p", "master"
   };
-  thumbnailUrl: {
+  thumbnail: {
     data: ProcessedImage;
     type: 'auto-generated' | 'user-uploaded';
     status: 'queued' | 'processing' | 'complete' | 'failed';
@@ -217,7 +217,7 @@ export interface mVideo {
     [key: string]: string;
   };
   videoSrc?: string; // For backward compatibility
-  thumbnailUrl: ProcessedImage;
+  thumbnail: ProcessedImage;
   duration: number;
   fileSize: number;
   resolution: string;
@@ -255,7 +255,7 @@ export interface mVideo {
 }
 
 // Update SuggestedVideo to extend from mVideo
-export interface SuggestedVideo extends Omit<mVideo, 'videoUrl' | 'thumbnailUrl'> {
+export interface SuggestedVideo extends Omit<mVideo, 'videoUrl' | 'thumbnail'> {
   videoSrc: string;
   channelName: string;
   channelAvatar: ProcessedImage;
@@ -263,7 +263,7 @@ export interface SuggestedVideo extends Omit<mVideo, 'videoUrl' | 'thumbnailUrl'
   views: string;
   uploadDate: string;
   duration: number;
-  thumbnailUrl: {
+  thumbnail: {
     data: ProcessedImage;
     type: 'auto-generated' | 'user-uploaded';
     status: 'queued' | 'processing' | 'complete' | 'failed';
@@ -444,7 +444,7 @@ export const getImageSrcSafe = (
 
 // Helper function to extract thumbnail safely (moved from manage uploads)
 export const getThumbnailSrc = (
-  thumbnail: UploadItem['thumbnail'] | Video['thumbnail'] | Short['thumbnailUrl'] | SuggestedVideo['thumbnailUrl'],
+  thumbnail: UploadItem['thumbnail'] | Video['thumbnail'] | Short['thumbnail'] | SuggestedVideo['thumbnail'],
   variant: '480w' | '720w' | '1080w' = '480w'
 ): string => {
   if (!thumbnail?.data) return '';
@@ -453,3 +453,4 @@ export const getThumbnailSrc = (
 
 export * from './blog.types';
 export * from './post.types';
+export * from './shorts'

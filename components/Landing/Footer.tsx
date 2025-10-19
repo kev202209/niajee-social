@@ -10,7 +10,7 @@ export default function Footer() {
 
   return (
     <footer
-      className="pt-16 pb-10 bg-indigo-100 dark:bg-indigo-950 text-gray-600 dark:text-gray-300 border-t border-gray-200/70 dark:border-white/10"
+      className="pt-16 pb-10 bg-white/80 dark:bg-gray-800/80 text-gray-600 dark:text-gray-300 border-t border-gray-200/70 dark:border-white/10"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-16 mb-14">

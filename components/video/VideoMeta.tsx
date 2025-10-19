@@ -357,7 +357,7 @@ useEffect(() => {
           </div>
           
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="md">
+            <Button className='hidden bg-blue-500' variant="outline" size="md">
               Membership
             </Button>
             <Button

@@ -117,7 +117,7 @@ type RawChannel = Partial<Pick<Channel, 'id' | 'name' | 'avatar' | 'verified'>> 
   createdAt?: string;
 };
 type RawVideo = Partial<
-  Pick<mVideo, 'id' | 'title' | 'description' | 'thumbnailUrl' | 'duration' | 'createdAt'>
+  Pick<mVideo, 'id' | 'title' | 'description' | 'thumbnail' | 'duration' | 'createdAt'>
 > & {
   videoId?: string;
   thumbnail?: ProcessedImage | string;
@@ -128,7 +128,7 @@ type RawVideo = Partial<
   publishedAt?: string;
 };
 type RawShort = Partial<
-  Pick<Short, 'id' | 'title' | 'thumbnailUrl' | 'duration' | 'views' | 'createdAt' | 'caption'>
+  Pick<Short, 'id' | 'title' | 'thumbnail' | 'duration' | 'views' | 'createdAt' | 'caption'>
 > & {
   viewCount?: number;
   thumbnail?: ProcessedImage | string;
@@ -226,7 +226,7 @@ export default function SearchPage() {
         title: v.title,
         description: v.description,
         // If backend sends a container, unwrap to .data; else use provided ProcessedImage|string
-        thumbnail: isThumbnailContainer(v.thumbnailUrl) ? v.thumbnailUrl.data : (v.thumbnail ?? v.thumbnailUrl),
+        thumbnail: isThumbnailContainer(v.thumbnail) ? v.thumbnail.data : (v.thumbnail ?? v.thumbnail),
         views: v.views ?? v.viewCount,
         duration: v.duration,
         createdAt: v.createdAt || v.publishedAt,
@@ -242,8 +242,8 @@ export default function SearchPage() {
         type: 'short',
         title: s.title,
         description: s.caption || s.description,
-        // Unwrap Short.thumbnailUrl container to ProcessedImage
-        thumbnail: isThumbnailContainer(s.thumbnailUrl) ? s.thumbnailUrl.data : s.thumbnail,
+        // Unwrap Short.thumbnail container to ProcessedImage
+        thumbnail: isThumbnailContainer(s.thumbnail) ? s.thumbnail.data : s.thumbnail,
         views: s.views ?? s.viewCount,
         createdAt: s.createdAt || s.publishedAt,
         channelName: s.channel?.name || s.channelName,
@@ -418,11 +418,12 @@ export default function SearchPage() {
       <div className="flex pt-16">
         <Sidebar isExpanded={isSidebarExpanded} setIsExpanded={setIsSidebarExpanded} />
         <main className="flex-1 min-w-0">
-          <div className="max-w-4xl mx-auto px-4 py-6">
+          {/* Updated root: Responsive padding */}
+          <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
             <div className="mb-6">
               <div className="flex items-center gap-2 mb-4">
                 <FiSearch className="w-5 h-5 text-gray-500" />
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                   {query ? `Search results for "${query}"` : 'Search'}
                 </h1>
               </div>

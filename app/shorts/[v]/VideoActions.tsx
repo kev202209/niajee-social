@@ -1,56 +1,31 @@
-import { useState, useRef, useEffect, type RefObject } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   MessageCircle,
   Share2,
-  MoreHorizontal,
   Bookmark,
   Plus,
-  Flag,
-  EyeOff,
 } from 'lucide-react';
 import Link from 'next/link'
 import LikeButton from "@/components/LikeButton";
 import { toast } from "sonner";
-import useOutsideClick from "@/hooks/useOutsideClick";
 import { formatCount } from '@/utils/formatCount';
 import ShareModal from '@/components/video/ShareModal';
 import ShareService from '@/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";
 import { getImageSrc } from '@/utils/imageUtils';
 import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
+import { ShortData, getImageSrcSafe } from '@/types'
 
-// Define the video data structure here or import it from a shared types file
-interface ShortData {
-  id: string;
-  title: string;
-  description?: string;
-  likeCount: number;
-  commentCount: number;
-  shareCount: number;
-  saveCount: number;
-  isLiked: boolean;
-  isSaved: boolean;
-  allowComments: boolean;
-  channel: {
-    id: string;
-    name: string;
-    avatar: string;
-    verified: boolean;
-    isFollowed: boolean;
-    handle: string;
-  };
-}
 
 interface VideoActionsProps {
   video: ShortData;
   onToggleComments: () => void;
-  onShowReport: () => void;
+  onShowReport: () => void; // kept for compatibility, not used here anymore
 }
 
 const VideoActions = ({ 
   video,
   onToggleComments,
-  onShowReport,
 }: VideoActionsProps) => {
   // Destructure properties from the video object
   const { 
@@ -65,7 +40,6 @@ const VideoActions = ({
   } = video;
   const { id: channelId, isFollowed } = channel;
 
-  const [showMenu, setShowMenu] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   
   // State is now initialized directly from the video object's properties
@@ -92,18 +66,6 @@ const VideoActions = ({
     setCurrentSaveCount(video.saveCount);
     setCurrentShareCount(video.shareCount);
   }, [video]); // The only dependency needed is the video object itself.
-
-  // use a HTMLDivElement ref so it can be passed as a div ref without type errors
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  // useOutsideClick expects RefObject<HTMLElement> (or array). Cast to that shape without using `any`.
-  // We cast via `unknown` -> `RefObject<HTMLElement>` to satisfy the hook signature safely.
-  useOutsideClick(menuRef as unknown as RefObject<HTMLElement>, () => setShowMenu(false));
-
-  const handleReport = () => {
-    setShowMenu(false);
-    onShowReport();
-  };
 
   // Handle like toggle
   const handleLikeToggle = async (newLiked: boolean) => {
@@ -226,39 +188,39 @@ const VideoActions = ({
   };
 
   // Handle not interested
-  const handleNotInterested = async () => {
-    if (loading.notInterested) return;
+  // const handleNotInterested = async () => {
+  //   if (loading.notInterested) return;
     
-    setLoading(prev => ({ ...prev, notInterested: true }));
-    setShowMenu(false);
+  //   setLoading(prev => ({ ...prev, notInterested: true }));
+  //   // setShowMenu(false);
     
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}/not-interested`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          }
-        }
-      );
+  //   try {
+  //     const response = await fetch(
+  //       `${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}/not-interested`,
+  //       {
+  //         method: 'POST',
+  //         credentials: 'include',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           'Accept': 'application/json',
+  //         }
+  //       }
+  //     );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to mark as not interested');
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.message || 'Failed to mark as not interested');
+  //     }
 
-      toast.success('We\'ll show you fewer videos like this');
+  //     toast.success('We\'ll show you fewer videos like this');
       
-    } catch (error) {
-      console.error('Error marking as not interested:', error);
-      toast.error(GENERIC_ERROR_MESSAGE);
-    } finally {
-      setLoading(prev => ({ ...prev, notInterested: false }));
-    }
-  };
+  //   } catch (error) {
+  //     console.error('Error marking as not interested:', error);
+  //     toast.error(GENERIC_ERROR_MESSAGE);
+  //   } finally {
+  //     setLoading(prev => ({ ...prev, notInterested: false }));
+  //   }
+  // };
 
   // Handle share with proper native share timing
   const handleShare = async () => {
@@ -295,6 +257,19 @@ const VideoActions = ({
     }
   };
 
+  // unified sound id (supports soundId or sound_id)
+  const effectiveSoundId = useMemo(() => {
+    if (typeof video.soundId === 'string' && video.soundId) return video.soundId;
+    const raw = video as unknown as Record<string, unknown>;
+    return typeof raw['sound_id'] === 'string' ? (raw['sound_id'] as string) : null;
+  }, [video]);
+
+  // resolve image: sound cover -> channel avatar -> placeholder
+  const soundImageSrc = useMemo(() => {
+    const avatar = getImageSrcSafe(video.channel.avatar);
+    return avatar || '/placeholder.png';
+  }, [video.channel.avatar]);
+
   return (
     <>
       <div className="flex flex-col items-center space-y-4">
@@ -303,11 +278,11 @@ const VideoActions = ({
           <div className="relative">
             <Link href={`/channels/${video.channel.handle}`}>
               <AuthenticatedImage
-                mediaKey={getImageSrc(channel.avatar, '480w') || ""}
-                alt={channel.name}
-                width={48}
-                height={48}
-                className="w-12 h-12 rounded-full border-2 border-white object-cover"
+                mediaKey={getImageSrc(video.channel.avatar, '480w') || ""}
+                alt={video.channel.name}
+                width={40}
+                height={40}
+                className="w-10 h-10 rounded-full border-2 border-white object-cover"
                 fallbackSrc="/placeholder.png"
               />
             </Link>
@@ -316,7 +291,7 @@ const VideoActions = ({
               <button
                 onClick={handleFollowToggle}
                 disabled={loading.follow}
-                className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors disabled:opacity-50"
+                className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors disabled:opacity-50"
               >
                 {loading.follow ? (
                   <div className="w-3 h-3 animate-spin rounded-full border border-white border-t-transparent"></div>
@@ -400,41 +375,27 @@ const VideoActions = ({
           </span>
         </div>
 
-        {/* More Button */}
-        <div className="relative flex flex-col items-center">
-          <button 
-            onClick={() => setShowMenu(!showMenu)} 
-            className="p-3 rounded-full transition-all hover:bg-black/20"
-          >
-            <MoreHorizontal 
-              size={26} 
-              className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors" 
-            />
-          </button>
-          
-          {showMenu && (
-            <div 
-              ref={menuRef}
-              className="absolute bottom-full mb-2 right-0 bg-black/90 backdrop-blur-sm rounded-lg p-2 min-w-48 z-50 border border-gray-600"
+        {/* Sound Action (bottom) */}
+        {effectiveSoundId && (
+          <div className="group mt-1 flex flex-col items-center">
+            <Link
+              href={`/shorts/sounds/${effectiveSoundId}`}
+              className="relative"
+              title={'Original audio'}
             >
-              <button 
-                onClick={handleReport}
-                className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2"
-              >
-                <Flag size={16} />
-                Report
-              </button>
-              <button 
-                onClick={handleNotInterested}
-                disabled={loading.notInterested}
-                className="w-full text-left px-3 py-2 hover:bg-gray-700 rounded text-sm text-white flex items-center gap-2 disabled:opacity-50"
-              >
-                <EyeOff size={16} />
-                {loading.notInterested ? 'Processing...' : 'Not Interested'}
-              </button>
-            </div>
-          )}
-        </div>
+              <div className="w-9 h-9 rounded-full border-2 border-white overflow-hidden relative bg-gray-800 flex items-center justify-center animate-spin [animation-duration:6s]">
+                <AuthenticatedImage
+                  mediaKey={getImageSrc(soundImageSrc, '480w') || ""}
+                  alt={'Original audio'}
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover"
+                  fallbackSrc="/placeholder.png"
+                />
+              </div>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Share Modal */}
