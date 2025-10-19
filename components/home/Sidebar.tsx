@@ -68,7 +68,7 @@ const Sidebar: FC<SidebarProps> = ({
   const basePositionClasses =
     interaction === "click"
       ? "fixed left-0 top-16 z-50"
-      : `fixed left-0 top-16 ${pushContent ? "" : "z-50"}`;
+      : `fixed left-0 top-16 ${pushContent ? "z-40" : "z-50"}`;
 
   const transformClasses =
     interaction === "click"
