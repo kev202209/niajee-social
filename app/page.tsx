@@ -5,7 +5,7 @@ import Home from '@/components/home/Index';
 import Landing from '@/components/Landing/index';
 import Loading from './watch/[v]/loading';
 
-export default function HomePage() {
+export default function LandingPage() {
   const { user, loading } = useAuth();
 
   if (loading) {

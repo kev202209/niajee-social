@@ -9,13 +9,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
     },
     {
-      url: 'https://app.niajee.com/shorts',
+      url: 'https://www.niajee.com/shorts',
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
     },
     {
-      url: 'https://app.niajee.com/',
+      url: 'https://www.niajee.com/home',
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,

@@ -62,8 +62,6 @@ function isValidRedirectUrl(url: string, request: NextRequest): boolean {
 
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
-  if (publicAssets.test(pathname)) return NextResponse.next();
-  if (publicPages.includes(pathname)) return NextResponse.next();
 
   const token = request.cookies.get('sggtx')?.value;
   const isAuthPage = authPages.some(p => pathname.startsWith(p));
@@ -111,14 +109,18 @@ export async function middleware(request: NextRequest) {
       if (redirectParam && isValidRedirectUrl(redirectParam, request)) {
         return NextResponse.redirect(new URL(redirectParam, request.url));
       } else {
-        return NextResponse.redirect(new URL('/', request.url));
+        // Send logged-in users to /home instead of /
+        return NextResponse.redirect(new URL('/home', request.url));
       }
     }
     return response;
   }
 
-  // Protected pages
-  if (!validSession) {
+  // Protected pages only (create/admin/saved/history)
+  const protectedPrefixes = ['/create', '/admin', '/saved', '/history'];
+  const isProtected = protectedPrefixes.some(p => pathname.startsWith(p));
+
+  if (isProtected && !validSession) {
     const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('redirect', pathname + search);
     return NextResponse.redirect(loginUrl);
@@ -128,5 +130,12 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  // Only run middleware on authenticated sections and auth pages
+  matcher: [
+    '/create/:path*',
+    '/admin/:path*',
+    '/saved',
+    '/history',
+    '/auth/:path*',
+  ],
 };
