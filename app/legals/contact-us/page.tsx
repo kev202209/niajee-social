@@ -119,6 +119,11 @@ const ContactForm = () => {
           Send Message
         </button>
       </form>
+      <div className="w-full p-3 flex justify-center items-center">
+        <p className="text-blue-500 dark:text-white text-center">
+          Or you can email us directly at: <a href="mailto:support@niajee.com" className="underline hover:text-blue-700 dark:hover:text-blue-300 text-lg font-bold">support@niajee.com</a>
+        </p>
+      </div>
 
       <ToastContainer
         toastClassName={() =>
