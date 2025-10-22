@@ -251,6 +251,40 @@ const ShortVideoPage = () => {
     return () => el.removeEventListener("wheel", onWheel);
   }, [handleScrollDown, handleScrollUp]);
 
+  // Touch swipe handling (mobile)
+  const touchStartYRef = useRef<number | null>(null);
+  const touchDeltaYRef = useRef<number>(0);
+  const SWIPE_THRESHOLD = 40; // px
+
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchStartYRef.current = e.touches[0]?.clientY ?? null;
+    touchDeltaYRef.current = 0;
+  };
+
+  const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (touchStartYRef.current == null) return;
+    const currentY = e.touches[0]?.clientY ?? touchStartYRef.current;
+    touchDeltaYRef.current = currentY - touchStartYRef.current;
+  };
+
+  const onTouchEnd = () => {
+    if (showComments) { // don't swipe while comments are open
+      touchStartYRef.current = null;
+      touchDeltaYRef.current = 0;
+      return;
+    }
+    const dy = touchDeltaYRef.current;
+    touchStartYRef.current = null;
+    touchDeltaYRef.current = 0;
+
+    if (Math.abs(dy) < SWIPE_THRESHOLD) return;
+    if (dy < 0) { // swipe up -> next
+      void handleScrollDown();
+    } else {     // swipe down -> previous
+      handleScrollUp();
+    }
+  };
+
   const toggleMute = () => {
     setIsMuted(prev => {
       const next = !prev;
@@ -336,8 +370,14 @@ const ShortVideoPage = () => {
       <Header />
 
       <div className="pt-10">
-        <div ref={scrollContainerRef} className="h-screen overflow-hidden flex justify-center">
-          <div className="h[200vh] w-full max-w-[500px] md:max-w-[760px] relative">
+        <div
+          ref={scrollContainerRef}
+          className="h-screen overflow-hidden flex justify-center touch-pan-y" // allow vertical gestures
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <div className="h-[200vh] w-full max-w-[500px] md:max-w-[760px] relative">
             {/* Current Video */}
             <div className="relative h-screen">
               <div className="flex items-center justify-center h-full">

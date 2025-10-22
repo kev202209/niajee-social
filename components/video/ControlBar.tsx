@@ -21,7 +21,7 @@ export default function ControlBar({ controls, videoId }: { controls: VideoPlaye
         px-2 py-2
         flex flex-col
         text-white
-        bg-black/60
+        bg-black/20
         transition-opacity duration-300
         ${controls.controlsVisible ? 'opacity-100' : 'opacity-0'}
         ${controls.mouseIdle ? 'pointer-events-none' : 'pointer-events-auto'}
