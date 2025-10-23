@@ -4,10 +4,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import BlobAnimation from '@/components/Blob';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface ApiMessage {
+  message?: string;
+}
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { ensureCsrf } = useAuth();
 
   const email = searchParams.get('email');
   const redirectQuery = searchParams.get('redirect') || undefined;
@@ -20,6 +26,11 @@ export default function VerifyEmailPage() {
   const [error, setError] = useState<string>('');
   const [resendCooldown, setResendCooldown] = useState<number>(0);
   const hasAutoSubmitted = useRef<boolean>(false);
+
+  useEffect(() => {
+    // Preload CSRF so first POST succeeds
+    void ensureCsrf().catch(() => void 0);
+  }, [ensureCsrf]);
 
   const isValidRedirectUrl = useCallback((url?: string) => {
     if (!url) return false;
@@ -55,17 +66,40 @@ export default function VerifyEmailPage() {
     setMessage('');
     setError('');
     try {
-      const res = await fetch(`${api_link}/auth/verify-email`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp: code }),
-      });
-      const data: { message?: string } = await res.json().catch(() => ({}));
+      const csrf = await ensureCsrf();
+
+      const doPost = async (): Promise<Response> => {
+        return fetch(`${api_link}/auth/verify-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-csrf-token': csrf,
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email, otp: code }),
+        });
+      };
+
+      let res = await doPost();
+      if (res.status === 403) {
+        // Fetch fresh CSRF and retry once
+        const newCsrf = await ensureCsrf();
+        res = await fetch(`${api_link}/auth/verify-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-csrf-token': newCsrf,
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email, otp: code }),
+        });
+      }
+
+      const data: ApiMessage = await res.json().catch(() => ({}));
 
       if (res.ok) {
         setMessage('Email verified successfully! You can now log in.');
         setError('');
-        // small delay then push to login with redirect (if valid)
         const params = new URLSearchParams();
         if (chosenRedirect) params.set('redirect', chosenRedirect);
         params.set('verified', 'true');
@@ -83,7 +117,7 @@ export default function VerifyEmailPage() {
     } finally {
       setIsVerifying(false);
     }
-  }, [api_link, chosenRedirect, email, router]);
+  }, [api_link, chosenRedirect, email, router, ensureCsrf]);
 
   const handleOtpChange = (value: string) => {
     // Keep only digits, clamp length to 6
@@ -109,13 +143,27 @@ export default function VerifyEmailPage() {
     setError('');
     setMessage('');
     try {
-      const res = await fetch(`${api_link}/auth/resend-verification`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // redirect kept for compatibility; backend ignores in OTP flow
-        body: JSON.stringify({ email, redirect: chosenRedirect || '' }),
-      });
-      const data: { message?: string } = await res.json().catch(() => ({}));
+      const csrf = await ensureCsrf();
+
+      const doPost = async (token: string): Promise<Response> => {
+        return fetch(`${api_link}/auth/resend-verification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-csrf-token': token,
+          },
+          credentials: 'include',
+          body: JSON.stringify({ email, redirect: chosenRedirect || '' }),
+        });
+      };
+
+      let res = await doPost(csrf);
+      if (res.status === 403) {
+        const newCsrf = await ensureCsrf();
+        res = await doPost(newCsrf);
+      }
+
+      const data: ApiMessage = await res.json().catch(() => ({}));
 
       if (res.ok) {
         setMessage(data?.message || 'A new OTP has been sent to your email.');
