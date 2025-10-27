@@ -30,10 +30,29 @@ const CATEGORIES = [
   'Other'
 ];
 
+type BlogLimitData = {
+  role: string;
+  unlimited: boolean;
+  limit: number | null;
+  used: number;
+  remaining: number | null;
+  canCreate: boolean;
+};
+
+type BlogLimitResponse = {
+  success: boolean;
+  message?: string;
+  data?: BlogLimitData;
+};
+
 export default function BlogsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
+
+  // NEW: creation limit state
+  const [limitInfo, setLimitInfo] = useState<BlogLimitData | null>(null);
+  const [limitLoading, setLimitLoading] = useState<boolean>(false);
   
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [featuredBlogs, setFeaturedBlogs] = useState<Blog[]>([]);
@@ -133,6 +152,39 @@ export default function BlogsPage() {
     }
   }, []);
 
+  // NEW: fetch current user's blog limit
+  const fetchLimit = useCallback(async () => {
+    if (!user) {
+      setLimitInfo(null);
+      return;
+    }
+    try {
+      setLimitLoading(true);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/me/limit`, {
+        method: 'GET',
+        credentials: 'include',
+        headers: { 'Accept': 'application/json' },
+      });
+      if (!res.ok) throw new Error('Failed to fetch limit status');
+      const data: BlogLimitResponse = await res.json();
+      if (data.success && data.data) {
+        setLimitInfo(data.data);
+      } else {
+        setLimitInfo(null);
+      }
+    } catch (e) {
+      console.error('Error fetching blog limit:', e);
+      setLimitInfo(null);
+    } finally {
+      setLimitLoading(false);
+    }
+  }, [user]);
+
+  // Load limit on mount and when user changes
+  useEffect(() => {
+    void fetchLimit();
+  }, [fetchLimit]);
+
   // Fetch blogs when filters (deps inside fetchBlogs) change
   useEffect(() => {
     fetchBlogs();
@@ -228,8 +280,9 @@ export default function BlogsPage() {
                     Read, learn, and share knowledge with our community
                   </p>
                 </div>
-                
-                {user && (
+
+                {/* NEW: Show Create button only if allowed */}
+                {user && !limitLoading && limitInfo?.canCreate && (
                   <Link
                     href="/blogs/create"
                     className="inline-flex items-center justify-center px-4 py-2.5 sm:px-5 sm:py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm sm:text-base shadow-sm whitespace-nowrap"
@@ -237,6 +290,18 @@ export default function BlogsPage() {
                     <FiPlus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                     Write a Blog
                   </Link>
+                )}
+
+                {/* Optional: show disabled button if at limit */}
+                {user && !limitLoading && limitInfo && !limitInfo.canCreate && (
+                  <button
+                    disabled
+                    className="inline-flex items-center justify-center px-4 py-2.5 sm:px-5 sm:py-2.5 bg-gray-300 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-lg cursor-not-allowed font-medium text-sm sm:text-base"
+                    title="You have reached your blog creation limit"
+                  >
+                    <FiPlus className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                    Limit reached
+                  </button>
                 )}
               </div>
 
