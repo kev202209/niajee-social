@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/home/Header';
@@ -29,6 +29,21 @@ const CATEGORIES = [
   'Other'
 ];
 
+type BlogLimitData = {
+  role: string;
+  unlimited: boolean;
+  limit: number | null;
+  used: number;
+  remaining: number | null;
+  canCreate: boolean;
+};
+
+type BlogLimitResponse = {
+  success: boolean;
+  message?: string;
+  data?: BlogLimitData;
+};
+
 export default function CreateBlogPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -51,6 +66,10 @@ export default function CreateBlogPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPreview, setShowPreview] = useState(false);
+
+  // NEW: limit gate
+  const [isCheckingLimit, setIsCheckingLimit] = useState<boolean>(true);
+  const [canCreate, setCanCreate] = useState<boolean>(false);
 
   const handleInputChange = <K extends keyof CreateBlogDto>(field: K, value: CreateBlogDto[K]) => {
     setFormData(prev => ({ ...prev, [field]: value } as CreateBlogDto));
@@ -247,7 +266,45 @@ export default function CreateBlogPage() {
     }
   };
 
+  useEffect(() => {
+    const checkLimit = async () => {
+      if (!user) {
+        setIsCheckingLimit(false);
+        setCanCreate(false);
+        return;
+      }
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/blogs/me/limit`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: { 'Accept': 'application/json' },
+        });
+        if (!res.ok) throw new Error('Failed to fetch limit');
+        const data: BlogLimitResponse = await res.json();
+        const allowed = !!data?.data?.canCreate;
+        setCanCreate(allowed);
+        if (!allowed) {
+          toast.error('You have reached your blog creation limit.');
+          router.replace('/blogs');
+        }
+      } catch (e) {
+        console.error('Limit check failed:', e);
+        // Fail-safe: block creation if check fails
+        toast.error('Unable to verify creation limit. Please try again later.');
+        router.replace('/blogs');
+      } finally {
+        setIsCheckingLimit(false);
+      }
+    };
+    void checkLimit();
+  }, [user, router]);
+
   const handleSubmit = async (status: 'draft' | 'published') => {
+    // Prevent submission if somehow canCreate toggled false later
+    if (!canCreate) {
+      toast.error('You have reached your blog creation limit.');
+      return;
+    }
     if (!validateForm()) {
       toast.error("Please fill in all required fields.");
       return;
@@ -346,7 +403,8 @@ export default function CreateBlogPage() {
       .join('');
   };
 
-  if (!user) {
+  // Block rendering until limit is checked
+  if (!user || isCheckingLimit || !canCreate) {
     return null;
   }
 

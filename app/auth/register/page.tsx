@@ -2,7 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { FaEye, FaGoogle, FaEyeSlash } from "react-icons/fa";
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
@@ -15,6 +15,7 @@ import { differenceInYears, parseISO } from "date-fns";
 
 export default function RegisterPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { register, checkEmailAvailability } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const api_link = process.env.NEXT_PUBLIC_API_URL;
@@ -49,7 +50,7 @@ export default function RegisterPage() {
         process.env.NEXT_PUBLIC_FRONTEND_A_URL,
         process.env.NEXT_PUBLIC_FRONTEND_B_URL,
       ].filter(Boolean);
-      return allowedDomains.some(domain => 
+      return allowedDomains.some(domain =>
         parsedUrl.origin.includes(domain as string)
       );
     } catch {
@@ -107,7 +108,7 @@ export default function RegisterPage() {
       const deviceInfo = await getDeviceInfo();
 
       // validate redirect before sending it to the backend
-      const safeRedirect = redirectUrl && isValidRedirectUrl(redirectUrl) ? redirectUrl : undefined;
+      const postRegisterRedirect = redirectUrl && isValidRedirectUrl(redirectUrl) ? redirectUrl : undefined;
 
       await register(
         {
@@ -119,14 +120,18 @@ export default function RegisterPage() {
           // username/profilePic will be auto-generated on backend
         },
         deviceInfo,
-        // pass validated redirect to backend so it can embed it in the verification email link
-        safeRedirect
+        // kept for compatibility; backend ignores in OTP flow
+        postRegisterRedirect
       );
-      // move to verification step
-      setStep(4);
-      toast.success("Registration successful! Please check your email for verification.");
+
+      toast.success("Registration successful! Enter the OTP sent to your email.");
+
+      // Immediately route to OTP verification page with email (and redirect if valid)
+      const query = new URLSearchParams();
+      query.set('email', formData.email);
+      if (postRegisterRedirect) query.set('redirect', postRegisterRedirect);
+      router.replace(`/auth/verify-email?${query.toString()}`);
     } catch (err) {
-      // Do NOT show raw server error to users. Log it and show a generic message.
       console.error('Registration error:', err);
       toast.error("Registration failed. Please try again.");
     } finally {
@@ -165,14 +170,14 @@ export default function RegisterPage() {
 
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen">
         <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 rounded shadow [background:linear-gradient(45deg,#ffffff,theme(colors.slate.200)_50%,#ffffff)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.300/.48)_80%,theme(colors.blue.500)_86%,theme(colors.blue.300)_90%,theme(colors.blue.500)_94%,theme(colors.slate.300/.48))_border-box] dark:[background:linear-gradient(45deg,#172033,theme(colors.slate.800)_50%,#172033)_padding-box,conic-gradient(from_var(--border-angle),theme(colors.slate.600/.48)_80%,theme(colors.indigo.500)_86%,theme(colors.indigo.300)_90%,theme(colors.indigo.500)_94%,theme(colors.slate.600/.48))_border-box]  rounded-2xl border border-1.5 border-transparent animate-border">
-          
+          {/* Step 1: Basic info */}
           {step === 1 && (
             <div>
               <h1 className="text-2xl font-bold mb-4 text-blue-500 dark:text-white">
                 Welcome to Niajee
               </h1>
-              <Link 
-                href={`/auth/login${safeRedirect ? `?redirect=${encodeURIComponent(safeRedirect)}` : ''}`} 
+              <Link
+                href={`/auth/login${safeRedirect ? `?redirect=${encodeURIComponent(safeRedirect)}` : ''}`}
                 className="block text-blue-600 dark:text-white mt-2 pb-2"
               >
                 Already have an account? <span className="font-bold">Login</span>
@@ -210,16 +215,16 @@ export default function RegisterPage() {
                 onClick={handleEmailCheck}
                 disabled={!formData.firstName || !formData.lastName || !formData.email || isEmailLoading}
                 className={`w-full h-10 p-2 rounded-xl mb-3 text-white ${
-                  isEmailLoading 
-                    ? "bg-blue-600 pointer-events-none" 
-                    : (!formData.firstName || !formData.lastName || !formData.email 
-                        ? "bg-gray-400 cursor-not-allowed" 
+                  isEmailLoading
+                    ? "bg-blue-600 pointer-events-none"
+                    : (!formData.firstName || !formData.lastName || !formData.email
+                        ? "bg-gray-400 cursor-not-allowed"
                         : "bg-blue-600 hover:bg-blue-700 cursor-pointer")
                 }`}
               >
                 {isEmailLoading ? <LoadingDots /> : "Continue"}
               </button>
-              
+
               <div className="flex items-center my-4">
                 <div className="flex-grow border-t border-gray-300"></div>
                 <span className="mx-2 text-gray-500">or</span>
@@ -236,6 +241,7 @@ export default function RegisterPage() {
             </div>
           )}
 
+          {/* Step 2: Birthday */}
           {step === 2 && (
             <div>
               <h1 className="text-2xl font-bold mb-4 text-blue-600 dark:text-white">
@@ -296,6 +302,7 @@ export default function RegisterPage() {
             </div>
           )}
 
+          {/* Step 3: Password */}
           {step === 3 && (
             <div>
               <h1 className="text-2xl font-bold mb-4 text-blue-600 dark:text-white">
@@ -372,10 +379,10 @@ export default function RegisterPage() {
                     isRegisterLoading
                   }
                   className={`p-2 h-10 rounded text-white ${
-                    isRegisterLoading 
-                      ? "bg-blue-600 pointer-events-none" 
+                    isRegisterLoading
+                      ? "bg-blue-600 pointer-events-none"
                       : (!formData.password || !formData.confirmPassword || !!passwordError
-                          ? "bg-gray-400 cursor-not-allowed" 
+                          ? "bg-gray-400 cursor-not-allowed"
                           : "bg-blue-600 hover:bg-blue-700 cursor-pointer")
                   }`}
                 >
@@ -385,12 +392,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {step === 4 && (
-            <div>
-              <h1 className="text-2xl font-bold mb-4 text-blue-500 dark:text-white">Verify Your Email</h1>
-              <p className="text-blue-500 dark:text-white">Registration successful! Please check your email for verification. If you can&apos;t see the email look at the SPAM folder.</p>
-            </div>
-          )}
+          {/* Note: step 4 UI removed; we redirect to /auth/verify-email after register */}
         </div>
       </div>
     </div>
