@@ -432,7 +432,7 @@ export default function ChannelOverview() {
               </button>
               
               <button 
-                onClick={() => navigateToPage('/live')}
+                onClick={() => navigateToPage('')}
                 className="p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition text-center group"
               >
                 <FiPlay className="w-6 h-6 text-red-600 dark:text-red-400 mx-auto mb-2 group-hover:scale-110 transition-transform" />

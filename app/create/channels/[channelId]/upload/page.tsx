@@ -13,7 +13,7 @@ import ThumbnailUploader from '../../../../../components/upload/ThumbnailUploade
 import FormFields from '../../../../../components/upload/FormFields';
 import UploadProgress from '../../../../../components/upload/UploadProgress';
 import NavigationBlocker from '../../../../../components/upload/NavigationBlocker';
-import UploadNotification from '../../../../../components/upload/UploadNotification';
+// import UploadNotification from '../../../../../components/upload/UploadNotification';
 
 import { useUploadForm } from '../../../../../hooks/upload/useUploadForm';
 import { useFileHandlers } from '../../../../../hooks/upload/useFileHandlers';
@@ -528,7 +528,7 @@ const ChannelUploadPage = () => {
         allowNavigation={() => uploadState.processingStep === 'complete'}
       />
 
-      <UploadNotification
+      {/* <UploadNotification
         isVisible={showNotification && uploadState.uploading}
         uploadProgress={uploadState.uploadProgress}
         processingProgress={uploadState.processingProgress}
@@ -545,7 +545,7 @@ const ChannelUploadPage = () => {
             behavior: 'smooth'
           });
         }}
-      />
+      /> */}
 
       {/* Updated root container: Responsive padding */}
       <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">

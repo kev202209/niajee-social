@@ -18,7 +18,7 @@ const channelMenuItems = [
   { label: 'Overview', icon: Home, href: '' },
   { label: 'Upload', icon: Upload, href: '/upload' },
   { label: 'Manage', icon: Video, href: '/manage-uploads' },
-  { label: 'Analytics', icon: BarChart3, href: '/analytics' },
+  // { label: 'Analytics', icon: BarChart3, href: '/analytics' },
   { label: 'Settings', icon: Settings, href: '/settings' },
 ] as const
 
