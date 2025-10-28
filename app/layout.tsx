@@ -7,14 +7,51 @@ import { Toaster } from '@/components/ui/sonner'
 import {PostHogProvider} from './providers/PHprovider'
 import CookieConsent from '@/components/CookieConsent'
 
+// Base site URL used for absolute OG/Twitter URLs
+const siteUrl = process.env.NEXT_PUBLIC_MAIN_URL || 'http://localhost:3000';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  applicationName: 'Niajee',
   title: 'Niajee - Social Media Super App',
   description: 'An all-in-one social media experience with feeds, videos, and more.',
-  keywords: ['social media', 'super app', 'feeds', 'videos', 'community', 'Niajee'], // Added keywords for SEO
-  icons: { // Added favicon configuration
-    icon: '/favicon.jpg', // Path to your favicon file in the public directory
-    // apple: '/apple-touch-icon.png', // Example for apple touch icon
-    // other sizes and formats can be defined here
+  keywords: ['social media', 'super app', 'feeds', 'videos', 'community', 'Niajee'],
+  alternates: { canonical: '/' },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-video-preview': -1,
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    url: siteUrl,
+    siteName: 'Niajee',
+    title: 'Niajee - Social Media Super App',
+    description: 'An all-in-one social media experience with feeds, videos, and more.',
+    images: [
+      {
+        url: '/favicon.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Niajee - Social Media Super App',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Niajee - Social Media Super App',
+    description: 'An all-in-one social media experience with feeds, videos, and more.',
+    images: ['/favicon.jpg'],
+  },
+  icons: {
+    icon: '/favicon.jpg',
+    apple: '/favicon.jpg',
   },
 }
 
