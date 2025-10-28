@@ -26,9 +26,16 @@ interface AuthContextType {
   logout: () => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
   sendResetPasswordOtp: (email: string) => Promise<void>;
-  verifyResetOtp: (otp: string) => Promise<void>;
+  verifyResetOtp: (email: string, otp: string) => Promise<void>;
   resetPassword: (
     otp: string,
+    newPassword: string,
+    confirmPassword: string
+  ) => Promise<void>;
+  // Token-based reset (magic-link style)
+  validateResetToken: (token: string) => Promise<boolean>;
+  resetPasswordWithToken: (
+    token: string,
     newPassword: string,
     confirmPassword: string
   ) => Promise<void>;
@@ -420,18 +427,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!response.ok) throw new Error('Failed to send reset OTP');
   };
 
-  const verifyResetOtp = async (otp: string) => {
+  const verifyResetOtp = async (email: string, otp: string): Promise<void> => {
     const csrf = await ensureCsrf();
-    const response = await fetch(`${api_link}/auth/verify-otp`, {
+    const res = await fetch(`${api_link}/auth/verify-reset-otp`, {
       method: 'POST',
       credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         'x-csrf-token': csrf,
       },
-      body: JSON.stringify({ otp }),
+      body: JSON.stringify({ email, otp }),
     });
-    if (!response.ok) throw new Error('Invalid OTP');
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error((data as { message?: string }).message || 'Invalid or expired code.');
+    }
   };
 
   const resetPassword = async (
@@ -450,6 +460,48 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ otp, newPassword, confirmPassword }),
     });
     if (!response.ok) throw new Error('Password reset failed');
+  };
+
+  // Validate reset token (GET). CSRF usually not required for GET, but include credentials for cookies.
+  const validateResetToken = async (token: string): Promise<boolean> => {
+    const response = await fetch(`${api_link}/auth/validate-reset-token?token=${encodeURIComponent(token)}`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'Accept': 'application/json' },
+    });
+    if (!response.ok) return false;
+    try {
+      const data = await response.json();
+      return Boolean((data as { valid?: boolean }).valid);
+    } catch {
+      return false;
+    }
+  };
+
+  // Token-based reset password (POST) with CSRF
+  const resetPasswordWithToken = async (
+    token: string,
+    newPassword: string,
+    confirmPassword: string
+  ): Promise<void> => {
+    const csrf = await ensureCsrf();
+    const response = await fetch(`${api_link}/auth/reset-password`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-csrf-token': csrf,
+      },
+      body: JSON.stringify({ token, newPassword, confirmPassword }),
+    });
+    if (!response.ok) {
+      let msg = 'Password reset failed';
+      try {
+        const data = await response.json();
+        if ((data as { message?: string }).message) msg = (data as { message: string }).message;
+      } catch { /* ignore */ }
+      throw new Error(msg);
+    }
   };
 
   const checkEmailAvailability = async (email: string): Promise<boolean> => {
@@ -515,6 +567,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sendResetPasswordOtp,
         verifyResetOtp,
         resetPassword,
+        validateResetToken,
+        resetPasswordWithToken,
         checkEmailAvailability,
         csrfToken,
         setCsrfToken,
