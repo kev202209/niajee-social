@@ -3,7 +3,7 @@
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  BarChart3,
+  // BarChart3,
   Upload,
   Settings,
   Home,
