@@ -8,6 +8,7 @@ import Sidebar from '@/components/home/Sidebar';
 import Button from "@/components/ui/CustomButton";
 import { toast } from "sonner";
 import BlockEditor from '@/components/blog/BlockEditor';
+import DOMPurify from 'dompurify';
 import type { OutputData } from "@editorjs/editorjs";
 import { CreateBlogDto } from '@/types';
 import { FiBookmark, FiEye, FiUpload, FiX, FiArrowLeft, FiLoader } from 'react-icons/fi';
@@ -389,18 +390,161 @@ export default function CreateBlogPage() {
     }
   };
 
-  // Simple, safe preview renderer
-  const escapeHtml = (str: string) =>
-    str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  // Render Editor.js content to HTML for preview (sanitized)
+  const escapeHtml = (str: string): string =>
+    str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
 
-  const renderEditorContent = (content?: OutputData) => {
+  const sanitize = (html: string): string =>
+    DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: [
+        'a','abbr','b','blockquote','br','caption','code','div','em','figure','figcaption','h1','h2','h3','h4','h5','h6',
+        'hr','i','img','li','mark','ol','p','pre','s','small','span','strong','sub','sup','table','tbody','td','th','thead','tr','u','ul','iframe'
+      ],
+      ALLOWED_ATTR: [
+        'href','title','target','rel','src','alt','class','width','height','loading','referrerpolicy','frameborder','allow','allowfullscreen'
+      ],
+      ALLOW_DATA_ATTR: false,
+      RETURN_TRUSTED_TYPE: false,
+    });
+
+  const safeHeadingLevel = (level: unknown): 1|2|3|4|5|6 => {
+    const n = typeof level === 'number' ? level : parseInt(String(level), 10);
+    if (n >= 1 && n <= 6) return n as 1|2|3|4|5|6;
+    return 2;
+  };
+
+  const renderEditorContent = (content?: OutputData): string => {
     if (!content?.blocks || content.blocks.length === 0) {
       return '<p>Your blog content will appear here...</p>';
     }
 
-    return content.blocks
-      .map(block => `<pre class="editor-block-preview">${escapeHtml(JSON.stringify(block, null, 2))}</pre>`)
-      .join('');
+    const htmlParts: string[] = [];
+
+    for (const block of content.blocks) {
+      const type = block.type;
+      const data = block.data as unknown;
+
+      if (type === 'paragraph') {
+        const d = data as { text?: string };
+        const text = d.text ?? '';
+        // Paragraphs may include inline formatting; sanitize, not escape.
+        htmlParts.push(`<p>${text}</p>`);
+        continue;
+      }
+
+      if (type === 'header') {
+        const d = data as { text?: string; level?: number };
+        const level = safeHeadingLevel(d.level);
+        const text = d.text ?? '';
+        htmlParts.push(`<h${level}>${text}</h${level}>`);
+        continue;
+      }
+
+      if (type === 'list') {
+        const d = data as { style?: 'unordered'|'ordered'; items?: string[] };
+        const items = Array.isArray(d.items) ? d.items : [];
+        const isOrdered = d.style === 'ordered';
+        const tag = isOrdered ? 'ol' : 'ul';
+        const li = items.map(i => `<li>${i}</li>`).join('');
+        htmlParts.push(`<${tag}>${li}</${tag}>`);
+        continue;
+      }
+
+      if (type === 'checklist') {
+        const d = data as { items?: Array<{ text?: string; checked?: boolean }> };
+        const items = Array.isArray(d.items) ? d.items : [];
+        const li = items
+          .map(i => `<li><input type="checkbox" disabled ${i.checked ? 'checked' : ''}/> <span>${i.text ?? ''}</span></li>`) 
+          .join('');
+        htmlParts.push(`<ul class="cdx-checklist">${li}</ul>`);
+        continue;
+      }
+
+      if (type === 'image' || type === 'simpleImage') {
+        // Handle both Image tool and SimpleImage
+        const d1 = data as { file?: { url?: string }; caption?: string; withBorder?: boolean; withBackground?: boolean; stretched?: boolean };
+        const d2 = data as { url?: string; caption?: string };
+        const url = d1.file?.url || d2.url || '';
+        const caption = d1.caption ?? d2.caption ?? '';
+        if (url) {
+          htmlParts.push(`<figure><img src="${url}" alt="${escapeHtml(caption)}" loading="lazy"/><figcaption>${escapeHtml(caption)}</figcaption></figure>`);
+        }
+        continue;
+      }
+
+      if (type === 'code') {
+        const d = data as { code?: string };
+        const code = d.code ? escapeHtml(d.code) : '';
+        htmlParts.push(`<pre><code>${code}</code></pre>`);
+        continue;
+      }
+
+      if (type === 'table') {
+        const d = data as { content?: string[][] };
+        const rows = Array.isArray(d.content) ? d.content : [];
+        const trs = rows
+          .map(row => `<tr>${row.map(cell => `<td>${cell ?? ''}</td>`).join('')}</tr>`)
+          .join('');
+        htmlParts.push(`<table><tbody>${trs}</tbody></table>`);
+        continue;
+      }
+
+      if (type === 'delimiter') {
+        htmlParts.push('<hr />');
+        continue;
+      }
+
+      if (type === 'raw') {
+        const d = data as { html?: string };
+        htmlParts.push(d.html ?? '');
+        continue;
+      }
+
+      if (type === 'embed') {
+        const d = data as { service?: string; embed?: string; source?: string; width?: number; height?: number };
+        // Only allow known safe providers for preview (e.g., YouTube)
+        const isYouTube = (d.service === 'youtube') || (typeof d.source === 'string' && d.source.includes('youtube'));
+        if (isYouTube && typeof d.embed === 'string') {
+          htmlParts.push(d.embed);
+        } else if (typeof d.source === 'string') {
+          // Fallback to a link
+          htmlParts.push(`<p><a href="${d.source}" target="_blank" rel="noopener noreferrer">${d.source}</a></p>`);
+        }
+        continue;
+      }
+
+      if (type === 'linkTool' || type === 'link') {
+        const d = data as { link?: string; meta?: { title?: string; description?: string; image?: { url?: string } } };
+        const href = d.link ?? '';
+        const title = d.meta?.title ?? href;
+        const description = d.meta?.description ?? '';
+        const img = d.meta?.image?.url;
+        const imageHtml = img ? `<img src="${img}" alt="${escapeHtml(title)}" loading="lazy"/>` : '';
+        htmlParts.push(`
+          <a class="link-card" href="${href}" target="_blank" rel="noopener noreferrer">
+            <div class="link-card__content">
+              <div class="link-card__text">
+                <div class="link-card__title">${escapeHtml(title)}</div>
+                <div class="link-card__desc">${escapeHtml(description)}</div>
+                <div class="link-card__url">${escapeHtml(href)}</div>
+              </div>
+              ${imageHtml}
+            </div>
+          </a>
+        `);
+        continue;
+      }
+
+      // Unknown block: show nothing to avoid JSON noise in preview
+    }
+
+    const html = htmlParts.join('');
+    return sanitize(html);
   };
 
   // Block rendering until limit is checked
