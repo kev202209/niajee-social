@@ -17,7 +17,7 @@ const TweetFeed: FC = () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await fetch(`${api_link}/posts/feed`, {
+      const response = await fetch(`${api_link}/posts/for-you`, {
         method: "GET",
         credentials: "include",
       });
