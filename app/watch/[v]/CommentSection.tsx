@@ -8,11 +8,29 @@ import TextAreaWithLimit from '@/components/ui/TextAreaWithLimit';
 import timeAgo from '@/utils/timeAgo';
 import AuthenticatedImage from "@/components/Image";
 import { getImageSrc } from '@/utils/imageUtils';
+import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 interface CommentsSectionProps {
   videoId: string;
   allowComments?: boolean;
 }
+
+interface ApiError {
+  message?: string;
+}
+
+const isHelpfulMessage = (msg: string): boolean => {
+  const banned = /(internal|server error|exception|trace|stack|bad request|forbidden|unauthorized)/i;
+  return !!msg && !banned.test(msg) && msg.trim().length > 0 && msg.length <= 160;
+};
+
+const pickUserMessage = (data: unknown): string => {
+  const msg =
+    typeof data === 'object' && data !== null && 'message' in data
+      ? (data as ApiError).message
+      : undefined;
+  return msg && isHelpfulMessage(msg) ? msg : GENERIC_ERROR_MESSAGE;
+};
 
 export default function CommentsSection({ videoId, allowComments = true }: CommentsSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -63,7 +81,8 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
           setCommentsCount(0);
           return;
         }
-        throw new Error(`Failed to fetch comments: ${response.status}`);
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(pickUserMessage(errData));
       }
 
       const data = await response.json();
@@ -89,13 +108,12 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
           setCommentsCount(data.comments?.length || 0);
         }
       } catch {
-        // swallow count fetch errors and fallback to array length
         console.warn('Failed to fetch comment count, using array length');
         setCommentsCount(data.comments?.length || 0);
       }
 
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to load comments. Please try again later.';
+      const message = err instanceof Error ? err.message : GENERIC_ERROR_MESSAGE;
       console.error('Error fetching comments:', err);
       setError(message);
       setComments([]);
@@ -140,7 +158,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData as { message?: string }).message || 'Failed to submit comment');
+        throw new Error(pickUserMessage(errorData));
       }
 
       const data = await response.json();
@@ -148,7 +166,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       setCommentsCount(prev => prev + 1);
       setNewComment('');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to submit comment';
+      const message = err instanceof Error ? err.message : GENERIC_ERROR_MESSAGE;
       console.error('Error submitting comment:', err);
       setError(message);
     } finally {
@@ -185,12 +203,11 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData as { message?: string }).message || 'Failed to submit reply');
+        throw new Error(pickUserMessage(errorData));
       }
 
       const data = await response.json();
 
-      // Add reply to the parent comment
       setComments(prev => prev.map(comment => {
         if (comment.id === parentId) {
           return {
@@ -206,7 +223,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       setReplyingTo(null);
       setCommentsCount(prev => prev + 1);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to submit reply';
+      const message = err instanceof Error ? err.message : GENERIC_ERROR_MESSAGE;
       console.error('Error submitting reply:', err);
       setError(message);
     } finally {
@@ -243,7 +260,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error((errorData as { message?: string }).message || 'Failed to update comment');
+        throw new Error(pickUserMessage(errorData));
       }
 
       // consume body even if not used
@@ -269,7 +286,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       setEditingId(null);
       setEditContent('');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to update comment';
+      const message = err instanceof Error ? err.message : GENERIC_ERROR_MESSAGE;
       console.error('Error updating comment:', err);
       setError(message);
     } finally {
@@ -300,10 +317,11 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       );
 
       if (!response.ok) {
-        throw new Error('Failed to like comment');
+        const errorData = await response.json().catch(() => ({}));
+        setError(pickUserMessage(errorData));
+        return;
       }
 
-      // Update comment like status
       setComments(prev => prev.map(comment => {
         if (comment.id === commentId) {
           return {
@@ -312,7 +330,6 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
             likeCount: comment.isLiked ? comment.likeCount - 1 : comment.likeCount + 1
           };
         }
-        // Also check replies
         return {
           ...comment,
           replies: comment.replies?.map(reply => {
@@ -329,6 +346,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       }));
     } catch (err: unknown) {
       console.error('Error liking comment:', err);
+      setError(GENERIC_ERROR_MESSAGE);
     }
   };
 
@@ -349,14 +367,15 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
       );
 
       if (!response.ok) {
-        throw new Error('Failed to delete comment');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(pickUserMessage(errorData));
       }
 
       // Remove comment from list
       setComments(prev => prev.filter(comment => comment.id !== commentId));
       setCommentsCount(prev => prev - 1);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to delete comment';
+      const message = err instanceof Error ? err.message : GENERIC_ERROR_MESSAGE;
       console.error('Error deleting comment:', err);
       setError(message);
     }

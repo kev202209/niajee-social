@@ -1,12 +1,13 @@
 // components/VideoMeta.tsx
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import Link from 'next/link'; // ADD: Next.js Link
 import { 
   Share2, 
   Download, 
   Save, 
   MoreHorizontal,
-  Link,
+  // Link,           // REMOVE: this was the lucide icon causing the conflict
   Flag,
   EyeOff 
 } from 'lucide-react';
@@ -340,7 +341,7 @@ useEffect(() => {
           <div className="flex items-center gap-3">
             <Link href={`/channels/${video.channel.handle}`}>
               <AuthenticatedImage
-                mediaKey={video.channel.avatar ? getImageSrc(video.channel.avatar, '480w') : ""}
+                mediaKey={video.channel.avatar ? getImageSrc(video.channel.avatar, '480w') : ''}
                 alt={video.channel.name}
                 width={48}
                 height={48}
