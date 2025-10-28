@@ -15,7 +15,7 @@ import {
   FiAlertTriangle,
   FiX,
 } from 'react-icons/fi';
-import { formatCount } from '@/utils/formatCount';
+import { formatCount } from '@/utils/formatUtils';
 import { getImageSrcSafe } from '@/types';
 import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 

@@ -8,7 +8,7 @@ import {
 import Link from 'next/link'
 import LikeButton from "@/components/LikeButton";
 import { toast } from "sonner";
-import { formatCount } from '@/utils/formatCount';
+import { formatCount } from '@/utils/formatUtils';
 import ShareModal from '@/components/video/ShareModal';
 import ShareService from '@/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";

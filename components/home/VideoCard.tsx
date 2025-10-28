@@ -4,7 +4,7 @@ import { FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiU
 import Link from "next/link";
 import timeAgo from "../../utils/timeAgo";
 import AuthenticatedImage from "@/components/Image";
-import { formatCount } from "@/utils/formatCount";
+import { formatCount } from "@/utils/formatUtils";
 import { getImageSrc } from "@/utils/imageUtils";
 import HoverPreviewPlayer from "@/components/media/HoverPreviewPlayer";
 

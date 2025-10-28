@@ -11,7 +11,7 @@ import {
   FiBarChart2,
   FiActivity,
 } from 'react-icons/fi';
-import { formatCount } from '@/utils/formatCount';
+import { formatCount } from '@/utils/formatUtils';
 import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 
 interface AnalyticsData {

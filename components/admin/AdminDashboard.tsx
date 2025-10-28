@@ -17,7 +17,7 @@ import {
   FiShield,
   FiActivity,
 } from 'react-icons/fi';
-import { formatCount } from '@/utils/formatCount';
+import { formatCount } from '@/utils/formatUtils';
 
 interface DashboardApiResponse {
   overview: {

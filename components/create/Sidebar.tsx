@@ -34,7 +34,7 @@ const Sidebar: FC<SidebarProps> = ({ isSidebarOpen }) => {
     >
       <nav className="flex flex-col pt-4 h-full w-full">
         {[
-          { label: 'Go Live',     icon: Rocket,    href: '/create/live' },
+          { label: 'Go Live',     icon: Rocket,    href: '' },
           { label: 'Channels',    icon: Film,      href: '/create/channels' },
           { label: 'Upload',      icon: Upload,    href: '/create/upload' },
           { label: 'Editor',      icon: Video,     href: '/create/editor' },

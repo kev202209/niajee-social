@@ -22,6 +22,7 @@ import Link from 'next/link';
 import AuthenticatedImage from '@/components/Image';
 import timeAgo from '@/utils/timeAgo';
 import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
+import { formatDuration } from '@/utils/formatUtils';
 
 const ManageUploadsPage = () => {
   const params = useParams();
@@ -171,20 +172,7 @@ const ManageUploadsPage = () => {
     return overallStatus.charAt(0).toUpperCase() + overallStatus.slice(1);
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
 
-  const formatDuration = (seconds?: number) => {
-    if (!seconds) return 'Unknown';
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
 
   useEffect(() => {
     fetchChannel();
@@ -321,7 +309,7 @@ const ManageUploadsPage = () => {
                         {/* Updated metadata: Smaller text, flex-wrap for mobile */}
                         <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                           <span className="capitalize">{upload.contentType}</span>
-                          <span>{formatFileSize(upload.fileSize)}</span>
+                          {/* <span>{formatFileSize(upload.fileSize)}</span> */}
                           {upload.duration && <span>{formatDuration(upload.duration)}</span>}
                           <span>{timeAgo(upload.createdAt)}</span>
                         </div>

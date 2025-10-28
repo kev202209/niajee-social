@@ -10,7 +10,7 @@ import {
   FiAlertTriangle,
   FiEye
 } from 'react-icons/fi';
-import { formatCount } from '@/utils/formatCount';
+import { formatCount } from '@/utils/formatUtils';
 import Image from 'next/image';
 import { getImageSrc } from '@/utils/imageUtils';
 import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';

@@ -13,7 +13,7 @@ import {
   FiHeart,
   FiMessageCircle,
 } from 'react-icons/fi';
-import { formatCount } from '@/utils/formatCount';
+import { formatCount } from '@/utils/formatUtils';
 import { getImageSrc } from '@/utils/imageUtils';
 import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
 

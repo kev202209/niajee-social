@@ -9,7 +9,7 @@ import AuthenticatedImage from '@/components/Image';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import timeAgo from '@/utils/timeAgo';
-import { formatCount } from '@/utils/formatCount';
+import { formatCount } from '@/utils/formatUtils';
 import type { User, Channel, mVideo, Short, Blog, Post, ProcessedImage } from '@/types';
 import { getImageSrc } from '@/utils/imageUtils';
 

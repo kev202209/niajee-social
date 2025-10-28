@@ -18,7 +18,7 @@ import ReportModal from '@/app/shorts/[v]/ReportModal';
 import ShareModal from './ShareModal';
 import { toast } from "sonner";
 import useOutsideClick from '@/hooks/useOutsideClick';
-import { formatCount } from '@/utils/formatCount';
+import { formatCount } from '@/utils/formatUtils';
 import ShareService from '@/utils/ShareService';
 import AuthenticatedImage from "@/components/Image";
 import { getImageSrc } from '@/utils/imageUtils';
