@@ -110,7 +110,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL(redirectParam, request.url));
       } else {
         // Send logged-in users to /home instead of /
-        return NextResponse.redirect(new URL('/home', request.url));
+        return NextResponse.redirect(new URL('/', request.url));
       }
     }
     return response;
