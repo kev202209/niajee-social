@@ -31,7 +31,7 @@ export default function Header() {
             href="/why"
             className="text-gray-700 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400 transition"
           >
-            Why
+            Why Niajee?
           </Link>
           <Link
             href="/legals/contact-us"
