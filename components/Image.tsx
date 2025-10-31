@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProcessedImage } from '@/types';
@@ -24,6 +24,9 @@ interface AuthenticatedImageProps {
 const imageCache = new Map<string, string>();
 const pendingRequests = new Map<string, Promise<string>>();
 
+const isAbsoluteUrl = (value: unknown): value is string =>
+  typeof value === 'string' && /^(https?:)\/\//i.test(value);
+
 const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   mediaKey,
   alt,
@@ -38,12 +41,12 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   onError,
   onLoad,
 }) => {
-  const { user } = useAuth(); // Only need user state, not token
+  const { user } = useAuth();
   const [imageSrc, setImageSrc] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(true);
-  // const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const api_url = process.env.NEXT_PUBLIC_API_URL;
   const isMounted = useRef(true);
+  const createdObjectUrlRef = useRef<string | null>(null);
 
   useEffect(() => {
     isMounted.current = true;
@@ -53,145 +56,143 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   }, []);
 
   useEffect(() => {
-    // Check if user is authenticated and mediaKey exists
+    // Clean previously created object URL when mediaKey changes
+    if (createdObjectUrlRef.current) {
+      try {
+        URL.revokeObjectURL(createdObjectUrlRef.current);
+      } catch {
+        // ignore
+      }
+      createdObjectUrlRef.current = null;
+    }
+
+    // If mediaKey is an absolute URL, use it directly (no auth fetch)
+    if (isAbsoluteUrl(mediaKey)) {
+      setImageSrc(mediaKey);
+      setIsLoading(false);
+      return;
+    }
+
+    // If no media key or user not authenticated, show fallback
     if (!mediaKey || !user) {
       setImageSrc(fallbackSrc);
       setIsLoading(false);
       return;
     }
 
-    const cacheKey = `${user.id}-${mediaKey}`; // Use user.id instead of token
+    const rawKey = typeof mediaKey === 'string' ? mediaKey : JSON.stringify(mediaKey);
+    const cacheKey = `${user.id}-${rawKey}`;
 
-    // Check if image is already cached
     if (imageCache.has(cacheKey)) {
       setImageSrc(imageCache.get(cacheKey)!);
       setIsLoading(false);
       return;
     }
 
-    // Check if request is already pending
     if (pendingRequests.has(cacheKey)) {
-      pendingRequests.get(cacheKey)!.then((url) => {
-        if (isMounted.current) {
-          setImageSrc(url);
-          setIsLoading(false);
-        }
-      }).catch(() => {
-        if (isMounted.current) {
-          // setHasError(true);
-          setImageSrc(fallbackSrc);
-          setIsLoading(false);
-        }
-      });
+      pendingRequests
+        .get(cacheKey)!
+        .then((url) => {
+          if (isMounted.current) setImageSrc(url);
+        })
+        .catch(() => {
+          if (isMounted.current) {
+            setImageSrc(fallbackSrc);
+            onError?.();
+          }
+        })
+        .finally(() => {
+          if (isMounted.current) setIsLoading(false);
+        });
       return;
     }
 
     const fetchImage = async (): Promise<string> => {
       try {
         setIsLoading(true);
-        // setHasError(false);
 
-        // HTTP-only cookie sent automatically with credentials: 'include'
-        const response = await fetch(`${api_url}/media/raw/${mediaKey}`, {
-          credentials: 'include', // This sends the HTTP-only cookie
+        const encodedKey = encodeURIComponent(String(mediaKey));
+        const res = await fetch(`${api_url}/media/raw/${encodedKey}`, {
+          credentials: 'include',
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to fetch image: ${response.status}`);
-        }
+        if (!res.ok) throw new Error(`Failed to fetch image: ${res.status}`);
 
-        const blob = await response.blob();
-        const imageUrl = URL.createObjectURL(blob);
-        
-        // Cache the result
-        imageCache.set(cacheKey, imageUrl);
-        
-        return imageUrl;
-      } catch (error) {
-        console.error('Error fetching authenticated image:', error);
-        throw error;
+        const blob = await res.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        createdObjectUrlRef.current = objectUrl;
+        imageCache.set(cacheKey, objectUrl);
+        return objectUrl;
       } finally {
-        // Remove from pending requests
         pendingRequests.delete(cacheKey);
       }
     };
 
-    // Add to pending requests
     const promise = fetchImage();
     pendingRequests.set(cacheKey, promise);
 
     promise
       .then((url) => {
-        if (isMounted.current) {
-          setImageSrc(url);
-        }
+        if (isMounted.current) setImageSrc(url);
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('Error fetching authenticated image:', err);
         if (isMounted.current) {
-          // setHasError(true);
           setImageSrc(fallbackSrc);
           onError?.();
         }
       })
       .finally(() => {
-        if (isMounted.current) {
-          setIsLoading(false);
-        }
+        if (isMounted.current) setIsLoading(false);
       });
 
-    // Cleanup function to revoke object URLs when component unmounts
+    // cleanup for this effect will revoke object URL if we created one earlier (handled above)
     return () => {
-      if (imageSrc && imageSrc.startsWith('blob:')) {
-        URL.revokeObjectURL(imageSrc);
-        // Remove from cache if it matches
-        if (imageCache.get(cacheKey) === imageSrc) {
-          imageCache.delete(cacheKey);
-        }
-      }
+      // no-op here because we revoke at mediaKey change and unmount below
     };
-  }, [mediaKey, user, api_url, fallbackSrc, onError, imageSrc]); // Add imageSrc to dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mediaKey, user, api_url, fallbackSrc, onError]);
 
-  // Cleanup effect for component unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (imageSrc && imageSrc.startsWith('blob:')) {
-        URL.revokeObjectURL(imageSrc);
-        // Remove from cache if it matches
+      if (createdObjectUrlRef.current && createdObjectUrlRef.current.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(createdObjectUrlRef.current);
+        } catch {
+          // ignore
+        }
         for (const [key, value] of imageCache.entries()) {
-          if (value === imageSrc) {
+          if (value === createdObjectUrlRef.current) {
             imageCache.delete(key);
           }
         }
       }
     };
-  }, [imageSrc]);
+  }, []);
 
   const handleImageLoad = () => {
-        if (isMounted.current) {
-          setIsLoading(false);
-        }
+    if (isMounted.current) setIsLoading(false);
     onLoad?.();
   };
 
   const handleImageError = () => {
-    // setHasError(true);
     setImageSrc(fallbackSrc);
     onError?.();
   };
 
-  // Show loading state
   if (isLoading && !imageSrc) {
     return (
-      <div 
+      <div
         className={`bg-gray-200 dark:bg-gray-700 animate-pulse flex items-center justify-center ${className}`}
-        style={fill ? {} : { width, height }}
+        style={fill ? undefined : { width, height }}
       >
-        <svg 
-          className="w-8 h-8 text-gray-400" 
-          fill="currentColor" 
-          viewBox="0 0 20 20"
-        >
-          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+        <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fillRule="evenodd"
+            d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+            clipRule="evenodd"
+          />
         </svg>
       </div>
     );
