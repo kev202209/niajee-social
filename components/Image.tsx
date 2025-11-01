@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProcessedImage } from '@/types';
+import { buildInitials, colorFromSeed, avatarSvg } from '@/utils/avatar-generator';
 
 interface AuthenticatedImageProps {
   mediaKey: ProcessedImage | string | null | undefined;
@@ -18,6 +19,7 @@ interface AuthenticatedImageProps {
   fallbackSrc?: string;
   onError?: () => void;
   onLoad?: () => void;
+  isProfilePic?: boolean; // NEW: flag for profile pics only
 }
 
 // Cache for storing fetched image URLs
@@ -40,6 +42,7 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   fallbackSrc = '/placeholder.png',
   onError,
   onLoad,
+  isProfilePic = false, // NEW: default false
 }) => {
   const { user } = useAuth();
   const [imageSrc, setImageSrc] = useState<string>('');
@@ -69,6 +72,17 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
     // If mediaKey is an absolute URL, use it directly (no auth fetch)
     if (isAbsoluteUrl(mediaKey)) {
       setImageSrc(mediaKey);
+      setIsLoading(false);
+      return;
+    }
+
+    // If mediaKey is null, user is authenticated, and it's a profile pic, generate avatar SVG
+    if (!mediaKey && user && isProfilePic) {
+      const initials = buildInitials(user.firstName, user.lastName, user.email);
+      const bgColor = colorFromSeed(user.email || `${user.firstName}${user.lastName}`);
+      const svg = avatarSvg(initials, bgColor, 400);
+      const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
+      setImageSrc(dataUrl);
       setIsLoading(false);
       return;
     }
@@ -151,7 +165,7 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       // no-op here because we revoke at mediaKey change and unmount below
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mediaKey, user, api_url, fallbackSrc, onError]);
+  }, [mediaKey, user, api_url, fallbackSrc, onError, isProfilePic]); // ADD isProfilePic to deps
 
   // Cleanup on unmount
   useEffect(() => {
