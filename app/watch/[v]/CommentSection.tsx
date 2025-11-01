@@ -540,6 +540,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
                   height={32}
                   className="w-8 h-8 rounded-full flex-shrink-0"
                   fallbackSrc="/placeholder.png"
+                  isProfilePic={true}
                 />
                 <div className="flex-1">
                   <TextAreaWithLimit
@@ -654,6 +655,7 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
               height={40}
               className="w-10 h-10 rounded-full flex-shrink-0"
               fallbackSrc="/placeholder.png"
+              isProfilePic={true}
             />
             <div className="flex-1">
               <TextAreaWithLimit

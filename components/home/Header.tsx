@@ -390,6 +390,7 @@ const Header: FC = () => {
                 height={36}
                 className="rounded-full"
                 fallbackSrc="/placeholder.png"
+                isProfilePic={true}
               />
             </button>
             <ProfileMenu

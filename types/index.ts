@@ -3,6 +3,8 @@ import { Post } from './post.types'
 export interface User {
   id: string;
   email: string;
+  firstName: string,
+  lastName: string,
   username: string;
   displayName: string | null;
   bio: string | null;

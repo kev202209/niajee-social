@@ -158,6 +158,7 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
           height={40}
           className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0"
           fallbackSrc="/placeholder.png"
+          isProfilePic={true}
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -310,6 +311,7 @@ export default function BlogComments({ blogId, comments, loading, onCommentAdded
             alt="You"
             className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0"
             fallbackSrc="/placeholder.png"
+            isProfilePic={true}
           />
           <input
             className="flex-1 border border-gray-300 dark:border-gray-700 rounded-full px-3 py-1.5 sm:px-4 sm:py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 min-w-0"

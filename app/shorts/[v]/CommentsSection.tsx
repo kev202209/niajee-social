@@ -496,6 +496,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
                   height={24}
                   className="w-6 h-6 rounded-full flex-shrink-0"
                   fallbackSrc="/placeholder.png"
+                  isProfilePic={true}
                 />
                 <div className="flex-1">
                   <input
@@ -635,6 +636,7 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
                   height={24}
                   className="w-6 h-6 rounded-full flex-shrink-0"
                   fallbackSrc="/placeholder.png"
+                  isProfilePic={true}
                 />
                 <div className="flex-1">
                   <input
