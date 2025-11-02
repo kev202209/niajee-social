@@ -33,6 +33,7 @@ const ManageUploadsPage = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const lastRefreshRef = useRef<number>(0);
+  const lastFetchRef = useRef<number>(0); // NEW: Track last fetch time
 
   const fetchChannel = useCallback(async () => {
     try {
@@ -50,6 +51,12 @@ const ManageUploadsPage = () => {
   }, [channelId]);
 
   const fetchUploads = useCallback(async () => {
+    const now = Date.now();
+    if (now - lastFetchRef.current < 10000) { // NEW: Enforce 10-second minimum between fetches
+      return;
+    }
+    lastFetchRef.current = now;
+
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/channels/${channelId}/uploads`, {
         credentials: 'include'
@@ -72,8 +79,7 @@ const ManageUploadsPage = () => {
 
   const refreshUploads = async () => {
     const now = Date.now();
-    if (now - lastRefreshRef.current < 5000) { // 5-second cooldown
-      // toast.info('Please wait before refreshing again.');
+    if (now - lastRefreshRef.current < 5000) { // 5-second cooldown for manual refresh
       return;
     }
     lastRefreshRef.current = now;
@@ -178,7 +184,7 @@ const ManageUploadsPage = () => {
     fetchChannel();
     fetchUploads();
 
-    // Auto-refresh every 30 seconds for processing uploads
+    // Auto-refresh every 10 seconds for processing uploads (changed from 2 minutes)
     const interval = setInterval(() => {
       if (document.hidden) return; // Skip if tab is not active
       const hasProcessingUploads = uploads.some(upload => {
@@ -189,7 +195,7 @@ const ManageUploadsPage = () => {
       if (hasProcessingUploads) {
         fetchUploads();
       }
-    }, 80000);
+    }, 10000); // NEW: 10-second interval
 
     return () => clearInterval(interval);
   }, [fetchChannel, fetchUploads, uploads]);
