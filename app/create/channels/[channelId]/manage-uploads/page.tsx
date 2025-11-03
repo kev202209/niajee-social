@@ -96,41 +96,32 @@ const ManageUploadsPage = () => {
   };
 
   const handleDeleteClick = (uploadId: string) => {
-    console.log('handleDeleteClick called with uploadId:', uploadId);
     setUploadToDelete(uploadId);
     setShowDeleteModal(true);
-    console.log('Modal should now be visible for uploadId:', uploadId);
   };
 
   const confirmDelete = async () => {
-    console.log('confirmDelete started for uploadId:', uploadToDelete);
     if (!uploadToDelete) {
-      console.log('No uploadToDelete set, exiting');
       return;
     }
 
     // Find the upload to determine contentType
     const upload = uploads.find(u => u.id === uploadToDelete);
     if (!upload) {
-      console.log('Upload not found, exiting');
       toast.error(GENERIC_ERROR_MESSAGE);
       return;
     }
 
     setShowDeleteModal(false);
     setDeleting(true);
-    console.log('Deleting state set to true, modal closed');
 
     try {
-      console.log('Fetching CSRF token...');
       const csrf = await ensureCsrf();
-      console.log('CSRF token obtained');
 
       // Determine endpoint based on contentType
       const endpoint = upload.contentType === 'short' 
         ? `/api/shorts/${uploadToDelete}` 
         : `/api/videos/${uploadToDelete}`;
-      console.log('Sending DELETE request to:', `${process.env.NEXT_PUBLIC_API_URL}${endpoint}`);
 
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${endpoint}`, {
         method: 'DELETE',
@@ -139,28 +130,23 @@ const ManageUploadsPage = () => {
           'x-csrf-token': csrf,
         },
       });
-      console.log('Response received, status:', response.status);
 
       if (response.ok) {
-        console.log('Delete successful, updating uploads list');
         setUploads(prev => prev.filter(u => u.id !== uploadToDelete));
         toast.success('Upload deleted successfully');
       } else {
-        console.log('Delete failed with status:', response.status);
         toast.error(GENERIC_ERROR_MESSAGE);
       }
     } catch (err) {
       console.error('Error in confirmDelete:', err);
       toast.error(GENERIC_ERROR_MESSAGE);
     } finally {
-      console.log('confirmDelete finished, resetting states');
       setUploadToDelete(null);
       setDeleting(false);
     }
   };
 
   const cancelDelete = () => {
-    console.log('cancelDelete called, closing modal');
     setShowDeleteModal(false);
     setUploadToDelete(null);
   };
