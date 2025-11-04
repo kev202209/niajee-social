@@ -313,6 +313,10 @@ export interface SuggestedVideo extends Omit<mVideo, 'videoUrl' | 'thumbnail'> {
     status: 'queued' | 'processing' | 'complete' | 'failed';
   }; // Updated to match actual structure
   age: string;
+  // Membership access fields
+  isMemberOnly?: boolean;
+  requiredTierId?: string | null;
+  needsMembership?: boolean;
 }
 
 export interface Comment {
