@@ -7,6 +7,7 @@ import SuggestedVideos from "./SuggestedVideos";
 import CommentsSection from "./CommentSection";
 import Sidebar from "@/components/home/Sidebar";
 import MobileBottomNav from "@/components/home/MobileBottomNav";
+import MembershipModal from "@/components/membership/MembershipModal";
 import { mVideo as Video } from "../../../types";
 import { FiAlertCircle, FiWifi, FiRefreshCw, FiVideo } from "react-icons/fi";
 
@@ -197,10 +198,18 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [membershipRequired, setMembershipRequired] = useState<{
+    channelId: string;
+    channelName: string;
+    requiredTier?: string | null;
+    tierName?: string;
+  } | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setMembershipRequired(null);
     
     try {
       // Fetch video data only
@@ -211,6 +220,19 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
       });
       
       if (!res.ok) {
+        // Handle 403 Forbidden - membership required
+        if (res.status === 403) {
+          const errorData = await res.json().catch(() => ({}));
+          setMembershipRequired({
+            channelId: errorData.channelId || '',
+            channelName: errorData.channelName || 'This channel',
+            requiredTier: errorData.requiredTierId || null,
+            tierName: errorData.tierName,
+          });
+          setShowMembershipModal(true);
+          return;
+        }
+        
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
       }
@@ -277,6 +299,40 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
             />
           </main>
         </div>
+      </div>
+    );
+  }
+
+  // Show membership required state
+  if (membershipRequired && !video) {
+    return (
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+        <Header />
+        <div className="flex pt-16">
+          <Sidebar 
+            isExpanded={isSidebarExpanded} 
+            setIsExpanded={setIsSidebarExpanded}
+            pushContent={false}
+            interaction="click"
+            overlayOnExpand={true}
+            clickWidthClass="w-56"
+          />
+          <main className="flex-1 w-full">
+            <ErrorState 
+              error="This video is exclusive to channel members" 
+              onRetry={() => setShowMembershipModal(true)} 
+            />
+          </main>
+        </div>
+        <MembershipModal
+          isOpen={showMembershipModal}
+          onClose={() => setShowMembershipModal(false)}
+          channelId={membershipRequired.channelId}
+          channelName={membershipRequired.channelName}
+          requiredTier={membershipRequired.requiredTier}
+          tierName={membershipRequired.tierName}
+          contentType="video"
+        />
       </div>
     );
   }

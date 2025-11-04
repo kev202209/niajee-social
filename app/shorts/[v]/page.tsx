@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Header from "@/components/home/Header";
 import Sidebar from "@/components/home/Sidebar";
 import MobileBottomNav from "@/components/home/MobileBottomNav";
+import MembershipModal from "@/components/membership/MembershipModal";
 import VideoPlayer from "./shortVideoPlayer";
 import ShortsSkeleton from './ShortSkeleton';
 import VideoActions from "./VideoActions";
@@ -35,6 +36,13 @@ const ShortVideoPage = () => {
   const [showReport, setShowReport] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [moreBusy, setMoreBusy] = useState(false);
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [membershipRequired, setMembershipRequired] = useState<{
+    channelId: string;
+    channelName: string;
+    requiredTier?: string | null;
+    tierName?: string;
+  } | null>(null);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const currentVideoRef = useRef<HTMLVideoElement>(null!);
@@ -73,6 +81,20 @@ const ShortVideoPage = () => {
     try {
       if (videoId) {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`, { credentials: "include" });
+        
+        // Handle 403 Forbidden - membership required
+        if (res.status === 403) {
+          const errorData = await res.json().catch(() => ({}));
+          setMembershipRequired({
+            channelId: errorData.channelId || '',
+            channelName: errorData.channelName || 'This channel',
+            requiredTier: errorData.requiredTierId || null,
+            tierName: errorData.tierName,
+          });
+          setShowMembershipModal(true);
+          return null;
+        }
+        
         if (!res.ok) return null;
         const data = await res.json();
         return isFullShort(data) ? data : null;
@@ -553,6 +575,19 @@ const ShortVideoPage = () => {
         videoId={currentVideo.id}
         videoTitle={currentVideo.title}
       />
+      
+      {membershipRequired && (
+        <MembershipModal
+          isOpen={showMembershipModal}
+          onClose={() => setShowMembershipModal(false)}
+          channelId={membershipRequired.channelId}
+          channelName={membershipRequired.channelName}
+          requiredTier={membershipRequired.requiredTier}
+          tierName={membershipRequired.tierName}
+          contentType="short"
+        />
+      )}
+      
       <MobileBottomNav />
     </div>
   );
