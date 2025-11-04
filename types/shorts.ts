@@ -46,6 +46,12 @@ export interface FullShortData {
     verified: boolean;
   };
   soundId?: string | null;
+  // Membership access fields
+  isMemberOnly?: boolean;
+  requiredTierId?: string | null;
+  canAccess?: boolean;
+  membershipBadge?: string;
+  needsMembership?: boolean;
 }
 
 export interface ShortData {

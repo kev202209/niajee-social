@@ -48,6 +48,12 @@ export interface Video {
     verified: boolean;
     handle: string;
   };
+  // Membership access fields
+  isMemberOnly?: boolean;
+  requiredTierId?: string | null;
+  canAccess?: boolean;
+  membershipBadge?: string;
+  needsMembership?: boolean;
 }
 
 export interface Short {
@@ -84,6 +90,23 @@ export interface Short {
   isPublic?: boolean;
   isSensitive?: boolean;
   age?: string; // Added for your data
+  // Membership access fields
+  isMemberOnly?: boolean;
+  requiredTierId?: string | null;
+  canAccess?: boolean;
+  membershipBadge?: string;
+  needsMembership?: boolean;
+}
+
+export interface MembershipTier {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+  benefits: string[];
+  description?: string;
+  color?: string;
+  badge?: string;
 }
 
 export interface Channel {
@@ -97,6 +120,21 @@ export interface Channel {
   videoCount?: number;
   createdAt?: string;
   viewCount?: number;
+  // Membership fields
+  membershipEnabled?: boolean;
+  membershipType?: 'free' | 'paid' | 'tiered' | null;
+  membershipPrice?: string | null;
+  membershipCurrency?: string;
+  membershipBenefits?: string[];
+  membershipDescription?: string | null;
+  membershipTiers?: MembershipTier[] | null;
+  memberCount?: number;
+  // User's subscription status
+  userSubscription?: {
+    status: 'active' | 'expired' | 'cancelled' | 'pending';
+    tier?: MembershipTier;
+    expiresAt?: string | null;
+  } | null;
 }
 
 // Add new interfaces that were inline
@@ -113,7 +151,11 @@ export interface MediaItem {
   title: string;
   views?: number;
   publishedAt?: string;
-  duration?: string; // videos only
+  duration?: string;
+  // Membership access fields
+  isMemberOnly?: boolean;
+  requiredTierId?: string | null;
+  needsMembership?: boolean;
 }
 
 export interface ChannelOverview {
@@ -292,6 +334,12 @@ export interface Comment {
   updatedAt: string;
   replies?: Comment[];
   repliesCount?: number;
+  // Membership badge info
+  membershipBadge?: {
+    tierName: string;
+    tierColor: string;
+    channelId: string;
+  } | null;
 }
 
 export interface CreateCommentDto {
