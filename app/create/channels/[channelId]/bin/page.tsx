@@ -5,7 +5,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import { Channel, UploadItem, ProcessingStatus, getThumbnailSrc } from '@/types';
 import { 
-  FiUpload, 
   FiLoader, 
   FiCheck, 
   FiX, 
@@ -14,14 +13,10 @@ import {
   FiSmartphone,
   FiRefreshCw,
   FiTrash2,
-  FiEye,
-  FiEdit,
-  FiImage,
   FiX as FiClose,
-  FiRotateCcw // ADD: Icon for Restore
+  FiRotateCcw
 } from 'react-icons/fi';
 import { toast } from 'sonner';
-import Link from 'next/link';
 import AuthenticatedImage from '@/components/Image';
 import timeAgo from '@/utils/timeAgo';
 import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
@@ -303,7 +298,6 @@ const BinPage = () => {
           {uploads.map((upload) => {
             const overallStatus = getOverallStatus(upload.processingStatus);
             const statusText = getStatusText(upload.processingStatus);
-            const videoProgress = upload.processingStatus.video?.progress;
             
             return (
               <div
