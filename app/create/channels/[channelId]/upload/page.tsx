@@ -250,6 +250,8 @@ const ChannelUploadPage = () => {
     tags: string[];
     category: string;
     visibility: string;
+    isMemberOnly?: boolean;
+    requiredTierId?: string | null;
   }
 
   // Strongly typed processing bodies
@@ -264,6 +266,8 @@ const ChannelUploadPage = () => {
     category: string;
     visibility: string;
     thumbnailS3Key?: string;
+    isMemberOnly?: boolean;
+    requiredTierId?: string | null;
   };
 
   type StartProcessingShortBody = {
@@ -277,6 +281,8 @@ const ChannelUploadPage = () => {
     category: string;
     visibility: string;
     thumbnailS3Key?: string;
+    isMemberOnly?: boolean;
+    requiredTierId?: string | null;
   };
 
   type StartProcessingResult = {
@@ -307,7 +313,9 @@ const ChannelUploadPage = () => {
         tags: metadata.tags,
         category: metadata.category,
         visibility: metadata.visibility,
-        ...(thumbnailS3Key ? { thumbnailS3Key } : {})
+        ...(thumbnailS3Key ? { thumbnailS3Key } : {}),
+        ...(metadata.isMemberOnly ? { isMemberOnly: metadata.isMemberOnly } : {}),
+        ...(metadata.requiredTierId ? { requiredTierId: metadata.requiredTierId } : {})
       };
     } else {
       requestBody = {
@@ -320,7 +328,9 @@ const ChannelUploadPage = () => {
         tags: metadata.tags,
         category: metadata.category,
         visibility: metadata.visibility,
-        ...(thumbnailS3Key ? { thumbnailS3Key } : {})
+        ...(thumbnailS3Key ? { thumbnailS3Key } : {}),
+        ...(metadata.isMemberOnly ? { isMemberOnly: metadata.isMemberOnly } : {}),
+        ...(metadata.requiredTierId ? { requiredTierId: metadata.requiredTierId } : {})
       };
     }
 
@@ -460,7 +470,9 @@ const ChannelUploadPage = () => {
           contentType: form.contentType,
           tags: form.tags,
           category: form.category,
-          visibility: form.visibility
+          visibility: form.visibility,
+          isMemberOnly: form.isMemberOnly,
+          requiredTierId: form.requiredTierId
         },
         thumbnailS3Key // ✅ NEW: Pass thumbnail S3 key if uploaded
       );
@@ -629,6 +641,8 @@ const ChannelUploadPage = () => {
               removeMention={removeMention}
               uploading={uploadState.uploading}
               categories={categories}
+              membershipEnabled={channel.membershipEnabled}
+              membershipTiers={channel.membershipTiers}
             />
           </div>
 
