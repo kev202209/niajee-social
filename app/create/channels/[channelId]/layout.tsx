@@ -8,7 +8,8 @@ import {
   Settings,
   Home,
   PlaySquare,
-  Video
+  Video,
+  Trash2,
 } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { DetailedChannel as Channel } from '@/types'
@@ -18,6 +19,7 @@ const channelMenuItems = [
   { label: 'Overview', icon: Home, href: '' },
   { label: 'Upload', icon: Upload, href: '/upload' },
   { label: 'Manage', icon: Video, href: '/manage-uploads' },
+  { label: 'Bin', icon: Trash2, href: '/bin' }, // ADD: New menu item for Bin
   // { label: 'Analytics', icon: BarChart3, href: '/analytics' },
   { label: 'Settings', icon: Settings, href: '/settings' },
 ] as const
