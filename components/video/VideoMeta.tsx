@@ -352,7 +352,7 @@ useEffect(() => {
             <div className="flex flex-col">
               <p className="font-semibold text-base sm:text-lg">{video.channel.name}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {followerCount === 0 ? '' : `${formatCount(followerCount)} ${followerCount === 1 ? 'follower' : 'followers'}`}
+                {followerCount === 0 ? '' : `${formatCount(followerCount)} ${followerCount === 1 ? 'subscriber' : 'subscribers'}`}
               </p>
             </div>
           </div>
@@ -372,7 +372,7 @@ useEffect(() => {
                   : ""
               }
             >
-              {isFollowLoading ? 'Loading...' : (isFollowing ? 'Following' : 'Follow')}
+              {isFollowLoading ? 'Loading...' : (isFollowing ? 'Subscribed' : 'Subscribe')}
             </Button>
           </div>
         </div>
