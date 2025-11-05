@@ -7,8 +7,15 @@ import { FiCheck, FiX, FiPlus, FiEdit2, FiTrash2, FiLock, FiUnlock, FiSave, FiAl
 
 type MembershipType = 'free' | 'single' | 'multiple';
 
-interface TierForm extends Omit<MembershipTier, 'id'> {
+interface TierForm {
   id?: string;
+  name: string;
+  price: string; // Store as string for better input control
+  currency: string;
+  benefits: string[];
+  description?: string;
+  color?: string;
+  badge?: string;
 }
 
 export default function MembershipPage() {
@@ -57,7 +64,10 @@ export default function MembershipPage() {
             setMembershipType('free');
           }
           
-          setTiers(channelData.membershipTiers || []);
+          setTiers(channelData.membershipTiers?.map((tier: MembershipTier) => ({
+            ...tier,
+            price: tier.price?.toString() || '0' // Convert to string for input control
+          })) || []);
         }
       } else {
         setError('Failed to load channel data');
@@ -79,7 +89,7 @@ export default function MembershipPage() {
     const newTier: TierForm = {
       id: `temp-${Date.now()}`,
       name: '',
-      price: 0,
+      price: '0',
       currency: 'KES',
       benefits: [],
       description: '',
@@ -93,7 +103,7 @@ export default function MembershipPage() {
   // Update tier
   const updateTier = (index: number, field: keyof TierForm, value: string | number | string[]) => {
     const updatedTiers = [...tiers];
-    (updatedTiers[index] as Record<keyof TierForm, unknown>)[field] = value;
+    updatedTiers[index] = { ...updatedTiers[index], [field]: value };
     setTiers(updatedTiers);
   };
 
@@ -138,7 +148,8 @@ export default function MembershipPage() {
             setSaving(false);
             return;
           }
-          if (tier.price <= 0) {
+          const price = parseFloat(tier.price);
+          if (isNaN(price) || price <= 0) {
             setError('All tiers must have a price greater than 0');
             setSaving(false);
             return;
@@ -158,7 +169,10 @@ export default function MembershipPage() {
         enabled: membershipEnabled,
         type: backendType,
         tiers: membershipEnabled && membershipType !== 'free' 
-          ? tiers.map(({ id, ...tier }) => tier) // Remove temporary IDs
+          ? tiers.map(({ id, ...tier }) => ({
+              ...tier,
+              price: parseFloat(tier.price) // Parse price to number for backend
+            })) // Remove temporary IDs
           : [],
         trialDays: trialDays,
       };
@@ -260,7 +274,7 @@ export default function MembershipPage() {
             </p>
             <div className="space-y-2">
               {/* Free Membership */}
-              <label className="flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50 ${membershipType === 'free' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'}">
+              <label className={`flex items-start p-4 border-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50 ${membershipType === 'free' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-700'}`}>
                 <input
                   type="radio"
                   name="membershipType"
@@ -510,7 +524,7 @@ function TierCard({
             min="0"
             step="0.01"
             value={tier.price}
-            onChange={(e) => onUpdate(index, 'price', parseFloat(e.target.value) || 0)}
+            onChange={(e) => onUpdate(index, 'price', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             disabled={!isEditing}
           />
