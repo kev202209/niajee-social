@@ -11,6 +11,10 @@ import Hls from 'hls.js';
 import BufferingSpinner from './BufferingSpinner';
 import { getFullUrl } from '@/utils/videourl';
 import { getDeviceInfo, DeviceInfo } from '@/utils/deviceInfo';
+import { FiLock } from 'react-icons/fi';
+import Link from 'next/link';
+import { getImageSrc } from '@/utils/imageUtils';
+import AuthenticatedImage from '@/components/Image';
 
 interface VideoProps {
   video: mVideo;
@@ -49,6 +53,27 @@ const isRecentlyWatched = (lastWatchedAt: string): boolean => {
   const now = new Date();
   const daysDiff = (now.getTime() - lastWatched.getTime()) / (1000 * 60 * 60 * 24);
   return daysDiff <= 7;
+};
+
+// Helper function to get thumbnail media key for AuthenticatedImage
+const getThumbnailMediaKey = (thumbnail: mVideo['thumbnail']): string | null => {
+  // First check for direct URL (this will be used as-is by AuthenticatedImage)
+  if (thumbnail.url) {
+    return thumbnail.url;
+  }
+  
+  // Then check for variants - prefer 720w for good quality/size balance
+  if (thumbnail.variants) {
+    return thumbnail.variants['720w'] || thumbnail.variants['1080w'] || thumbnail.variants['480w'];
+  }
+  
+  // Finally check for ProcessedImage data
+  if (thumbnail.data) {
+    const src = getImageSrc(thumbnail.data, '720w');
+    return src || null;
+  }
+  
+  return null;
 };
 
 export default function VideoPlayer({ video }: VideoProps) {
@@ -343,7 +368,6 @@ export default function VideoPlayer({ video }: VideoProps) {
     } else {
       console.error('HLS not supported and no native support');
     }
-    // CRITICAL FIX: Only depend on streamUrl and shouldLoadVideo - nothing else
   }, [streamUrl, shouldLoadVideo]);
 
   useEffect(() => {
@@ -380,10 +404,16 @@ export default function VideoPlayer({ video }: VideoProps) {
     };
   }, []);
 
+  // Check if membership is required
+  const requiresMembership = video.needsMembership || !video.canAccess;
+
+  // Get thumbnail media key
+  const thumbnailMediaKey = getThumbnailMediaKey(video.thumbnail);
+
   if (!streamUrl) {
     return (
       <div className="bg-gray-800 aspect-video flex items-center justify-center">
-        <p className="text-white">No video source available</p>
+        <p className="text-white">Error loading the video.</p>
       </div>
     );
   }
@@ -397,14 +427,53 @@ export default function VideoPlayer({ video }: VideoProps) {
           </div>
         )}
 
-        <VideoContainer 
-          controls={controls} 
-          videoRef={videoRef as React.RefObject<HTMLVideoElement>}
-          className="w-full h-full rounded"
-        />
-        <PlayPauseOverlay controls={controls} />
-        <VolumeSeekIndicator controls={controls} />
-        <ControlBar controls={controls} videoId={video.id} />
+        {requiresMembership ? (
+          // Show blurred thumbnail with membership overlay
+          <div className="relative aspect-video bg-black rounded overflow-hidden">
+            {thumbnailMediaKey && (
+              <AuthenticatedImage
+                mediaKey={thumbnailMediaKey}
+                alt={video.title}
+                fill
+                className="object-cover filter blur-sm"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                priority
+                fallbackSrc="/placeholder.png"
+              />
+            )}
+            <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center z-10">
+              <div className="text-center text-white px-6">
+                <FiLock className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <h3 className="text-xl font-bold mb-2">Members Only Content</h3>
+                <p className="text-gray-300 mb-6 max-w-md">
+                  Join {video.channel.name} to watch this exclusive video.
+                  {video.requiredTierId && (
+                    <span className="block mt-1 text-sm">
+                      Requires: {video.requiredTierId}
+                    </span>
+                  )}
+                </p>
+                <Link href={`/channels/${video.channel.handle}/membership`}>
+                  <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                    Join Membership
+                  </button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : (
+          // Normal video player
+          <>
+            <VideoContainer 
+              controls={controls} 
+              videoRef={videoRef as React.RefObject<HTMLVideoElement>}
+              className="w-full h-full rounded"
+            />
+            <PlayPauseOverlay controls={controls} />
+            <VolumeSeekIndicator controls={controls} />
+            <ControlBar controls={controls} videoId={video.id} />
+          </>
+        )}
       </div>
       <VideoMeta video={video} />
     </div>

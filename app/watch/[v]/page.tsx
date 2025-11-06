@@ -9,7 +9,7 @@ import Sidebar from "@/components/home/Sidebar";
 import MobileBottomNav from "@/components/home/MobileBottomNav";
 import MembershipModal from "@/components/membership/MembershipModal";
 import { mVideo as Video } from "../../../types";
-import { FiAlertCircle, FiWifi, FiRefreshCw, FiVideo } from "react-icons/fi";
+import { FiAlertCircle, FiWifi, FiRefreshCw, FiVideo, FiLock } from "react-icons/fi";
 
 // Skeleton Components
 const VideoPlayerSkeleton = () => (
@@ -229,18 +229,29 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
             requiredTier: errorData.requiredTierId || null,
             tierName: errorData.tierName,
           });
-          setShowMembershipModal(true);
-          return;
+          // Still fetch video data for meta display
+          // Continue to fetch video data below
+        } else {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
         }
-        
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
       }
       
+      // Always try to fetch video data for meta display
       const data = await res.json();
       if (!data.video) throw new Error('Video data not found in response');
       
       setVideo(data.video);
+      
+      // Set membership info if needed
+      if (data.video.needsMembership || !data.video.canAccess) {
+        setMembershipRequired({
+          channelId: data.video.channel.id,
+          channelName: data.video.channel.name,
+          requiredTier: data.video.requiredTierId,
+          tierName: data.video.requiredTierId,
+        });
+      }
       
     } catch (err: unknown) {
       console.error('Error fetching data:', err);
@@ -303,12 +314,12 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
     );
   }
 
-  // Show membership required state
-  if (membershipRequired && !video) {
+  // Only render VideoPlayer if video exists and access is allowed
+  if (video) {
     return (
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
         <Header />
-        <div className="flex pt-16">
+        <div className="flex pt-20">
           <Sidebar 
             isExpanded={isSidebarExpanded} 
             setIsExpanded={setIsSidebarExpanded}
@@ -318,55 +329,25 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
             clickWidthClass="w-56"
           />
           <main className="flex-1 w-full">
-            <ErrorState 
-              error="This video is exclusive to channel members" 
-              onRetry={() => setShowMembershipModal(true)} 
-            />
+            <div className="text-gray-900 dark:text-gray-100">
+              <div className="max-w-7xl mx-auto p-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="md:w-2/3 space-y-4">
+                    <VideoPlayer video={video} />
+                    <CommentsSection videoId={videoId} allowComments={video.allowComments} />
+                  </div>
+                  <div className="md:w-1/3">
+                    <SuggestedVideos videoId={videoId} />
+                  </div>
+                </div>
+              </div>
+            </div>
           </main>
         </div>
-        <MembershipModal
-          isOpen={showMembershipModal}
-          onClose={() => setShowMembershipModal(false)}
-          channelId={membershipRequired.channelId}
-          channelName={membershipRequired.channelName}
-          requiredTier={membershipRequired.requiredTier}
-          tierName={membershipRequired.tierName}
-          contentType="video"
-        />
+        <MobileBottomNav />
       </div>
     );
   }
 
-  // Show normal content
-  return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      <Header />
-      <div className="flex pt-20">
-        <Sidebar 
-          isExpanded={isSidebarExpanded} 
-          setIsExpanded={setIsSidebarExpanded}
-          pushContent={false}
-          interaction="click"
-          overlayOnExpand={true}
-          clickWidthClass="w-56"
-        />
-        <main className="flex-1 w-full">
-          <div className="text-gray-900 dark:text-gray-100">
-            <div className="max-w-7xl mx-auto p-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="md:w-2/3 space-y-4">
-                  <VideoPlayer video={video} />
-                  <CommentsSection videoId={videoId} allowComments={video.allowComments} />
-                </div>
-                <div className="md:w-1/3">
-                  <SuggestedVideos videoId={videoId} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-      <MobileBottomNav /> {/* Added mobile bottom navigation */}
-    </div>
-  );
+  return null;
 }

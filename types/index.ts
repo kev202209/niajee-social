@@ -261,12 +261,25 @@ export interface mVideo {
     [key: string]: string;
   };
   videoSrc?: string; // For backward compatibility
-  thumbnail: ProcessedImage;
+  thumbnail: {
+    url?: string; // Add url field for direct thumbnail access
+    data?: ProcessedImage;
+    type: 'auto-generated' | 'user-uploaded';
+    status: 'queued' | 'processing' | 'complete' | 'failed';
+    variants?: {
+      '480w': string;
+      '720w': string;
+      '1080w': string;
+    };
+    width?: number;
+    height?: number;
+    format?: string;
+  };
   duration: number;
   fileSize: number;
   resolution: string;
-  isLiked: boolean
-  isSaved: boolean
+  isLiked: boolean;
+  isSaved: boolean;
   viewCount: number;
   likeCount: number;
   dislikeCount: number;
@@ -289,13 +302,18 @@ export interface mVideo {
   channel: {
     id: string;
     name: string;
-    avatar: ProcessedImage;
+    avatar: ProcessedImage | null;
     verified: boolean;
     monetized: boolean;
     followerCount: number;
-    isFollowed: true,
+    isFollowed: boolean;
     handle: string;
   };
+  // Membership access fields
+  isMemberOnly?: boolean;
+  requiredTierId?: string | null;
+  canAccess?: boolean;
+  needsMembership?: boolean;
 }
 
 // Update SuggestedVideo to extend from mVideo
