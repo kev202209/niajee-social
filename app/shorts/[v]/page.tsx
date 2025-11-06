@@ -418,10 +418,17 @@ const ShortVideoPage = () => {
                     channel={{
                       name: currentVideo.channel.name,
                       icon: getImageSrcSafe(currentVideo.channel.avatar),
+                      handle: currentVideo.channel.handle,
+                      id: currentVideo.channel.id,
                     }}
                     caption={currentVideo.description || currentVideo.title || ""}
                     song="Original Audio"
                     onAutoplayFallbackMuted={() => setIsMuted(true)}
+                    // Add membership props
+                    needsMembership={currentVideo.needsMembership}
+                    canAccess={currentVideo.canAccess}
+                    requiredTierId={currentVideo.requiredTierId}
+                    thumbnail={currentVideo.thumbnail}
                   />
 
                   {/* Mobile: More button inside video */}
@@ -555,11 +562,18 @@ const ShortVideoPage = () => {
                   channel={{
                     name: nextVideo.channel.name,
                     icon: getImageSrcSafe(nextVideo.channel.avatar),
+                    handle: nextVideo.channel.handle,
+                    id: nextVideo.channel.id,
                   }}
                   caption={nextVideo.description || nextVideo.title || ""}
                   song="Original Audio"
                   shouldAutoPlay={false}
                   preloadMode="auto"
+                  // Add membership props
+                  needsMembership={nextVideo.needsMembership}
+                  canAccess={nextVideo.canAccess}
+                  requiredTierId={nextVideo.requiredTierId}
+                  thumbnail={nextVideo.thumbnail}
                 />
               ) : (
                 <ShortsSkeleton />
