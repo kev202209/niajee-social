@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { FaEye, FaGoogle, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import { useRouter, useSearchParams } from 'next/navigation';
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
@@ -218,9 +219,9 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={handleGoogleLogin}
-                  className="w-full p-2 dark:bg-sky-500/10 bg-sky-600 hover:bg-sky-500/80 text-white dark:hover:bg-sky-500/80 dark:text-white rounded-xl flex items-center justify-center gap-2"
+                  className="w-full p-2 dark:bg-sky-500/10 bg-sky-300 hover:bg-sky-400/80 text-white dark:hover:bg-sky-500/80 dark:text-white rounded-xl flex items-center justify-center gap-2"
                 >
-                  <FaGoogle /> Login with Google
+                  <FcGoogle /> Login with Google
                 </button>
                 <Link
                   href="/auth/forget-password"

@@ -3,7 +3,8 @@
 import React, { useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from 'next/navigation';
-import { FaEye, FaGoogle, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 import BlobAnimation from "@/components/Blob";
 import LoadingDots from "@/components/LoadingDots";
 import { toast, ToastContainer } from "react-toastify";
@@ -233,9 +234,9 @@ export default function RegisterPage() {
               <div className="mt-4 flex flex-col gap-2">
                 <button
                   onClick={handleGoogleSignup}
-                  className="w-full p-2 dark:bg-sky-500/10 bg-sky-600 hover:bg-sky-500/80 text-white dark:hover:bg-sky-500/80 dark:text-white rounded-xl flex items-center justify-center gap-2"
+                  className="w-full p-2 dark:bg-sky-500/10 bg-sky-300 hover:bg-sky-400/80 text-white dark:hover:bg-sky-500/80 dark:text-white rounded-xl flex items-center justify-center gap-2"
                 >
-                  <FaGoogle /> Sign up with Google
+                  <FcGoogle /> Sign up with Google
                 </button>
               </div>
             </div>
