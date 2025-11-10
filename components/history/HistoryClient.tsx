@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { fetchVideoHistory, fetchShortHistory } from '@/lib/api/history';
 import { HistoryVideoCard, HistoryShortCard } from './HistoryUnifiedCards';
+import { ProcessedImage } from '@/types';
 
 type TabKey = 'all' | 'videos' | 'shorts';
 
@@ -16,7 +17,11 @@ interface RawHistoryChannel {
 interface RawHistoryItem {
   id: string;
   title?: string;
-  thumbnail?: string | null;
+  thumbnail?: {
+    data: ProcessedImage;
+    type: 'auto-generated' | 'user-uploaded';
+    status: 'queued' | 'processing' | 'complete' | 'failed';
+  } | null;
   duration?: number | null;
   channel?: RawHistoryChannel;
   history?: {
@@ -26,7 +31,6 @@ interface RawHistoryItem {
     completed?: boolean;
     timesWatched?: number;
   };
-  // extra raw fields are allowed
   [key: string]: unknown;
 }
 
@@ -38,6 +42,61 @@ interface PagedResponse<T> {
     totalPages: number;
     total?: number;
   };
+}
+
+interface UnifiedItem {
+  type: 'video' | 'short';
+  id: string;
+  title: string;
+  thumbnail: {
+    data: ProcessedImage;
+    type: 'auto-generated' | 'user-uploaded';
+    status: 'queued' | 'processing' | 'complete' | 'failed';
+  } | null;
+  duration: number | null;
+  channel: {
+    id: string;
+    name: string;
+    handle: string;
+    avatar: string | null;
+  };
+  history: {
+    lastWatchedAt: string;
+    positionSec?: number;
+    durationSec?: number | null;
+    completed?: boolean;
+    timesWatched?: number;
+  };
+  raw: RawHistoryItem;
+}
+
+function getDateLabel(date: Date): string {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const itemDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  if (itemDate.getTime() === today.getTime()) {
+    return 'Today';
+  } else if (itemDate.getTime() === yesterday.getTime()) {
+    return 'Yesterday';
+  } else {
+    return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  }
+}
+
+function groupByDate(items: UnifiedItem[]): Record<string, UnifiedItem[]> {
+  const groups: Record<string, UnifiedItem[]> = {};
+  items.forEach(item => {
+    const date = new Date(item.history.lastWatchedAt);
+    const label = getDateLabel(date);
+    if (!groups[label]) {
+      groups[label] = [];
+    }
+    groups[label].push(item);
+  });
+  return groups;
 }
 
 export default function HistoryClient() {
@@ -89,7 +148,7 @@ export default function HistoryClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const unified = [
+  const unified: UnifiedItem[] = [
     ...videos.map(v => ({
       type: 'video' as const,
       id: v.id,
@@ -132,6 +191,8 @@ export default function HistoryClient() {
       ? unified.filter(i => i.type === 'video')
       : unified.filter(i => i.type === 'short');
 
+  const grouped = groupByDate(visible);
+
   const loadMore = () => {
     if (tab === 'all') {
       if (!videoDone) void loadVideos();
@@ -152,14 +213,11 @@ export default function HistoryClient() {
   return (
     <div className="w-full flex flex-col">
       <main className="flex-1 pt-8 pb-20">
-        {/* Updated container: Responsive padding */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6">
-          {/* Updated header: Responsive text */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-6">
             Watch History
           </h1>
 
-          {/* Updated tabs: Responsive padding and flex-wrap */}
           <div className="flex flex-wrap gap-3 mb-8">
             {(['all','videos','shorts'] as TabKey[]).map(t => (
               <button
@@ -167,8 +225,8 @@ export default function HistoryClient() {
                 onClick={() => setTab(t)}
                 className={`px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-sm font-medium border transition shadow-sm ${
                   tab === t
-                    ? 'bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400 text-white border-transparent'
-                    : 'bg-white/80 dark:bg-gray-900/60 backdrop-blur border-gray-200 dark:border-white/10 hover:border-indigo-400/60'
+                    ? 'bg-blue-600 text-white border-transparent'
+                    : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 hover:border-blue-400'
                 }`}
               >
                 {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -176,38 +234,63 @@ export default function HistoryClient() {
             ))}
           </div>
 
-          {/* Updated error: Responsive padding */}
           {error && (
             <div className="mb-6 text-sm bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
               {error}
             </div>
           )}
 
-          {/* Updated empty state: Responsive text */}
           {visible.length === 0 && !loading && (
             <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">
               No history yet.
             </p>
           )}
 
-          {/* Updated list: Responsive spacing */}
-          <ul className="space-y-6 sm:space-y-10">
-            {visible.map(item => (
-              <li key={`${item.type}-${item.id}`}>
-                {item.type === 'video'
-                  ? <HistoryVideoCard data={item.raw} />
-                  : <HistoryShortCard data={item.raw} />}
-              </li>
-            ))}
-          </ul>
+          {Object.entries(grouped).map(([dateLabel, items]) => {
+            const videoItems = items.filter(item => item.type === 'video');
+            const shortItems = items.filter(item => item.type === 'short');
 
-          {/* Updated load more: Responsive padding */}
+            return (
+              <div key={dateLabel} className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                  {dateLabel}
+                </h2>
+                
+                {/* Videos Grid */}
+                {videoItems.length > 0 && (
+                  <div className="max-w-7xl mx-auto mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                      {videoItems.map(item => (
+                        <div key={`${item.type}-${item.id}`}>
+                          <HistoryVideoCard data={item.raw} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Shorts Horizontal Scroll */}
+                {shortItems.length > 0 && (
+                  <div className="overflow-x-auto mb-6">
+                    <div className="flex space-x-4 pb-2">
+                      {shortItems.map(item => (
+                        <div key={`${item.type}-${item.id}`} className="flex-shrink-0">
+                          <HistoryShortCard data={item.raw} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
           {canLoadMore && (
-            <div className="mt-8 sm:mt-10">
+            <div className="mt-8 flex justify-center">
               <button
                 onClick={loadMore}
                 disabled={loading}
-                className="px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl text-sm font-medium border border-gray-300 dark:border-white/10 bg-white dark:bg-gray-900 hover:border-indigo-400/60 dark:hover:border-indigo-400/40 transition disabled:opacity-50"
+                className="px-6 py-3 rounded-lg text-sm font-medium border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-blue-400 dark:hover:border-blue-400 transition disabled:opacity-50"
               >
                 {loading ? 'Loading…' : 'Load More'}
               </button>
