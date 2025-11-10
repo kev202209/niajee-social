@@ -2,8 +2,7 @@
 import React from 'react';
 import VideoCard from '@/components/home/VideoCard';
 import ShortCard from '@/components/home/ShortCard';
-import timeAgo from '@/utils/timeAgo';
-import { Video, Short } from '@/types';
+import { Video, Short, ProcessedImage } from '@/types';
 
 interface RawHistoryChannel {
   id?: string;
@@ -15,9 +14,22 @@ interface RawHistoryChannel {
 interface RawHistoryBase {
   id: string;
   title?: string;
-  thumbnail?: string | null;
+  thumbnail?: {
+    data: ProcessedImage;
+    type: 'auto-generated' | 'user-uploaded';
+    status: 'queued' | 'processing' | 'complete' | 'failed';
+  } | null;
   duration?: number | null;
   channel?: RawHistoryChannel;
+  videoUrl?: Record<string, string>;
+  views?: number;
+  viewCount?: number;
+  likes?: number;
+  likeCount?: number;
+  createdAt?: string;
+  videoId?: string;
+  description?: string;
+  dislikes?: number;
   history?: {
     lastWatchedAt: string;
     positionSec?: number;
@@ -28,160 +40,80 @@ interface RawHistoryBase {
 }
 
 interface HistoryVideoProps {
-  data: RawHistoryBase; // raw video history object
+  data: RawHistoryBase;
 }
 interface HistoryShortProps {
-  data: RawHistoryBase; // raw short history object
+  data: RawHistoryBase;
 }
 
-function formatDur(sec?: number) {
-  if (!sec) return '';
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = Math.floor(sec % 60).toString().padStart(2,'0');
-  return h ? `${h}:${m.toString().padStart(2,'0')}:${s}` : `${m}:${s}`;
+function createMockProcessedImage(avatarUrl: string | null): ProcessedImage {
+  const url = avatarUrl || '';
+  return {
+    width: 720,
+    height: 1280,
+    format: 'webp',
+    variants: {
+      '480w': url,
+      '720w': url,
+      '1080w': url
+    },
+    originalKey: url,
+    processedAt: new Date().toISOString(),
+    thumbnailKey: url
+  };
 }
 
 export const HistoryVideoCard: React.FC<HistoryVideoProps> = ({ data }) => {
-  const progressPct = data.history?.durationSec
-    ? Math.min(100, (data.history.positionSec ?? 0) / (data.history.durationSec ?? 1) * 100)
-    : data.history?.completed ? 100 : 0;
-
-  // Safely read potential runtime fields without `any`
-  const raw = data as unknown as Record<string, unknown>;
-
-  // Build an object that matches the Video type required by VideoCard.
-  // Fill missing required fields with sensible defaults.
-  const adapted = {
+  const adapted: Video = {
     id: data.id,
-    // canonical player id/name expected by VideoCard
-    videoId: typeof raw.videoId === 'string' ? raw.videoId : data.id,
-    // video sources: prefer an object if present, otherwise use empty string placeholder
-    videoUrl:
-      typeof raw.videoUrl === 'object' && raw.videoUrl !== null
-        ? (raw.videoUrl as Record<string, string>)
-        : (typeof raw.videoUrl === 'string' ? raw.videoUrl : ''),
-    description: typeof raw.description === 'string' ? raw.description : '',
-    // display fields
+    videoId: data.videoId ?? data.id,
+    videoUrl: data.videoUrl ?? {},
+    description: data.description ?? '',
     title: data.title ?? '',
-    // VideoCard expects `thumbnail` (not thumbnail) and `thumbnail` should be a key for your image utility
-    thumbnail: typeof raw.thumbnail === 'string' ? raw.thumbnail : String(data.thumbnail ?? ''),
-    // thumbnail: String(data.thumbnail ?? ''),
+    thumbnail: data.thumbnail ?? {
+      data: createMockProcessedImage(null),
+      type: 'auto-generated',
+      status: 'complete'
+    },
     duration: data.duration ?? 0,
-    // numeric stats
-    views: typeof raw.views === 'number' ? raw.views : Number(raw.views ?? 0),
-    likes: typeof raw.likes === 'number' ? raw.likes : Number(raw.likes ?? 0),
-    dislikes: typeof raw.dislikes === 'number' ? raw.dislikes : 0,
-    createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : new Date().toISOString(),
-    // channel shape expected by the Video type
+    views: data.views ?? data.viewCount ?? 0,
+    likes: data.likes ?? data.likeCount ?? 0,
+    dislikes: data.dislikes ?? 0,
+    createdAt: data.createdAt ?? new Date().toISOString(),
     channel: {
       id: data.channel?.id ?? '',
       name: data.channel?.name ?? '',
-      avatar: data.channel?.avatar ?? '',
+      avatar: createMockProcessedImage(data.channel?.avatar ?? null),
       handle: data.channel?.handle ?? '',
+      verified: false,
     },
-  } as unknown as Video;
+  };
 
-  return (
-    <div className="relative group">
-      <div className="relative">
-        <VideoCard video={adapted} />
-        {/* Duration badge: Responsive text */}
-        {data.duration && (
-          <span className="absolute bottom-1 right-1 z-10 bg-black/70 text-white text-xs sm:text-[11px] px-1.5 py-0.5 rounded">
-            {formatDur(data.duration)}
-          </span>
-        )}
-        {/* Progress bar overlay */}
-        {progressPct > 0 && (
-          <div className="absolute left-0 bottom-0 h-1 w-full bg-black/30">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400"
-              style={{ width: `${progressPct}%` }}
-            />
-          </div>
-        )}
-      </div>
-      {/* Updated metadata: Responsive text and gap */}
-      <div className="mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5">
-        <a
-          href={`/channels/${data.channel?.handle?.replace(/^@/,'')}`}
-          className="hover:underline font-medium text-gray-800 dark:text-gray-200"
-        >
-          {data.channel?.name}
-        </a>
-        <span>• {timeAgo(data.history?.lastWatchedAt ?? new Date().toISOString())}</span>
-        {data.history?.completed && <span>• Completed</span>}
-        {!data.history?.completed && progressPct > 5 && progressPct < 95 && (
-          <span>• {progressPct.toFixed(0)}%</span>
-        )}
-      </div>
-    </div>
-  );
+  return <VideoCard video={adapted} />;
 };
 
 export const HistoryShortCard: React.FC<HistoryShortProps> = ({ data }) => {
-  const pct = data.history?.completed
-    ? 100
-    : data.history?.positionSec && data.history?.durationSec
-      ? (data.history.positionSec / (data.history.durationSec ?? 1)) * 100
-      : 0;
-
-  const rawShort = data as unknown as Record<string, unknown>;
-  const adaptedShort = {
+  const adaptedShort: Short = {
     id: data.id,
-    videoUrl:
-      typeof rawShort.videoUrl === 'object' && rawShort.videoUrl !== null
-        ? (rawShort.videoUrl as Record<string, string>)
-        : (typeof rawShort.videoUrl === 'string' ? rawShort.videoUrl : ''),
+    videoUrl: data.videoUrl ?? {},
     title: data.title ?? '',
-    thumbnail: typeof rawShort.thumbnail === 'string' ? rawShort.thumbnail : String(data.thumbnail ?? ''),
-    // thumbnail: String(data.thumbnail ?? ''),
+    thumbnail: data.thumbnail ?? {
+      data: createMockProcessedImage(null),
+      type: 'auto-generated',
+      status: 'complete'
+    },
     duration: data.duration ?? 0,
-    views: typeof rawShort.views === 'number' ? rawShort.views : Number(rawShort.views ?? 0),
-    likes: typeof rawShort.likes === 'number' ? rawShort.likes : Number(rawShort.likes ?? 0),
-    createdAt: typeof rawShort.createdAt === 'string' ? rawShort.createdAt : new Date().toISOString(),
+    views: data.views ?? data.viewCount ?? 0,
+    likes: data.likes ?? data.likeCount ?? 0,
+    createdAt: data.createdAt ?? new Date().toISOString(),
     channel: {
       id: data.channel?.id ?? '',
       name: data.channel?.name ?? '',
       handle: data.channel?.handle ?? '',
-      avatar: data.channel?.avatar ?? ''
+      avatar: createMockProcessedImage(data.channel?.avatar ?? null),
+      verified: false,
     }
-  } as unknown as Short;
+  };
 
-  return (
-    <div className="relative group">
-      <div className="relative">
-        <ShortCard short={adaptedShort} />
-        {/* Progress bar */}
-        {pct > 0 && (
-          <div className="absolute left-0 bottom-0 h-1 w-full bg-black/30">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-amber-400"
-              style={{ width: `${Math.min(100, pct)}%` }}
-            />
-          </div>
-        )}
-        {/* Updated badge: Responsive text */}
-        <span className="absolute top-1 left-1 bg-black/55 text-white text-xs sm:text-[10px] px-1.5 py-0.5 rounded">
-          Short
-        </span>
-      </div>
-      {/* Updated metadata: Responsive text and gap */}
-      <div className="mt-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex flex-wrap gap-x-2 gap-y-0.5">
-        {data.channel?.name && (
-          <a
-            href={`/channels/${(data.channel?.handle ?? '').replace(/^@/,'')}`}
-            className="hover:underline font-medium text-gray-800 dark:text-gray-200"
-          >
-            {data.channel.name}
-          </a>
-        )}
-        <span>• {timeAgo(data.history?.lastWatchedAt ?? new Date().toISOString())}</span>
-        {data.history?.timesWatched && data.history.timesWatched > 1 && (
-          <span>• {data.history.timesWatched} views</span>
-        )}
-      </div>
-    </div>
-  );
+  return <ShortCard short={adaptedShort} />;
 };
