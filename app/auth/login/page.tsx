@@ -221,7 +221,7 @@ export default function LoginPage() {
                   onClick={handleGoogleLogin}
                   className="w-full p-2 dark:bg-sky-500/10 bg-sky-300 hover:bg-sky-400/80 text-white dark:hover:bg-sky-500/80 dark:text-white rounded-xl flex items-center justify-center gap-2"
                 >
-                  <FcGoogle /> Login with Google
+                  <FcGoogle className="text-2xl"/> Login with Google
                 </button>
                 <Link
                   href="/auth/forget-password"
