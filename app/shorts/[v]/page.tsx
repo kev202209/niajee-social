@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Header from "@/components/home/Header";
 import Sidebar from "@/components/home/Sidebar";
@@ -21,6 +21,7 @@ const PREFETCH_AHEAD = 2;
 
 const ShortVideoPage = () => {
   const params = useParams();
+  const router = useRouter();
   const initialVideoId = Array.isArray(params?.v) ? params.v[0] : params?.v;
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
@@ -134,7 +135,114 @@ const ShortVideoPage = () => {
     return unique;
   };
 
-  // Fill queue to target size
+  const [shortCache, setShortCache] = useState<Map<string, FullShortData>>(new Map());
+
+  // Helper: add array of shorts to cache
+  const addToCache = useCallback((items: FullShortData[]) => {
+    if (!items.length) return;
+    setShortCache(prev => {
+      const next = new Map(prev);
+      for (const it of items) next.set(it.id, it);
+      return next;
+    });
+  }, []);
+
+  // Init
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      let current: FullShortData | null = null;
+
+      // If we have an initial id, try direct fetch (membership gating needs full object)
+      if (initialVideoId) {
+        // Avoid network if already cached (e.g. user came from feed page and passed state in future)
+        if (shortCache.has(initialVideoId)) {
+          current = shortCache.get(initialVideoId) ?? null;
+        } else {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${initialVideoId}`, { credentials: "include" });
+            if (res.status === 403) {
+              const errorData = await res.json().catch(() => ({}));
+              setMembershipRequired({
+                channelId: errorData.channelId || '',
+                channelName: errorData.channelName || 'This channel',
+                requiredTier: errorData.requiredTierId || null,
+                tierName: errorData.tierName,
+              });
+              setShowMembershipModal(true);
+              setLoading(false);
+              return;
+            }
+            if (res.ok) {
+              const data = await res.json();
+              if (data && typeof data === 'object' && typeof data.id === 'string') {
+                current = data as FullShortData;
+              }
+            }
+        }
+      } else {
+        // No param: take one from feed
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/content/feed/shorts?limit=1`, { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          const raw = (data?.shorts?.[0] ?? data?.data?.[0]) as unknown;
+          if (raw && typeof raw === 'object' && typeof (raw as Record<string, unknown>).id === 'string') {
+            current = raw as FullShortData;
+          }
+        }
+      }
+
+      if (!current) {
+        setLoading(false);
+        return;
+      }
+
+      setCurrentVideo(current);
+      addToCache([current]);
+      updateUrl(current.id);
+
+      // Prefetch buffer from feed (excluding current)
+      const batch = await fetchFeedBatch(PREFETCH_AHEAD, [current.id]);
+      addToCache(batch);
+      setNextQueue(batch);
+      setLoading(false);
+    };
+    void init();
+    // We intentionally exclude shortCache + initialVideoId to prevent re-fetch loops while navigating internally.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // PARAM CHANGE HANDLER (user manually navigates or deep link)
+  useEffect(() => {
+    if (!initialVideoId) return;
+    // If already current, do nothing
+    if (currentVideo?.id === initialVideoId) return;
+    // If cached, use cache (no fetch)
+    if (shortCache.has(initialVideoId)) {
+      const cached = shortCache.get(initialVideoId) ?? null;
+      setCurrentVideo(cached);
+      return;
+    }
+    // Fallback: fetch only if totally unknown
+    (async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${initialVideoId}`, { credentials: "include" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && typeof data === 'object' && typeof data.id === 'string') {
+          const full = data as FullShortData;
+          setCurrentVideo(full);
+          addToCache([full]);
+        }
+      } catch {}
+    })();
+  }, [initialVideoId, shortCache, currentVideo, addToCache]);
+
+  // Update URL using shallow routing to avoid triggering full re-run effects
+  const updateUrl = (id: string) => {
+    router.push(`/shorts/${id}`, { scroll: false });
+  };
+
+  // Fill queue when needed (no duplicate network if cached)
   const fillQueue = useCallback(async () => {
     if (!currentVideo) return;
     const exclude = new Set<string>([
@@ -145,35 +253,16 @@ const ShortVideoPage = () => {
     const need = Math.max(0, PREFETCH_AHEAD - nextQueue.length);
     if (need === 0) return;
     const batch = await fetchFeedBatch(PREFETCH_AHEAD, Array.from(exclude));
-    // Keep only new items not already in queue
     const newOnes = batch.filter(b => !exclude.has(b.id));
     if (newOnes.length) {
+      addToCache(newOnes);
       setNextQueue(prev => {
         const existing = new Set(prev.map(v => v.id));
         const merged = [...prev, ...newOnes.filter(n => !existing.has(n.id))];
-        return merged.slice(0, PREFETCH_AHEAD); // cap buffer
+        return merged.slice(0, PREFETCH_AHEAD);
       });
     }
-  }, [currentVideo, videoHistory, nextQueue]);
-
-  // Init
-  useEffect(() => {
-    const init = async () => {
-      setLoading(true);
-      const current = await fetchCurrentVideo(initialVideoId);
-      if (!current) {
-        setLoading(false);
-        return;
-      }
-      setCurrentVideo(current);
-      updateUrl(current.id);
-      // prime buffer
-      const batch = await fetchFeedBatch(PREFETCH_AHEAD, [current.id]);
-      setNextQueue(batch);
-      setLoading(false);
-    };
-    void init();
-  }, [initialVideoId]);
+  }, [currentVideo, videoHistory, nextQueue, addToCache]);
 
   // Refill when queue shrinks
   useEffect(() => {
@@ -196,10 +285,6 @@ const ShortVideoPage = () => {
     try { localStorage.setItem('video-volume', vol.toString()); } catch {}
   };
 
-  const updateUrl = (id: string) => {
-    window.history.pushState(null, '', `/shorts/${id}`);
-  };
-
   // Derived next video from queue
   const nextVideo = useMemo(() => nextQueue[0] ?? null, [nextQueue]);
 
@@ -211,14 +296,12 @@ const ShortVideoPage = () => {
       setVideoHistory(prev => [...prev, currentVideo]);
       const newCurrent = nextVideo;
       setCurrentVideo(newCurrent);
-      updateUrl(newCurrent.id);
+      updateUrl(newCurrent.id); // Shallow push; no forced refetch
       setIsPaused(false);
       setIsMuted(true);
       if (currentVideoRef.current) currentVideoRef.current.muted = true;
 
-      // drop head and refill
       setNextQueue(prev => prev.slice(1));
-      // Refill in background using latest snapshot
       const exclude = [
         ...videoHistory.map(v => v.id),
         currentVideo.id,
@@ -226,6 +309,7 @@ const ShortVideoPage = () => {
         ...nextQueue.slice(1).map(v => v.id),
       ];
       const refill = await fetchFeedBatch(PREFETCH_AHEAD, exclude);
+      addToCache(refill);
       setNextQueue(prev => {
         const existing = new Set(prev.map(v => v.id));
         const merged = [...prev, ...refill.filter(n => !existing.has(n.id))];
@@ -234,7 +318,7 @@ const ShortVideoPage = () => {
 
       scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
     }, 600);
-  }, [nextVideo, currentVideo, videoHistory, nextQueue]);
+  }, [nextVideo, currentVideo, videoHistory, nextQueue, addToCache]);
 
   // Navigation: previous
   const handleScrollUp = useCallback(() => {
