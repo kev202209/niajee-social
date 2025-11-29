@@ -22,10 +22,10 @@ const channelMenuItems = [
   { label: 'Upload', icon: Upload, href: '/upload' },
   { label: 'Manage', icon: Video, href: '/manage-uploads' },
   { label: 'Bin', icon: Trash2, href: '/bin' },
-  { label: 'Analytics', icon: BarChart3, href: '/analytics' },
-  { label: 'Membership', icon: Users, href: '/membership' },
-  { label: 'Revenue', icon: DollarSign, href: '/revenue' },
-  { label: 'Payouts', icon: DollarSign, href: '/payouts' },
+  // { label: 'Analytics', icon: BarChart3, href: '/analytics' },
+  // { label: 'Membership', icon: Users, href: '/membership' },
+  // { label: 'Revenue', icon: DollarSign, href: '/revenue' },
+  // { label: 'Payouts', icon: DollarSign, href: '/payouts' },
   { label: 'Settings', icon: Settings, href: '/settings' },
 ] as const
 
