@@ -217,14 +217,14 @@ export default function ChannelPage() {
                       <span className="flex items-center justify-center gap-2"><FiBell className="w-4 h-4" /> Subscribe</span>
                     )}
                   </button>
-                  {channel.membershipEnabled && (
+                  {/* {channel.membershipEnabled && (
                     <Link
                       href={`/channels/${handle}/membership`}
                       className="w-full lg:w-auto lg:ml-8 px-4 sm:px-6 py-2 rounded-full font-semibold shadow transition bg-blue-600 text-white hover:bg-blue-700 text-center"
                     >
                       Join Membership
                     </Link>
-                  )}
+                  )} */}
                 </div>
               </div>
             </div>
@@ -389,14 +389,14 @@ export default function ChannelPage() {
                   <div className="text-center py-12">
                     <FiUsers className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500 dark:text-gray-400">No members yet. Be the first to join!</p>
-                    {channel.membershipEnabled && (
+                    {/* {channel.membershipEnabled && (
                       <Link
                         href={`/channels/${handle}/membership`}
                         className="inline-block mt-4 px-6 py-2 rounded-full font-semibold shadow transition bg-blue-600 text-white hover:bg-blue-700"
                       >
                         Join Membership
                       </Link>
-                    )}
+                    )} */}
                   </div>
                 ) : (
                   <div className="space-y-4">
