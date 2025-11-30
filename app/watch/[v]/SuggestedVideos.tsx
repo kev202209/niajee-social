@@ -6,7 +6,7 @@ import { SuggestedVideo, getThumbnailSrc } from "@/types";
 import Link from "next/link";
 import timeAgo from "@/utils/timeAgo";
 import HoverPreviewPlayer from "@/components/media/HoverPreviewPlayer";
-import LockedContentOverlay from "@/components/media/LockedContentOverlay";
+// import LockedContentOverlay from "@/components/media/LockedContentOverlay";
 
 interface SuggestedVideosProps {
   videoId: string;

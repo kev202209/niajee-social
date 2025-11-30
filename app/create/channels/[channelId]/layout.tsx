@@ -3,15 +3,15 @@
 import { useParams, usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  BarChart3,
+  // BarChart3,
   Upload,
   Settings,
   Home,
   PlaySquare,
   Video,
   Trash2,
-  Users,
-  DollarSign,
+  // Users,
+  // DollarSign,
 } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { DetailedChannel as Channel } from '@/types'

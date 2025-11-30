@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Sidebar from '@/components/home/Sidebar';
 import MobileBottomNav from '@/components/home/MobileBottomNav';
+import AuthenticatedImage from '@/components/Image';
+import { getImageSrc } from '@/utils/imageUtils';
 import {
   FiCheck,
   FiX,
@@ -14,8 +16,8 @@ import {
   FiCreditCard,
   FiCalendar,
   FiTrendingUp,
-  FiTrendingDown,
 } from 'react-icons/fi';
+
 
 interface MembershipTier {
   id: string;
@@ -266,8 +268,10 @@ export default function SubscriptionsPage() {
                             {/* Channel Info */}
                             <div className="flex items-start gap-4 mb-4">
                               {sub.channelAvatar ? (
-                                <img
-                                  src={sub.channelAvatar}
+                                <AuthenticatedImage
+                                  width={64}
+                                  height={64}
+                                  mediaKey={getImageSrc(sub.channelAvatar, '480w')}
                                   alt={sub.channelName}
                                   className="w-16 h-16 rounded-full object-cover"
                                 />
@@ -386,8 +390,10 @@ export default function SubscriptionsPage() {
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
                               {sub.channelAvatar ? (
-                                <img
-                                  src={sub.channelAvatar}
+                                <AuthenticatedImage
+                                  height={35}
+                                  width={35}
+                                  mediaKey={getImageSrc(sub.channelAvatar, '480w')}
                                   alt={sub.channelName}
                                   className="w-12 h-12 rounded-full object-cover"
                                 />
@@ -531,7 +537,7 @@ export default function SubscriptionsPage() {
               </div>
 
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                You'll lose access to member-only content and benefits. Your subscription will remain active
+                You&apos;ll lose access to member-only content and benefits. Your subscription will remain active
                 until the end of the current billing period.
               </p>
 

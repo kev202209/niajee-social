@@ -256,7 +256,7 @@ export default function ChannelMembershipPage() {
                 Membership Not Available
               </h2>
               <p className="text-gray-600 dark:text-gray-400">
-                This channel hasn't enabled memberships yet.
+                This channel hasn&apos;t enabled memberships yet.
               </p>
             </div>
           </main>

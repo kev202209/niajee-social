@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { Channel, MembershipTier } from '@/types';
-import { FiCheck, FiX, FiPlus, FiEdit2, FiTrash2, FiLock, FiUnlock, FiSave, FiAlertCircle } from 'react-icons/fi';
+import { FiCheck, FiX, FiPlus, FiEdit2, FiTrash2, FiLock, FiSave, FiAlertCircle } from 'react-icons/fi';
 
 type MembershipType = 'free' | 'single' | 'multiple';
 
@@ -169,7 +169,7 @@ export default function MembershipPage() {
         enabled: membershipEnabled,
         type: backendType,
         tiers: membershipEnabled && membershipType !== 'free' 
-          ? tiers.map(({ id, ...tier }) => ({
+          ? tiers.map(({ ...tier }) => ({
               ...tier,
               price: parseFloat(tier.price) // Parse price to number for backend
             })) // Remove temporary IDs

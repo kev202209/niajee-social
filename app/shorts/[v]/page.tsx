@@ -78,39 +78,39 @@ const ShortVideoPage = () => {
   };
 
   // Fetch one by ID or any single
-  const fetchCurrentVideo = async (videoId?: string): Promise<FullShortData | null> => {
-    try {
-      if (videoId) {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`, { credentials: "include" });
+  // const fetchCurrentVideo = async (videoId?: string): Promise<FullShortData | null> => {
+  //   try {
+  //     if (videoId) {
+  //       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/shorts/${videoId}`, { credentials: "include" });
         
-        // Handle 403 Forbidden - membership required
-        if (res.status === 403) {
-          const errorData = await res.json().catch(() => ({}));
-          setMembershipRequired({
-            channelId: errorData.channelId || '',
-            channelName: errorData.channelName || 'This channel',
-            requiredTier: errorData.requiredTierId || null,
-            tierName: errorData.tierName,
-          });
-          setShowMembershipModal(true);
-          return null;
-        }
+  //       // Handle 403 Forbidden - membership required
+  //       if (res.status === 403) {
+  //         const errorData = await res.json().catch(() => ({}));
+  //         setMembershipRequired({
+  //           channelId: errorData.channelId || '',
+  //           channelName: errorData.channelName || 'This channel',
+  //           requiredTier: errorData.requiredTierId || null,
+  //           tierName: errorData.tierName,
+  //         });
+  //         setShowMembershipModal(true);
+  //         return null;
+  //       }
         
-        if (!res.ok) return null;
-        const data = await res.json();
-        return isFullShort(data) ? data : null;
-      } else {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/content/feed/shorts?limit=1`, { credentials: "include" });
-        if (!res.ok) return null;
-        const data = await res.json();
-        const raw = (data?.shorts?.[0] ?? data?.data?.[0]) as unknown;
-        return isFullShort(raw) ? raw : null;
-      }
-    } catch (err) {
-      console.error(err);
-      return null;
-    }
-  };
+  //       if (!res.ok) return null;
+  //       const data = await res.json();
+  //       return isFullShort(data) ? data : null;
+  //     } else {
+  //       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/content/feed/shorts?limit=1`, { credentials: "include" });
+  //       if (!res.ok) return null;
+  //       const data = await res.json();
+  //       const raw = (data?.shorts?.[0] ?? data?.data?.[0]) as unknown;
+  //       return isFullShort(raw) ? raw : null;
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     return null;
+  //   }
+  // };
 
   // Fetch a batch from feed with exclusions (no normalization)
   const fetchFeedBatch = async (limit: number, excludeIds: string[]): Promise<FullShortData[]> => {

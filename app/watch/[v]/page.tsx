@@ -7,9 +7,9 @@ import SuggestedVideos from "./SuggestedVideos";
 import CommentsSection from "./CommentSection";
 import Sidebar from "@/components/home/Sidebar";
 import MobileBottomNav from "@/components/home/MobileBottomNav";
-import MembershipModal from "@/components/membership/MembershipModal";
+// import MembershipModal from "@/components/membership/MembershipModal";
 import { mVideo as Video } from "../../../types";
-import { FiAlertCircle, FiWifi, FiRefreshCw, FiVideo, FiLock } from "react-icons/fi";
+import { FiAlertCircle, FiWifi, FiRefreshCw, FiVideo, } from "react-icons/fi";
 
 // Skeleton Components
 const VideoPlayerSkeleton = () => (
@@ -198,18 +198,18 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
-  const [showMembershipModal, setShowMembershipModal] = useState(false);
-  const [membershipRequired, setMembershipRequired] = useState<{
-    channelId: string;
-    channelName: string;
-    requiredTier?: string | null;
-    tierName?: string;
-  } | null>(null);
+  // const [showMembershipModal, setShowMembershipModal] = useState(false);
+  // const [membershipRequired, setMembershipRequired] = useState<{
+  //   channelId: string;
+  //   channelName: string;
+  //   requiredTier?: string | null;
+  //   tierName?: string;
+  // } | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
-    setMembershipRequired(null);
+    // setMembershipRequired(null);
     
     try {
       // Fetch video data only
@@ -222,13 +222,13 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
       if (!res.ok) {
         // Handle 403 Forbidden - membership required
         if (res.status === 403) {
-          const errorData = await res.json().catch(() => ({}));
-          setMembershipRequired({
-            channelId: errorData.channelId || '',
-            channelName: errorData.channelName || 'This channel',
-            requiredTier: errorData.requiredTierId || null,
-            tierName: errorData.tierName,
-          });
+          // const errorData = await res.json().catch(() => ({}));
+          // setMembershipRequired({
+          //   channelId: errorData.channelId || '',
+          //   channelName: errorData.channelName || 'This channel',
+          //   requiredTier: errorData.requiredTierId || null,
+          //   tierName: errorData.tierName,
+          // });
           // Still fetch video data for meta display
           // Continue to fetch video data below
         } else {
@@ -244,14 +244,14 @@ export default function WatchPage({ params }: { params: Promise<{ v: string }> }
       setVideo(data.video);
       
       // Set membership info if needed
-      if (data.video.needsMembership || !data.video.canAccess) {
-        setMembershipRequired({
-          channelId: data.video.channel.id,
-          channelName: data.video.channel.name,
-          requiredTier: data.video.requiredTierId,
-          tierName: data.video.requiredTierId,
-        });
-      }
+      // if (data.video.needsMembership || !data.video.canAccess) {
+      //   setMembershipRequired({
+      //     channelId: data.video.channel.id,
+      //     channelName: data.video.channel.name,
+      //     requiredTier: data.video.requiredTierId,
+      //     tierName: data.video.requiredTierId,
+      //   });
+      // }
       
     } catch (err: unknown) {
       console.error('Error fetching data:', err);
