@@ -7,6 +7,7 @@ import Link from "next/link";
 import AuthenticatedImage from "@/components/Image";
 import Hls from 'hls.js';
 import { getFullUrl } from "@/utils/videourl";
+import LockedContentOverlay from "@/components/media/LockedContentOverlay";
 
 const ShortCard: FC<{ short: Short }> = ({ short }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -216,6 +217,17 @@ const ShortCard: FC<{ short: Short }> = ({ short }) => {
             playsInline
             className="absolute inset-0 object-cover w-full h-full opacity-0 group-hover:opacity-100 transition-opacity"
           />
+          
+          {/* Locked Content Overlay */}
+          {short.needsMembership && (
+            <LockedContentOverlay
+              channelId={short.channel.id || ''}
+              channelName={short.channel.name}
+              requiredTier={short.requiredTierId}
+              contentType="short"
+              className="rounded-t-xl"
+            />
+          )}
           
           {/* Volume Button & Slider */}
           <button

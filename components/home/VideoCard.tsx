@@ -1,12 +1,13 @@
 import { FC, useEffect, useRef, useState } from "react";
 import { Video, getThumbnailSrc } from "@/types";
-import { FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiUser } from "react-icons/fi";
+import { FiMoreHorizontal, FiPlusCircle, FiFlag, FiXCircle, FiMessageCircle, FiUser, FiLock } from "react-icons/fi";
 import Link from "next/link";
 import timeAgo from "../../utils/timeAgo";
 import AuthenticatedImage from "@/components/Image";
 import { formatCount } from "@/utils/formatUtils";
 import { getImageSrc } from "@/utils/imageUtils";
 import HoverPreviewPlayer from "@/components/media/HoverPreviewPlayer";
+import LockedContentOverlay from "@/components/media/LockedContentOverlay";
 
 function useOutsideClick(
   ref: React.RefObject<HTMLElement | null>,
@@ -43,6 +44,17 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
             className="w-full h-full"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
+          
+          {/* Locked Content Overlay */}
+          {video.needsMembership && (
+            <LockedContentOverlay
+              channelId={video.channel.id}
+              channelName={video.channel.name}
+              requiredTier={video.requiredTierId}
+              contentType="video"
+              className="rounded-t-lg"
+            />
+          )}
         </div>
 
         {/* Details Section */}
@@ -68,9 +80,14 @@ const VideoCard: FC<{ video: Video }> = ({ video }) => {
 
             {/* Video Info */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight line-clamp-2 mb-1">
-                {video.title}
-              </h3>
+              <div className="flex items-start gap-2 mb-1">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight line-clamp-2 flex-1">
+                  {video.title}
+                </h3>
+                {video.isMemberOnly && (
+                  <FiLock className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
+                )}
+              </div>
 
               <div className="flex items-center gap-1 mb-1">
                 <p className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">

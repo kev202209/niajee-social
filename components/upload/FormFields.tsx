@@ -2,6 +2,14 @@ import React from 'react';
 import { UploadForm } from '../../app/create/channels/[channelId]/upload/types';
 import TagInput from './TagInput';
 import MentionInput from './MentionInput';
+import MembershipAccessSection from './MembershipAccessSection';
+
+interface MembershipTier {
+  id: string;
+  name: string;
+  price: number;
+  currency: string;
+}
 
 interface FormFieldsProps {
   form: UploadForm;
@@ -12,6 +20,9 @@ interface FormFieldsProps {
   removeMention: (mention: string) => void;
   uploading: boolean;
   categories: string[];
+  // Membership props
+  membershipEnabled?: boolean;
+  membershipTiers?: MembershipTier[] | null;
 }
 
 export default function FormFields({
@@ -22,8 +33,35 @@ export default function FormFields({
   addMention,
   removeMention,
   uploading,
-  categories
+  categories,
+  membershipEnabled = false,
+  membershipTiers = null,
 }: FormFieldsProps) {
+  
+  const handleMemberOnlyChange = (checked: boolean) => {
+    // Create a synthetic event that matches the expected interface
+    const syntheticEvent = {
+      target: {
+        name: 'isMemberOnly',
+        value: String(checked),
+        type: 'checkbox',
+        checked: checked,
+      },
+    };
+    handleInputChange(syntheticEvent as unknown as React.ChangeEvent<HTMLInputElement>);
+  };
+
+  const handleTierChange = (tierId: string | null) => {
+    // Create a synthetic event that matches the expected interface
+    const syntheticEvent = {
+      target: {
+        name: 'requiredTierId',
+        value: tierId || '',
+        type: 'select',
+      },
+    };
+    handleInputChange(syntheticEvent as unknown as React.ChangeEvent<HTMLSelectElement>);
+  };
   return (
     <div className="space-y-6">
       {/* Title */}
@@ -275,6 +313,17 @@ export default function FormFields({
           />
         </div>
       )}
+
+      {/* Membership Access Section */}
+      <MembershipAccessSection
+        isMemberOnly={form.isMemberOnly || false}
+        requiredTierId={form.requiredTierId}
+        membershipEnabled={membershipEnabled}
+        membershipTiers={membershipTiers}
+        onMemberOnlyChange={handleMemberOnlyChange}
+        onTierChange={handleTierChange}
+        disabled={uploading}
+      />
     </div>
   );
 }

@@ -6,11 +6,27 @@ export interface FullShortData {
   description?: string;
   videoUrl: {
     [quality: string]: string;
-  } | string; // Handle both formats
-  videoSrc?: string; // Direct video source URL
+  } | string;
+  videoSrc?: string;
   masterPlaylist?: string;
   qualities?: string[];
-  thumbnail: string | null;
+  thumbnail: {
+    data?: {
+      width: number;
+      format: string;
+      height: number;
+      variants: {
+        '480w': string;
+        '720w': string;
+        '1080w': string;
+      };
+      originalKey: string;
+      processedAt: string;
+      thumbnailKey: string;
+    };
+    type?: 'auto-generated' | 'user-uploaded';
+    status?: 'queued' | 'processing' | 'complete' | 'failed';
+  } | null;
   duration: number;
   viewCount: number;
   likeCount: number;
@@ -18,11 +34,14 @@ export interface FullShortData {
   shareCount: number;
   saveCount: number;
   isPublic: boolean;
+  allowComments: boolean;
+  allowLikes: boolean;
+  allowDuet: boolean;
   isLiked: boolean;
   isSaved: boolean;
-  allowComments: boolean;
-  allowDuet: boolean;
-  monetization: {
+  isMemberOnly?: boolean;
+  requiredTierId?: string | null;
+  monetization?: {
     enabled: boolean;
     reason: string | null;
   };
@@ -34,68 +53,121 @@ export interface FullShortData {
     id: string;
     name: string;
     handle: string;
-    avatar: ProcessedImage | null; // UPDATED: matches API ProcessedImage
+    avatar: string | null;
     verified: boolean;
     isFollowed: boolean;
   };
-  user?: {
-    id: string;
-    username: string;
-    displayName: string;
-    profilePic: string;
-    verified: boolean;
-  };
-  soundId?: string | null;
+  canAccess?: boolean;
+  needsMembership?: boolean;
 }
 
 export interface ShortData {
   id: string;
   title: string;
   description?: string;
+  videoUrl: {
+    [quality: string]: string;
+  } | string;
+  videoSrc?: string;
+  masterPlaylist?: string;
+  qualities?: string[];
+  thumbnail: {
+    data?: {
+      width: number;
+      format: string;
+      height: number;
+      variants: {
+        '480w': string;
+        '720w': string;
+        '1080w': string;
+      };
+      originalKey: string;
+      processedAt: string;
+      thumbnailKey: string;
+    };
+    type?: 'auto-generated' | 'user-uploaded';
+    status?: 'queued' | 'processing' | 'complete' | 'failed';
+  } | null;
+  duration: number;
+  viewCount: number;
   likeCount: number;
   commentCount: number;
   shareCount: number;
   saveCount: number;
+  isPublic: boolean;
+  allowComments: boolean;
+  allowLikes: boolean;
+  allowDuet: boolean;
   isLiked: boolean;
   isSaved: boolean;
-  allowComments: boolean;
-  soundId?: string | null;
+  isMemberOnly?: boolean;
+  requiredTierId?: string | null;
+  monetization?: {
+    enabled: boolean;
+    reason: string | null;
+  };
+  tags: string[];
+  mentions: string[];
+  location: string | null;
+  createdAt: string;
   channel: {
     id: string;
     name: string;
     handle: string;
-    avatar: ProcessedImage | null; // UPDATED: matches API ProcessedImage
+    avatar: string | null;
     verified: boolean;
     isFollowed: boolean;
   };
+  canAccess?: boolean;
+  needsMembership?: boolean;
+  soundId?: string;
 }
 
-// Lightweight sound meta (matches raw API shape, no normalization)
+// Extended SoundMeta with all required properties
 export interface SoundMeta {
   id: string;
   title: string;
-  cover?: ProcessedImage;
+  artist?: string;
+  duration: number;
+  waveform?: number[];
   audio?: {
-    variants: { mp3: string };
-    originalKey: string;
+    variants?: {
+      mp3?: string;
+      original?: string;
+    };
+    originalKey?: string;
   };
-  durationSec?: number;
+  cover?: ProcessedImage;
   usageCount?: number;
 }
 
 export interface SoundShortItem {
   id: string;
-  title?: string;
-  // match the actual API shape (ProcessedImage container)
-  thumbnail?: {
-    data: ProcessedImage;
-    type: 'auto-generated' | 'user-uploaded';
-    status: 'queued' | 'processing' | 'complete' | 'failed';
+  title: string;
+  thumbnail: {
+    data?: {
+      width: number;
+      format: string;
+      height: number;
+      variants: {
+        '480w': string;
+        '720w': string;
+        '1080w': string;
+      };
+      originalKey: string;
+      processedAt: string;
+      thumbnailKey: string;
+    };
+    type?: 'auto-generated' | 'user-uploaded';
+    status?: 'queued' | 'processing' | 'complete' | 'failed';
   } | null;
-  // include videoUrl so ShortCard can preview on hover
-  videoUrl?: {
-    [quality: string]: string;
+  viewCount: number;
+  likeCount: number;
+  createdAt: string;
+  channel: {
+    name: string;
+    handle: string;
+    avatar: string | null;
+    verified: boolean;
   };
-  createdAt?: string;
-  channel?: { name?: string; handle?: string };
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import { FiChevronLeft, FiChevronRight, FiAlertCircle, FiRefreshCw } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiAlertCircle, FiRefreshCw, FiLock } from "react-icons/fi";
 import { SuggestedVideo, getThumbnailSrc } from "@/types";
 import Link from "next/link";
 import timeAgo from "@/utils/timeAgo";
 import HoverPreviewPlayer from "@/components/media/HoverPreviewPlayer";
+// import LockedContentOverlay from "@/components/media/LockedContentOverlay";
 
 interface SuggestedVideosProps {
   videoId: string;
@@ -350,15 +351,26 @@ function ShortCard({ short }: { short: SuggestedContent }) {
       <div className="cursor-pointer group">
         <div className="relative aspect-[9/16] rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 mb-2">
           {short.thumbnail && short.thumbnail.status === 'complete' ? (
-            <HoverPreviewPlayer
-              source={hasVideoSrc(short) ? (short.videoSrc ?? '') : ''}
-              poster={getThumbnailSrc(short.thumbnail)}
-              durationSeconds={durationSeconds}
-              durationLabel={short.duration != null ? String(short.duration) : ''}
-              className="w-full h-full"
-              sizes="128px"
-              rounded={false}
-            />
+            <>
+              <HoverPreviewPlayer
+                source={hasVideoSrc(short) ? (short.videoSrc ?? '') : ''}
+                poster={getThumbnailSrc(short.thumbnail)}
+                durationSeconds={durationSeconds}
+                durationLabel={short.duration != null ? String(short.duration) : ''}
+                className="w-full h-full"
+                sizes="128px"
+                rounded={false}
+              />
+              {/* Lock icon for member-only shorts */}
+              {short.needsMembership && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <FiLock className="w-5 h-5 text-white mx-auto mb-1" />
+                    <span className="text-white text-xs font-semibold">Members</span>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700">
               <div className="text-center p-2">
@@ -379,9 +391,14 @@ function ShortCard({ short }: { short: SuggestedContent }) {
         </div>
         
         <div className="space-y-1">
-          <h4 className="text-xs font-medium text-gray-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-            {short.title}
-          </h4>
+          <div className="flex items-start gap-1">
+            <h4 className="text-xs font-medium text-gray-900 dark:text-white line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors flex-1">
+              {short.title}
+            </h4>
+            {short.isMemberOnly && (
+              <FiLock className="w-3 h-3 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
+            )}
+          </div>
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {short.views} views
           </p>
@@ -418,14 +435,25 @@ function SuggestedVideoCard({ video }: { video: SuggestedContent }) {
       <div className="flex items-start gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-800 p-2 rounded">
         <div className="relative w-40 h-24 flex-shrink-0 bg-gray-200 dark:bg-gray-700 rounded overflow-hidden">
           {video.thumbnail ? (
-            <HoverPreviewPlayer
-              source={hasVideoSrc(video) ? (video.videoSrc ?? '') : ''}
-              poster={getThumbnailSrc(video.thumbnail)}
-              durationSeconds={durationSeconds}
-              durationLabel={video.duration != null ? String(video.duration) : ''}
-              className="w-full h-full"
-              sizes="160px"
-            />
+            <>
+              <HoverPreviewPlayer
+                source={hasVideoSrc(video) ? (video.videoSrc ?? '') : ''}
+                poster={getThumbnailSrc(video.thumbnail)}
+                durationSeconds={durationSeconds}
+                durationLabel={video.duration != null ? String(video.duration) : ''}
+                className="w-full h-full"
+                sizes="160px"
+              />
+              {/* Lock icon for member-only content */}
+              {video.needsMembership && (
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                  <div className="text-center">
+                    <FiLock className="w-6 h-6 text-white mx-auto mb-1" />
+                    <span className="text-white text-xs font-semibold">Members</span>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-600 dark:to-gray-700">
               <div className="text-center">
@@ -452,9 +480,14 @@ function SuggestedVideoCard({ video }: { video: SuggestedContent }) {
         </div>
 
         <div className="flex flex-col flex-1 min-w-0">
-          <h3 className="font-semibold text-sm line-clamp-2 text-gray-900 dark:text-white mb-1">
-            {video.title}
-          </h3>
+          <div className="flex items-start gap-1 mb-1">
+            <h3 className="font-semibold text-sm line-clamp-2 text-gray-900 dark:text-white flex-1">
+              {video.title}
+            </h3>
+            {video.isMemberOnly && (
+              <FiLock className="w-3 h-3 text-gray-500 dark:text-gray-400 flex-shrink-0 mt-0.5" />
+            )}
+          </div>
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">
             {video.channelName}
           </p>

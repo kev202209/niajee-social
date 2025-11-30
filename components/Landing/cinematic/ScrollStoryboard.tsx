@@ -72,6 +72,7 @@ export default function ScrollStoryboard() {
 									<video
 										className="w-full h-full object-cover"
 										src={s.clip}
+										poster={s.clip.replace('.mp4', '.jpg')}
 										autoPlay
 										muted
 										loop

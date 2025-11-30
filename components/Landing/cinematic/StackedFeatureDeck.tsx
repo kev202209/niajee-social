@@ -123,6 +123,7 @@ export default function StackedFeatureDeck() {
                                             <video
                                                 className="w-full h-full object-cover opacity-25 dark:opacity-30"
                                                 src={layer.loop}
+                                                poster={layer.loop.replace('.mp4', '.jpg')}
                                                 autoPlay
                                                 muted
                                                 loop

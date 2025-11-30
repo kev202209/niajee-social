@@ -44,7 +44,7 @@ export default function ContentTypeSelector({
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
         {contentType === 'short' 
-          ? 'Short videos are vertical videos up to 60 seconds long, perfect for mobile viewing'
+          ? 'Short videos are vertical videos mostly up to 60 seconds long.'
           : 'Long-form videos support all formats and can be any length'
         }
       </p>

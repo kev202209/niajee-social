@@ -352,15 +352,19 @@ useEffect(() => {
             <div className="flex flex-col">
               <p className="font-semibold text-base sm:text-lg">{video.channel.name}</p>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {followerCount === 0 ? '' : `${formatCount(followerCount)} ${followerCount === 1 ? 'follower' : 'followers'}`}
+                {followerCount === 0 ? '' : `${formatCount(followerCount)} ${followerCount === 1 ? 'subscriber' : 'subscribers'}`}
               </p>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            <Button className='hidden bg-blue-500' variant="outline" size="md">
-              Membership
-            </Button>
+            {video.needsMembership && (
+              <Link href={`/channels/${video.channel.handle}/membership`}>
+                <Button variant="outline" size="md" className="bg-blue-500 text-white border-blue-500 hover:bg-blue-600">
+                  Join Membership
+                </Button>
+              </Link>
+            )}
             <Button
               variant={isFollowing ? undefined : "primary"}
               size="md"
@@ -372,7 +376,7 @@ useEffect(() => {
                   : ""
               }
             >
-              {isFollowLoading ? 'Loading...' : (isFollowing ? 'Following' : 'Follow')}
+              {isFollowLoading ? 'Loading...' : (isFollowing ? 'Subscribed' : 'Subscribe')}
             </Button>
           </div>
         </div>
@@ -490,6 +494,12 @@ useEffect(() => {
             <span>{formatCount(video.viewCount)} views</span>
             <span className="text-gray-500">•</span>
             <span>{timeAgo(video.createdAt)}</span>
+            {video.category && (
+              <>
+                <span className="text-gray-500">•</span>
+                <span className="text-blue-600 dark:text-blue-400">{video.category}</span>
+              </>
+            )}
           </div>
           
           <div className="text-sm leading-relaxed">
@@ -508,6 +518,21 @@ useEffect(() => {
               </button>
             )}
           </div>
+
+          {/* Tags Section */}
+          {video.tags && video.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+              {video.tags.map((tag, index) => (
+                <Link 
+                  key={index} 
+                  href={`/search?q=${encodeURIComponent(tag)}`}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                >
+                  #{tag}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

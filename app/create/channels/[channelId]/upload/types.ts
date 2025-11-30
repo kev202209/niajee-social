@@ -17,6 +17,9 @@ export interface UploadForm {
   isSensitive: boolean;
   mentions: string[];
   location?: string;
+  // Membership fields
+  isMemberOnly?: boolean;
+  requiredTierId?: string | null;
 }
 
 export interface UploadProgressData {

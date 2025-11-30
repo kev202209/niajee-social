@@ -9,6 +9,7 @@ import timeAgo from '@/utils/timeAgo';
 import AuthenticatedImage from "@/components/Image";
 import { getImageSrc } from '@/utils/imageUtils';
 import { GENERIC_ERROR_MESSAGE } from '@/utils/toastMessages';
+import MemberBadge from '@/components/MemberBadge';
 
 interface CommentsSectionProps {
   videoId: string;
@@ -410,10 +411,17 @@ export default function CommentsSection({ videoId, allowComments = true }: Comme
           fallbackSrc="/placeholder.png"
         />
         <div className="flex-1 space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-sm">
               {comment.user.displayName || comment.user.username}
             </span>
+            {comment.membershipBadge && (
+              <MemberBadge
+                tierName={comment.membershipBadge.tierName}
+                tierColor={comment.membershipBadge.tierColor}
+                size="sm"
+              />
+            )}
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {timeAgo(comment.createdAt)}
             </span>

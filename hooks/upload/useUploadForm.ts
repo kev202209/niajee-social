@@ -18,6 +18,8 @@ export function useUploadForm() {
     isSensitive: false,
     mentions: [],
     location: '',
+    isMemberOnly: false,
+    requiredTierId: null,
   });
 
   const [videoPreview, setVideoPreview] = useState<string>('');
@@ -50,6 +52,9 @@ export function useUploadForm() {
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setForm(prev => ({ ...prev, [name]: checked }));
+    } else if (name === 'requiredTierId') {
+      // Handle requiredTierId specially - convert empty string to null
+      setForm(prev => ({ ...prev, requiredTierId: value || null }));
     } else {
       setForm(prev => ({ ...prev, [name]: value || '' }));
     }

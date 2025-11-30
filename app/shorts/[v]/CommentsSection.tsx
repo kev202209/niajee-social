@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import AuthenticatedImage from "@/components/Image";
 import timeAgo from '@/utils/timeAgo';
 import { getImageSrc } from '@/utils/imageUtils';
+import MemberBadge from '@/components/MemberBadge';
 
 interface Comment {
   id: string;
@@ -27,6 +28,11 @@ interface Comment {
   isLiked: boolean;
   replies?: Comment[];
   repliesCount?: number;
+  membershipBadge?: {
+    tierName: string;
+    tierColor: string;
+    channelId: string;
+  } | null;
 }
 
 interface CommentsSectionProps {
@@ -285,10 +291,17 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
           fallbackSrc="/placeholder.png"
         />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-wrap">
             <span className="font-semibold text-sm text-gray-900 dark:text-white">
               {comment.user.displayName || comment.user.username}
             </span>
+            {comment.membershipBadge && (
+              <MemberBadge
+                tierName={comment.membershipBadge.tierName}
+                tierColor={comment.membershipBadge.tierColor}
+                size="sm"
+              />
+            )}
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {timeAgo(comment.createdAt)}
             </span>

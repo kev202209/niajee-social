@@ -10,6 +10,8 @@ import {
   PlaySquare,
   Video,
   Trash2,
+  // Users,
+  // DollarSign,
 } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { DetailedChannel as Channel } from '@/types'
@@ -19,8 +21,11 @@ const channelMenuItems = [
   { label: 'Overview', icon: Home, href: '' },
   { label: 'Upload', icon: Upload, href: '/upload' },
   { label: 'Manage', icon: Video, href: '/manage-uploads' },
-  { label: 'Bin', icon: Trash2, href: '/bin' }, // ADD: New menu item for Bin
+  { label: 'Bin', icon: Trash2, href: '/bin' },
   // { label: 'Analytics', icon: BarChart3, href: '/analytics' },
+  // { label: 'Membership', icon: Users, href: '/membership' },
+  // { label: 'Revenue', icon: DollarSign, href: '/revenue' },
+  // { label: 'Payouts', icon: DollarSign, href: '/payouts' },
   { label: 'Settings', icon: Settings, href: '/settings' },
 ] as const
 
@@ -138,8 +143,8 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 safe-bottom">
-          <div className="grid grid-cols-5 h-16">
+        <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 safe-bottom overflow-x-auto">
+          <div className="flex min-w-max h-16">
             {channelMenuItems.map(({ label, icon: Icon, href }) => {
               const fullPath = `/create/channels/${channelId}${href}`
               const isActive = isActiveRoute(href)
@@ -148,7 +153,7 @@ export default function ChannelLayout({ children }: { children: React.ReactNode 
                 <Link
                   key={label}
                   href={fullPath}
-                  className={`flex flex-col items-center justify-center gap-1 transition ${
+                  className={`flex flex-col items-center justify-center gap-1 transition px-4 min-w-[80px] ${
                     isActive
                       ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                       : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'

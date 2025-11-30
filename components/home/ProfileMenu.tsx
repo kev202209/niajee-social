@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { FiPlus, FiUser, FiLogOut } from "react-icons/fi";
+import { FiPlus, FiUser, FiLogOut, FiStar } from "react-icons/fi";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ProfileMenuProps {
@@ -48,6 +48,16 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ show, onClose, anchorRef }) =
           >
             <FiUser className="mr-3 w-4 h-4" />
             <span className="text-sm">Profile</span>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/home/subscriptions"
+            className="flex items-center w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            onClick={onClose}
+          >
+            <FiStar className="mr-3 w-4 h-4" />
+            <span className="text-sm">My Memberships</span>
           </Link>
         </li>
         <li>
