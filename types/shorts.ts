@@ -120,15 +120,25 @@ export interface ShortData {
   };
   canAccess?: boolean;
   needsMembership?: boolean;
+  soundId?: string;
 }
 
-// Lightweight sound meta (matches raw API shape, no normalization)
+// Extended SoundMeta with all required properties
 export interface SoundMeta {
   id: string;
   title: string;
   artist?: string;
   duration: number;
   waveform?: number[];
+  audio?: {
+    variants?: {
+      mp3?: string;
+      original?: string;
+    };
+    originalKey?: string;
+  };
+  cover?: ProcessedImage;
+  usageCount?: number;
 }
 
 export interface SoundShortItem {

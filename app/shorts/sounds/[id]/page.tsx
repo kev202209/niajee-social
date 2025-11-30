@@ -55,9 +55,13 @@ const SoundDetailsPage = () => {
 
         if (soundRes.ok) {
           const s = await soundRes.json();
-          if (!cancelled) setSound(s as SoundMeta); // Direct cast (no normalization)
+          if (!cancelled) setSound(s as SoundMeta);
         } else {
-          if (!cancelled) setSound({ id: soundId, title: 'Original audio' });
+          if (!cancelled) setSound({ 
+            id: soundId, 
+            title: 'Original audio',
+            duration: 0 
+          });
         }
 
         if (shortsRes.ok) {
@@ -168,7 +172,7 @@ const SoundDetailsPage = () => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-white/80 text-2xl"></div>
+              <div className="w-full h-full flex items-center justify-center text-white/80 text-2xl">🎵</div>
             )}
 
             {/* Circular progress ring overlay */}
