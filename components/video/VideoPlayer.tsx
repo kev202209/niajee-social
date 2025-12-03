@@ -421,6 +421,30 @@ export default function VideoPlayer({ video }: VideoProps) {
   return (
     <div className="space-y-4">
       <div className="relative" ref={containerRef}>
+        {/* Fullscreen title overlay (top-left like YouTube).
+            Visible only when in fullscreen, fades with control visibility,
+            and doesn't capture pointer events. */}
+        {controls.isFullscreen && (
+          <div
+            className={`
+              absolute top-4 left-4 z-40 pointer-events-none
+              transition-opacity duration-300
+              max-w-[80vw]
+            `}
+          >
+            <h2
+              className={`
+                text-white text-2xl sm:text-3xl font-bold truncate
+                drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]
+                ${controls.controlsVisible ? 'opacity-100' : 'opacity-0'}
+              `}
+              title={video.title}
+            >
+              {video.title}
+            </h2>
+          </div>
+        )}
+
         {(buffering || !shouldLoadVideo) && (
           <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40">
             <BufferingSpinner />
