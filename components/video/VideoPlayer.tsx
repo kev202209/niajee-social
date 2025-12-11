@@ -420,7 +420,10 @@ export default function VideoPlayer({ video }: VideoProps) {
 
   return (
     <div className="space-y-4">
-      <div className="relative" ref={containerRef}>
+      <div 
+        className={`relative ${controls.isFullscreen ? 'fixed inset-0 z-50 bg-black flex items-center justify-center' : ''}`}
+        ref={containerRef}
+      >
         {/* Fullscreen title overlay (top-left like YouTube).
             Visible only when in fullscreen, fades with control visibility,
             and doesn't capture pointer events. */}
@@ -488,11 +491,13 @@ export default function VideoPlayer({ video }: VideoProps) {
         ) : (
           // Normal video player
           <>
-            <VideoContainer 
-              controls={controls} 
-              videoRef={videoRef as React.RefObject<HTMLVideoElement>}
-              className="w-full h-full rounded"
-            />
+            <div className={controls.isFullscreen ? 'w-full h-full flex items-center justify-center' : 'w-full'}>
+              <VideoContainer 
+                controls={controls} 
+                videoRef={videoRef as React.RefObject<HTMLVideoElement>}
+                className={controls.isFullscreen ? 'w-full h-full rounded' : 'w-full rounded'}
+              />
+            </div>
             <PlayPauseOverlay controls={controls} />
             <VolumeSeekIndicator controls={controls} />
             <ControlBar controls={controls} videoId={video.id} />
