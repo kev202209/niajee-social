@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -11,7 +15,7 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "baseUrl": ".",
     "plugins": [
@@ -20,15 +24,38 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"],
-      "@editorjs/simple-image": ["types/editorjs-stubs/simple-image"],
-      "@editorjs/link": ["types/editorjs-stubs/link"],
-      "@editorjs/raw": ["types/editorjs-stubs/raw"],
-      "@editorjs/embed": ["types/editorjs-stubs/embed"],
-      "@editorjs/checklist": ["types/editorjs-stubs/checklist"],
-      "@editorjs/marker": ["types/editorjs-stubs/marker"]
+      "@/*": [
+        "./*"
+      ],
+      "@editorjs/simple-image": [
+        "types/editorjs-stubs/simple-image"
+      ],
+      "@editorjs/link": [
+        "types/editorjs-stubs/link"
+      ],
+      "@editorjs/raw": [
+        "types/editorjs-stubs/raw"
+      ],
+      "@editorjs/embed": [
+        "types/editorjs-stubs/embed"
+      ],
+      "@editorjs/checklist": [
+        "types/editorjs-stubs/checklist"
+      ],
+      "@editorjs/marker": [
+        "types/editorjs-stubs/marker"
+      ]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "types/**/*.d.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "types/**/*.d.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
