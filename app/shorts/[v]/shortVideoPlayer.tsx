@@ -214,7 +214,6 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
     const video = effectiveRef?.current;
     if (!video || !videoSrc || requiresMembership) return;
 
-    console.log('Setting up video with source:', videoSrc);
     
     setIsBuffering(true);
     setHasError(false);
@@ -247,11 +246,7 @@ const VideoPlayer: FC<VideoPlayerProps> = ({
       if (!viewRecordedRef.current && video.currentTime >= VIEW_THRESHOLD) {
         viewRecordedRef.current = true;
         setViewRecorded(true);
-        ViewTrackingService.recordView(videoIdRef.current, 'short').then(result => {
-          if (result.viewRecorded) {
-            console.log(`View recorded for short ${videoIdRef.current}. New count: ${result.newViewCount}`);
-          }
-        });
+        ViewTrackingService.recordView(videoIdRef.current, 'short');
       }
     };
     const handleLoadedMetadata = () => setDuration(video.duration);
