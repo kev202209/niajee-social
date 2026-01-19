@@ -30,7 +30,7 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ show, onClose, anchorRef }) =
             Sign in to access your profile and create posts
           </p>
           <Link
-            href="/login"
+            href="/auth/login"
             onClick={onClose}
             className="inline-block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
           >
