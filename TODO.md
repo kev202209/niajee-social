@@ -73,27 +73,27 @@
 -[X] Ensure that the auth pages support something like this (router.push('/login?redirect=/blogs/create');) so that the user can login and register then taken to the page they were in
 -[] There is a notorious bug on the short page where the pause/play affects the comment and the header profile pic, ensure you investigate and fix.
 -[X`] Fix the auth to ensure that the user taken to register to the auth will e returned to the other auth on the completing the registration and login in
--[] Fix the contact us from so that it does not look so simple with some statements on how we will reach out and what to expect also add the support email underneath for the users who do not what to fill the form
+-[X] Fix the contact us from so that it does not look so simple with some statements on how we will reach out and what to expect also add the support email underneath for the users who do not what to fill the form
 -[] Add a replay at the end of the video
--[] Ensure the /placeholder-video is removed and replaced by an icon to show something like x or just blank
--[] have the footer with the same color has the header
--[] Fix the links on the user card on the header
--[] Ensure you centralise the headers and sidebars so that they are not so many.
--[] Remember to update the videos so that they can load faster by making some gifs from them.
--[] Remember to update the nav bar to look like it is hovering by having it have a padding or margin so that i does not touch the walls of the screen
--[] Fix the issue with the watch page where the content is out of screen and remove the old sidebar.
--[] See if you can fix the short page where the client swipes to the next to handle correctly and show a new video.
+-[X] Ensure the /placeholder-video is removed and replaced by an icon to show something like x or just blank
+-[X] have the footer with the same color has the header
+-[X] Fix the links on the user card on the header
+-[X] Ensure you centralise the headers and sidebars so that they are not so many.
+-[X] Remember to update the videos so that they can load faster by making some gifs from them.
+-[X] Remember to update the nav bar to look like it is hovering by having it have a padding or margin so that i does not touch the walls of the screen
+-[X] Fix the issue with the watch page where the content is out of screen and remove the old sidebar.
+-[X] See if you can fix the short page where the client swipes to the next to handle correctly and show a new video.
 -[] Finish up on the manage uploads. 
--[] see how you can fix the sidebar so that it can be appropraite for the short and video page.
--[] Fix the short page loading skeleton. it looks off, it does not match the page layout.
+-[X] see how you can fix the sidebar so that it can be appropraite for the short and video page.
+-[X] Fix the short page loading skeleton. it looks off, it does not match the page layout.
 -[] Fix the video comment section, currently the user needs to click the button twice to submit.
 -[] Create pages are not mobile responsive, please change that
 -[] Add the banner adding option for the channel new and settings page.
--[]
--[]
--[]
--[]
--[]
+-[] Add back the play in play on the video
+-[] Fix the issue where the mouse does not disaplear on inactivity also the controlls to not fully disappear.
+-[] See if you can ensure that the homepage images have a thumbnail for the state where the video is not fully loaded so that teh page can look dynamic even when the information is not all full.
+-[] Ensure to add back the other pages in th channels after you add the mpesa paybill and you have made them functional.
+-[] Can you ensure you check why we have the getImagesrc and getImageSrcSafe, they seem to be doing the same thing.
 -[]
 -[]
 -[]
