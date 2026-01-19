@@ -24,52 +24,69 @@ const ProfileMenu: React.FC<ProfileMenuProps> = ({ show, onClose, anchorRef }) =
       ref={anchorRef}
       className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-4 z-50"
     >
-      <div className="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
-        <p className="font-semibold text-gray-900 dark:text-gray-100">
-          {user ? user.username : "Username"}
-        </p>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          {user ? user.email : "you@email.com"}
-        </p>
-      </div>
-      <ul className="space-y-1">
-        <li>
-          <Link href="/create" className="flex items-center w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
-            <FiPlus className="mr-3 w-4 h-4" />
-            <span className="text-sm">Create</span>
-          </Link>
-        </li>
-        <li>
+      {!user ? (
+        <div className="text-center py-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Sign in to access your profile and create posts
+          </p>
           <Link
-            href={`${process.env.NEXT_PUBLIC_FRONTEND_B_URL}/${user?.username ?? ""}`}
-            className="flex items-center w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <FiUser className="mr-3 w-4 h-4" />
-            <span className="text-sm">Profile</span>
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/home/subscriptions"
-            className="flex items-center w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            href="/login"
             onClick={onClose}
+            className="inline-block w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
           >
-            <FiStar className="mr-3 w-4 h-4" />
-            <span className="text-sm">My Memberships</span>
+            Login
           </Link>
-        </li>
-        <li>
-          <button
-            onClick={handleLogout}
-            className="flex items-center w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-red-600 dark:text-red-400"
-          >
-            <FiLogOut className="mr-3 w-4 h-4" />
-            <span className="text-sm">Logout</span>
-          </button>
-        </li>
-      </ul>
+        </div>
+      ) : (
+        <>
+          <div className="mb-3 pb-3 border-b border-gray-200 dark:border-gray-700">
+            <p className="font-semibold text-gray-900 dark:text-gray-100">
+              {user.username}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {user.email}
+            </p>
+          </div>
+          <ul className="space-y-1">
+            <li>
+              <Link href="/create" className="flex items-center w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                <FiPlus className="mr-3 w-4 h-4" />
+                <span className="text-sm">Create</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href={`${process.env.NEXT_PUBLIC_FRONTEND_B_URL}/${user.username}`}
+                className="flex items-center w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FiUser className="mr-3 w-4 h-4" />
+                <span className="text-sm">Profile</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                href="/home/subscriptions"
+                className="flex items-center w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                onClick={onClose}
+              >
+                <FiStar className="mr-3 w-4 h-4" />
+                <span className="text-sm">My Memberships</span>
+              </Link>
+            </li>
+            <li>
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-red-600 dark:text-red-400"
+              >
+                <FiLogOut className="mr-3 w-4 h-4" />
+                <span className="text-sm">Logout</span>
+              </button>
+            </li>
+          </ul>
+        </>
+      )}
     </div>
   );
 };
