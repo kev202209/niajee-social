@@ -19,7 +19,7 @@ interface AuthenticatedImageProps {
   fallbackSrc?: string;
   onError?: () => void;
   onLoad?: () => void;
-  isProfilePic?: boolean; // NEW: flag for profile pics only
+  isProfilePic?: boolean;
 }
 
 // Cache for storing fetched image URLs
@@ -42,9 +42,17 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
   fallbackSrc = '/placeholder.png',
   onError,
   onLoad,
-  isProfilePic = false, // NEW: default false
+  isProfilePic = false,
 }) => {
-  const { user } = useAuth();
+  let user = null;
+  try {
+    const auth = useAuth();
+    user = auth?.user || null;
+  } catch {
+    // AuthContext not available or user not authenticated
+    user = null;
+  }
+
   const [imageSrc, setImageSrc] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const api_url = process.env.NEXT_PUBLIC_API_URL;
@@ -78,24 +86,32 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
 
     // If mediaKey is null, user is authenticated, and it's a profile pic, generate avatar SVG
     if (!mediaKey && user && isProfilePic) {
-      const initials = buildInitials(user.firstName, user.lastName, user.email);
-      const bgColor = colorFromSeed(user.email || `${user.firstName}${user.lastName}`);
-      const svg = avatarSvg(initials, bgColor, 400);
-      const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
-      setImageSrc(dataUrl);
-      setIsLoading(false);
-      return;
+      try {
+        const initials = buildInitials(user.firstName, user.lastName, user.email);
+        const bgColor = colorFromSeed(user.email || `${user.firstName}${user.lastName}`);
+        const svg = avatarSvg(initials, bgColor, 400);
+        const dataUrl = `data:image/svg+xml;base64,${btoa(svg)}`;
+        setImageSrc(dataUrl);
+        setIsLoading(false);
+        return;
+      } catch (err) {
+        console.error('Error generating avatar:', err);
+        setImageSrc(fallbackSrc);
+        setIsLoading(false);
+        return;
+      }
     }
 
-    // If no media key or user not authenticated, show fallback
-    if (!mediaKey || !user) {
+    // If no media key, show fallback
+    if (!mediaKey) {
       setImageSrc(fallbackSrc);
       setIsLoading(false);
       return;
     }
 
     const rawKey = typeof mediaKey === 'string' ? mediaKey : JSON.stringify(mediaKey);
-    const cacheKey = `${user.id}-${rawKey}`;
+    // Use mediaKey alone for cache key (not tied to user)
+    const cacheKey = rawKey;
 
     if (imageCache.has(cacheKey)) {
       setImageSrc(imageCache.get(cacheKey)!);
@@ -123,8 +139,9 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
 
     const fetchImage = async (): Promise<string> => {
       try {
-        setIsLoading(true);
+        if (!api_url) throw new Error('API URL not configured');
 
+        setIsLoading(true);
         const encodedKey = encodeURIComponent(String(mediaKey));
         const res = await fetch(`${api_url}/media/raw/${encodedKey}`, {
           credentials: 'include',
@@ -150,7 +167,7 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
         if (isMounted.current) setImageSrc(url);
       })
       .catch((err) => {
-        console.error('Error fetching authenticated image:', err);
+        console.error('Error fetching image:', err);
         if (isMounted.current) {
           setImageSrc(fallbackSrc);
           onError?.();
@@ -165,7 +182,7 @@ const AuthenticatedImage: React.FC<AuthenticatedImageProps> = ({
       // no-op here because we revoke at mediaKey change and unmount below
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mediaKey, user, api_url, fallbackSrc, onError, isProfilePic]); // ADD isProfilePic to deps
+  }, [mediaKey, user, api_url, fallbackSrc, onError, isProfilePic]);
 
   // Cleanup on unmount
   useEffect(() => {
