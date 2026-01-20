@@ -1,5 +1,8 @@
 'use client';
 import React, { useState, useCallback, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
+import { FiX } from 'react-icons/fi';
 import {
   fetchVideoSaved,
   fetchShortSaved,
@@ -26,6 +29,7 @@ interface BaseSave {
 }
 
 export default function SavedClient() {
+  const { user } = useAuth();
   const [tab, setTab] = useState<TabKey>('all');
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
 
@@ -203,6 +207,54 @@ export default function SavedClient() {
       setError(message || 'Toggle failed');
     }
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-primary-bg text-gray-900 dark:text-gray-100 flex flex-col">
+        <Header />
+        
+        {/* Modal Backdrop */}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 pt-16">
+          {/* Modal */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Your Saves
+              </h2>
+              <Link href="/" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <FiX size={24} />
+              </Link>
+            </div>
+            
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Sign in to save and organize your favorite videos, shorts, and blogs.
+            </p>
+
+            <div className="space-y-3">
+              <Link
+                href="/auth/login"
+                className="block w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-center"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/register"
+                className="block w-full px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold rounded-lg transition-colors text-center"
+              >
+                Create Account
+              </Link>
+            </div>
+
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+              <Link href="/" className="text-blue-600 hover:underline">
+                Continue browsing
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-primary-bg text-gray-900 dark:text-gray-100 flex flex-col">
