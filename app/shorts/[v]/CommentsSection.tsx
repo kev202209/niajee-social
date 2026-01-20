@@ -45,18 +45,16 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
   const [isVisible, setIsVisible] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); // now displayed in UI
+  const [error, setError] = useState<string | null>(null);
   const [newComment, setNewComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [commentsCount, setCommentsCount] = useState(0);
   
-  // Edit functionality state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const editInputRef = useRef<HTMLInputElement>(null);
   
-  // Focus states for minimized forms
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isDesktopInputFocused, setIsDesktopInputFocused] = useState(false);
   
@@ -131,36 +129,35 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
     if (commentsEnabled && shortId) {
       fetchComments();
     }
-  }, [shortId, commentsEnabled, fetchComments]); // include fetchComments
+  }, [shortId, commentsEnabled, fetchComments]);
  
-  // Submit new comment
-   const handleSubmitComment = async (e: React.FormEvent) => {
-     e.preventDefault();
-     if (!newComment.trim() || !isAuthenticated || submitting) return;
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim() || !isAuthenticated || submitting) return;
 
-     try {
-       setSubmitting(true);
-       setError(null);
-       const response = await fetch(
-         `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/${shortId}`,
-         {
-           method: 'POST',
-           credentials: 'include',
-           headers: {
-             'Content-Type': 'application/json',
-             'Accept': 'application/json',
-           },
-           body: JSON.stringify({
-             text: newComment.trim(),
-             parentId: undefined,
-           }),
-         }
-       );
+    try {
+      setSubmitting(true);
+      setError(null);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/comments/short/${shortId}`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({
+            text: newComment.trim(),
+            parentId: undefined,
+          }),
+        }
+      );
 
-       if (!response.ok) {
-         const errorData: unknown = await response.json().catch(() => ({}));
-         throw new Error((errorData as { message?: string })?.message || 'Failed to submit comment');
-       }
+      if (!response.ok) {
+        const errorData: unknown = await response.json().catch(() => ({}));
+        throw new Error((errorData as { message?: string })?.message || 'Failed to submit comment');
+      }
 
       const data: unknown = await response.json();
       const created = (data as { comment?: Comment })?.comment;
@@ -276,7 +273,6 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
     }, 300);
   };
 
-  // Comment item component to avoid duplication
   const CommentItem = ({ comment }: { comment: Comment }) => {
     const isOwn = user && comment.user.id === user.id;
     
@@ -381,7 +377,6 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
             </div>
           )}
           
-          {/* Confirm delete popup */}
           {confirmDeleteId === comment.id && (
             <div className="absolute z-10 left-10 top-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded shadow-lg p-3">
               <p className="text-sm text-gray-800 dark:text-gray-200 mb-2">
@@ -407,6 +402,20 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
       </div>
     );
   };
+
+  const UnauthenticatedPrompt = () => (
+    <div className="p-6 border border-gray-300 dark:border-gray-600 rounded-lg text-center">
+      <p className="text-gray-600 dark:text-gray-400 mb-4">
+        Sign in to leave a comment
+      </p>
+      <a 
+        href="/auth/login"
+        className="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+      >
+        Sign In
+      </a>
+    </div>
+  );
 
   return (
     <>
@@ -500,64 +509,70 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
         {/* Mobile Comment input - Minimized */}
         {commentsEnabled && (
           <form onSubmit={handleSubmitComment} className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <div className="p-2">
-              <div className="flex items-center space-x-2">
-                <AuthenticatedImage
-                  mediaKey={getImageSrc(user?.profilePic, '480w') || ""}
-                  alt="User"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 rounded-full flex-shrink-0"
-                  fallbackSrc="/placeholder.png"
-                  isProfilePic={true}
-                />
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onFocus={() => setIsInputFocused(true)}
-                    onBlur={() => setIsInputFocused(false)}
-                    placeholder="Add a comment..."
-                    className="w-full py-2 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    disabled={!isAuthenticated || submitting}
-                  />
-                </div>
-                <button 
-                  type="submit"
-                  disabled={!newComment.trim() || !isAuthenticated || submitting}
-                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {submitting ? (
-                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                  ) : (
-                    <FiSend size={16} />
-                  )}
-                </button>
+            {!isAuthenticated ? (
+              <div className="p-4">
+                <UnauthenticatedPrompt />
               </div>
-              {/* Expanded buttons when focused */}
-              {isInputFocused && newComment.trim() && (
-                <div className="flex justify-end mt-2 space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNewComment('');
-                      setIsInputFocused(false);
-                    }}
-                    className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
+            ) : (
+              <div className="p-2">
+                <div className="flex items-center space-x-2">
+                  <AuthenticatedImage
+                    mediaKey={getImageSrc(user?.profilePic, '480w') || ""}
+                    alt="User"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6 rounded-full flex-shrink-0"
+                    fallbackSrc="/placeholder.png"
+                    isProfilePic={true}
+                  />
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onFocus={() => setIsInputFocused(true)}
+                      onBlur={() => setIsInputFocused(false)}
+                      placeholder="Add a comment..."
+                      className="w-full py-2 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      disabled={submitting}
+                    />
+                  </div>
+                  <button 
                     type="submit"
                     disabled={!newComment.trim() || submitting}
-                    className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                    className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {submitting ? 'Posting...' : 'Post'}
+                    {submitting ? (
+                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    ) : (
+                      <FiSend size={16} />
+                    )}
                   </button>
                 </div>
-              )}
-            </div>
+                {/* Expanded buttons when focused */}
+                {isInputFocused && newComment.trim() && (
+                  <div className="flex justify-end mt-2 space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewComment('');
+                        setIsInputFocused(false);
+                      }}
+                      className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!newComment.trim() || submitting}
+                      className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                    >
+                      {submitting ? 'Posting...' : 'Post'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </form>
         )}
       </div>
@@ -640,64 +655,70 @@ const CommentsSection: FC<CommentsSectionProps> = ({ shortId, commentsEnabled, o
         {/* Desktop Comment input - Minimized */}
         {commentsEnabled && (
           <form onSubmit={handleSubmitComment} className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-            <div className="p-3">
-              <div className="flex items-center space-x-2">
-                <AuthenticatedImage
-                  mediaKey={getImageSrc(user?.profilePic, '480w') || ""}
-                  alt="User"
-                  width={24}
-                  height={24}
-                  className="w-6 h-6 rounded-full flex-shrink-0"
-                  fallbackSrc="/placeholder.png"
-                  isProfilePic={true}
-                />
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onFocus={() => setIsDesktopInputFocused(true)}
-                    onBlur={() => setIsDesktopInputFocused(false)}
-                    placeholder="Add a comment..."
-                    className="w-full py-2 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    disabled={!isAuthenticated || submitting}
-                  />
-                </div>
-                <button 
-                  type="submit"
-                  disabled={!newComment.trim() || !isAuthenticated || submitting}
-                  className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {submitting ? (
-                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                  ) : (
-                    <FiSend size={16} />
-                  )}
-                </button>
+            {!isAuthenticated ? (
+              <div className="p-4">
+                <UnauthenticatedPrompt />
               </div>
-              {/* Expanded buttons when focused */}
-              {isDesktopInputFocused && newComment.trim() && (
-                <div className="flex justify-end mt-2 space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNewComment('');
-                      setIsDesktopInputFocused(false);
-                    }}
-                    className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                  >
-                    Cancel
-                  </button>
-                  <button
+            ) : (
+              <div className="p-3">
+                <div className="flex items-center space-x-2">
+                  <AuthenticatedImage
+                    mediaKey={getImageSrc(user?.profilePic, '480w') || ""}
+                    alt="User"
+                    width={24}
+                    height={24}
+                    className="w-6 h-6 rounded-full flex-shrink-0"
+                    fallbackSrc="/placeholder.png"
+                    isProfilePic={true}
+                  />
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onFocus={() => setIsDesktopInputFocused(true)}
+                      onBlur={() => setIsDesktopInputFocused(false)}
+                      placeholder="Add a comment..."
+                      className="w-full py-2 px-3 text-sm border border-gray-300 dark:border-gray-600 rounded-full bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                      disabled={submitting}
+                    />
+                  </div>
+                  <button 
                     type="submit"
                     disabled={!newComment.trim() || submitting}
-                    className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                    className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {submitting ? 'Posting...' : 'Post'}
+                    {submitting ? (
+                      <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    ) : (
+                      <FiSend size={16} />
+                    )}
                   </button>
                 </div>
-              )}
-            </div>
+                {/* Expanded buttons when focused */}
+                {isDesktopInputFocused && newComment.trim() && (
+                  <div className="flex justify-end mt-2 space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewComment('');
+                        setIsDesktopInputFocused(false);
+                      }}
+                      className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!newComment.trim() || submitting}
+                      className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                    >
+                      {submitting ? 'Posting...' : 'Post'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </form>
         )}
       </div>
