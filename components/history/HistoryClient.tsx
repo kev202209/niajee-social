@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { fetchVideoHistory, fetchShortHistory } from '@/lib/api/history';
 import { HistoryVideoCard, HistoryShortCard } from './HistoryUnifiedCards';
 import { ProcessedImage } from '@/types';
+import Link from 'next/link';
+import { FiX } from 'react-icons/fi';
 
 type TabKey = 'all' | 'videos' | 'shorts';
 
@@ -100,6 +103,7 @@ function groupByDate(items: UnifiedItem[]): Record<string, UnifiedItem[]> {
 }
 
 export default function HistoryClient() {
+  const { user } = useAuth();
   const [tab, setTab] = useState<TabKey>('all');
   const [videoPage, setVideoPage] = useState(1);
   const [shortPage, setShortPage] = useState(1);
@@ -209,6 +213,52 @@ export default function HistoryClient() {
     : tab === 'videos'
       ? !videoDone
       : !shortDone;
+
+  if (!user) {
+    return (
+      <>
+        {/* Modal Backdrop */}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          {/* Modal */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                View History
+              </h2>
+              <Link href="/" className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <FiX size={24} />
+              </Link>
+            </div>
+            
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Sign in to view your watch history and continue where you left off.
+            </p>
+
+            <div className="space-y-3">
+              <Link
+                href="/auth/login"
+                className="block w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-center"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/auth/register"
+                className="block w-full px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-semibold rounded-lg transition-colors text-center"
+              >
+                Create Account
+              </Link>
+            </div>
+
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+              <Link href="/" className="text-blue-600 hover:underline">
+                Continue without signing in
+              </Link>
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="w-full flex flex-col">
