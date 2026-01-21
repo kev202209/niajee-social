@@ -6,7 +6,9 @@ import {
   Plus,
 } from 'lucide-react';
 import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext';
 import LikeButton from "@/components/LikeButton";
+import AuthRequiredModal from '@/components/modals/AuthRequiredModal';
 import { toast } from "sonner";
 import { formatCount } from '@/utils/formatUtils';
 import ShareModal from '@/components/video/ShareModal';
@@ -27,6 +29,9 @@ const VideoActions = ({
   video,
   onToggleComments,
 }: VideoActionsProps) => {
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
+
   // Destructure properties from the video object
   const { 
     id: videoId, 
@@ -41,6 +46,8 @@ const VideoActions = ({
   const { id: channelId, isFollowed } = channel;
 
   const [showShareModal, setShowShareModal] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalAction, setAuthModalAction] = useState<'like' | 'comment' | 'save' | 'share'>('like');
   
   // State is now initialized directly from the video object's properties
   const [liked, setLiked] = useState(isLiked);
@@ -69,6 +76,12 @@ const VideoActions = ({
 
   // Handle like toggle
   const handleLikeToggle = async (newLiked: boolean) => {
+    if (!isAuthenticated) {
+      setAuthModalAction('like');
+      setAuthModalOpen(true);
+      return;
+    }
+
     setLoading(prev => ({ ...prev, like: true }));
     
     try {
@@ -105,6 +118,12 @@ const VideoActions = ({
 
   // Handle follow toggle
   const handleFollowToggle = async () => {
+    if (!isAuthenticated) {
+      setAuthModalAction('like');
+      setAuthModalOpen(true);
+      return;
+    }
+
     if (loading.follow) return;
     
     setLoading(prev => ({ ...prev, follow: true }));
@@ -130,8 +149,6 @@ const VideoActions = ({
       const data = await response.json();
       setFollowing(data.isFollowed);
       
-      // toast.success(data.isFollowed ? 'Following channel' : 'Unfollowed channel');
-      
     } catch (error) {
       console.error('Error toggling follow:', error);
       toast.error(GENERIC_ERROR_MESSAGE);
@@ -142,6 +159,12 @@ const VideoActions = ({
 
   // Handle save toggle
   const handleSaveToggle = async () => {
+    if (!isAuthenticated) {
+      setAuthModalAction('save');
+      setAuthModalOpen(true);
+      return;
+    }
+
     if (loading.save) return;
     
     setLoading(prev => ({ ...prev, save: true }));
@@ -224,6 +247,12 @@ const VideoActions = ({
 
   // Handle share with proper native share timing
   const handleShare = async () => {
+    if (!isAuthenticated) {
+      setAuthModalAction('share');
+      setAuthModalOpen(true);
+      return;
+    }
+
     const result = await ShareService.share(
       video.id,
       video.title,
@@ -321,7 +350,14 @@ const VideoActions = ({
         {/* Comment Button with Count */}
         <div className="flex flex-col items-center">
           <button 
-            onClick={onToggleComments}
+            onClick={() => {
+              if (!isAuthenticated) {
+                setAuthModalAction('comment');
+                setAuthModalOpen(true);
+              } else {
+                onToggleComments();
+              }
+            }}
             className="p-3 rounded-full transition-all hover:bg-black/20"
           >
             <MessageCircle 
@@ -397,6 +433,13 @@ const VideoActions = ({
           </div>
         )}
       </div>
+
+      {/* Auth Required Modal */}
+      <AuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        actionType={authModalAction}
+      />
 
       {/* Share Modal */}
       <ShareModal
