@@ -1,16 +1,17 @@
 // components/VideoMeta.tsx
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
-import Link from 'next/link'; // ADD: Next.js Link
+import Link from 'next/link';
 import { 
   Share2, 
   Download, 
   Save, 
   MoreHorizontal,
-  // Link,           // REMOVE: this was the lucide icon causing the conflict
   Flag,
   EyeOff 
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import AuthRequiredModal from '@/components/modals/AuthRequiredModal';
 import { mVideo as Video } from '../../types';
 import timeAgo from '../../utils/timeAgo';
 import Button from '../ui/CustomButton';
@@ -30,6 +31,9 @@ interface VideoMetaProps {
 }
 
 export default function VideoMeta({ video }: VideoMetaProps) {
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
+
   const [descExpanded, setDescExpanded] = useState(false);
   const [shouldShowMore, setShouldShowMore] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
@@ -40,11 +44,13 @@ export default function VideoMeta({ video }: VideoMetaProps) {
   const [saveCount, setSaveCount] = useState(video.saveCount || 0);
   const [isLiked, setIsLiked] = useState(video.isLiked || false);
   
-  // New states for additional functionality
   const [isSaved, setIsSaved] = useState(video.isSaved || false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalAction, setAuthModalAction] = useState<'like' | 'comment' | 'save' | 'share'>('like');
+  
   const [loading, setLoading] = useState({
     save: false,
     download: false,
@@ -83,6 +89,12 @@ export default function VideoMeta({ video }: VideoMetaProps) {
 
   // Handle like toggle
   const handleLikeToggle = async (liked: boolean) => {
+    if (!isAuthenticated) {
+      setAuthModalAction('like');
+      setAuthModalOpen(true);
+      return;
+    }
+
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/videos/${video.id}/like`,
@@ -115,6 +127,12 @@ export default function VideoMeta({ video }: VideoMetaProps) {
 
   // Handle follow/unfollow
   const handleFollowToggle = async () => {
+    if (!isAuthenticated) {
+      setAuthModalAction('like');
+      setAuthModalOpen(true);
+      return;
+    }
+
     if (isFollowLoading) return;
 
     try {
@@ -170,6 +188,12 @@ export default function VideoMeta({ video }: VideoMetaProps) {
 
   // Handle save toggle
   const handleSaveToggle = async () => {
+    if (!isAuthenticated) {
+      setAuthModalAction('save');
+      setAuthModalOpen(true);
+      return;
+    }
+
     if (loading.save) return;
     
     setLoading(prev => ({ ...prev, save: true }));
@@ -252,6 +276,12 @@ export default function VideoMeta({ video }: VideoMetaProps) {
 
   // Handle share with proper native share timing
   const handleShare = async () => {
+    if (!isAuthenticated) {
+      setAuthModalAction('share');
+      setAuthModalOpen(true);
+      return;
+    }
+
     const result = await ShareService.share(
       video.id,
       video.title,
@@ -326,9 +356,9 @@ export default function VideoMeta({ video }: VideoMetaProps) {
     setShowReport(true);
   };
 
-useEffect(() => {
-  setIsFollowing( video.channel.isFollowed || false);
-}, [ video.channel.isFollowed]);
+  useEffect(() => {
+    setIsFollowing(video.channel.isFollowed || false);
+  }, [video.channel.isFollowed]);
 
   return (
     <>
@@ -535,6 +565,13 @@ useEffect(() => {
           )}
         </div>
       </div>
+
+      {/* Auth Required Modal */}
+      <AuthRequiredModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        actionType={authModalAction}
+      />
 
       {/* Report Modal */}
       <ReportModal
